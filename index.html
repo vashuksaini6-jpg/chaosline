@@ -24,20 +24,30 @@ html, body { width:100%; height:100%; background:#000; overflow:hidden; font-fam
 @keyframes cl-spinArrow { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
 
 /* STAGE */
-.cl-stage { position:fixed; background:#000; overflow:hidden; transform-origin:center center; }
+.cl-stage { position:fixed; background:#000; overflow:hidden; }
 
-/* SCREENS - contain preserves aspect ratio */
+/* PNG WRAPPER — holds the actual PNG at correct aspect ratio */
+.cl-png-area {
+  position: absolute;
+  top: 0; bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  aspect-ratio: 16 / 9;
+  height: 100%;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+/* SCREENS - fill the png-area exactly */
 .cl-screen {
   position:absolute; top:0; left:0; width:100%; height:100%;
-  background-size: contain;
+  background-size: 100% 100%;
   background-repeat: no-repeat;
   background-position: center center;
-  background-color: #000;
   display:none;
   image-rendering: pixelated;
   image-rendering: -moz-crisp-edges;
   image-rendering: crisp-edges;
-  -ms-interpolation-mode: nearest-neighbor;
 }
 .cl-screen.cl-active { display:block; }
 #cl-screen-loading { background-image:url('loading.png'); }
@@ -97,14 +107,14 @@ html, body { width:100%; height:100%; background:#000; overflow:hidden; font-fam
 .cl-popup-close:active { transform:scale(0.91); }
 
 /* COIN */
-.cl-coin-display { position:absolute; top:4%; right:3%; color:#fff; font-family:'Press Start 2P',monospace; font-size:1.6vh; z-index:50; pointer-events:none; text-shadow:1px 1px 4px #000, 0 0 8px #000; }
+.cl-coin-display { position:absolute; top:6%; right:3.5%; color:#fff; font-family:'Press Start 2P',monospace; font-size:1.6vh; z-index:50; pointer-events:none; text-shadow:1px 1px 4px #000, 0 0 8px #000; }
 
-/* LOCK */
-.cl-lock-overlay { position:absolute; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.68); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:3.2vh; z-index:15; pointer-events:none; }
+/* LOCK — child of button, fills 100% */
+.cl-lock-overlay { position:absolute; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.68); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:3vh; z-index:15; pointer-events:none; }
 .cl-world-lock { border-radius:10px; }
 
 /* MUTE */
-.cl-mute-btn { position:absolute; bottom:4%; left:3%; width:5.5vh; height:5.5vh; background:rgba(0,0,0,0.65); border:2px solid rgba(255,255,255,0.22); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:2vh; cursor:pointer; z-index:100; touch-action:manipulation; transition:transform 0.08s; }
+.cl-mute-btn { position:absolute; bottom:4%; left:3%; width:5vh; height:5vh; background:rgba(0,0,0,0.65); border:2px solid rgba(255,255,255,0.22); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:2vh; cursor:pointer; z-index:100; touch-action:manipulation; transition:transform 0.08s; }
 .cl-mute-btn:active { transform:scale(0.87); }
 </style>
 </head>
@@ -121,76 +131,92 @@ html, body { width:100%; height:100%; background:#000; overflow:hidden; font-fam
 </div>
 
 <div class="cl-stage" id="cl-stage">
+  <div class="cl-png-area" id="cl-png-area">
 
-  <div class="cl-jaw-wrap" id="cl-jaw-wrap">
-    <div class="cl-jaw-throat"></div>
-    <div class="cl-jaw-top"></div>
-    <div class="cl-jaw-bottom"></div>
-  </div>
-
-  <div class="cl-popup-backdrop" id="cl-popup" onclick="cl_closePopup()">
-    <div class="cl-popup-box" onclick="event.stopPropagation()">
-      <div id="cl-popup-text"></div>
-      <button class="cl-popup-close" onclick="cl_closePopup()">✕ CLOSE</button>
+    <div class="cl-jaw-wrap" id="cl-jaw-wrap">
+      <div class="cl-jaw-throat"></div>
+      <div class="cl-jaw-top"></div>
+      <div class="cl-jaw-bottom"></div>
     </div>
-  </div>
 
-  <div id="cl-screen-loading" class="cl-screen cl-active">
-    <div class="cl-loading-bar-track">
-      <div class="cl-loading-bar-fill" id="cl-loading-fill"></div>
+    <div class="cl-popup-backdrop" id="cl-popup" onclick="cl_closePopup()">
+      <div class="cl-popup-box" onclick="event.stopPropagation()">
+        <div id="cl-popup-text"></div>
+        <button class="cl-popup-close" onclick="cl_closePopup()">✕ CLOSE</button>
+      </div>
     </div>
-  </div>
 
-  <div id="cl-screen-mainmenu" class="cl-screen">
-    <div class="cl-coin-display" id="cl-coin-menu">0</div>
-    <div class="cl-btn cl-btn-play" style="left:13%;top:28%;width:22%;height:16%;" onclick="cl_handleClick(event,()=>cl_showScreen('worldselect'),true)"></div>
-    <div class="cl-btn" style="left:13%;top:48%;width:11%;height:13%;" onclick="cl_handleClick(event,()=>cl_showPopup('🎨 SKINS<br><br>Coming Soon!'),false)"></div>
-    <div class="cl-btn" style="left:25%;top:48%;width:11%;height:13%;" onclick="cl_handleClick(event,()=>cl_showPopup('🛒 SHOP<br><br>Coming Soon!'),false)"></div>
-    <div class="cl-btn" style="left:13%;top:65%;width:7%;height:12%;" onclick="cl_handleClick(event,()=>cl_showPopup('🎒 INVENTORY<br><br>Coming Soon!'),false)"></div>
-    <div class="cl-btn" style="left:21%;top:65%;width:16%;height:12%;" onclick="cl_handleClick(event,()=>cl_showPopup('🏆 MY STATS<br><br>Coming Soon!'),false)"></div>
-    <div class="cl-btn" style="left:55%;top:86%;width:20%;height:8%;" onclick="cl_handleClick(event,()=>cl_showPopup('📖 HOW TO PLAY<br><br>• Tap to Jump<br>• Avoid traps<br>• Reach the flag<br>• Collect coins<br>• Don\'t die.'),false)"></div>
-    <div class="cl-mute-btn" onclick="cl_toggleMute()">🔊</div>
-  </div>
-
-  <div id="cl-screen-worldselect" class="cl-screen">
-    <div class="cl-coin-display" id="cl-coin-world">0</div>
-    <div class="cl-btn" style="left:2%;top:3%;width:6%;height:12%;" onclick="cl_handleClick(event,()=>cl_showScreen('mainmenu'),false)"></div>
-    <div class="cl-btn" style="left:4%;top:18%;width:29%;height:70%;" onclick="cl_handleClick(event,()=>cl_selectWorld('overworld'),false)"></div>
-    <div class="cl-btn" style="left:36%;top:18%;width:29%;height:70%;" onclick="cl_handleClick(event,()=>cl_selectWorld('nether'),false)">
-      <div class="cl-lock-overlay cl-world-lock" id="cl-lock-nether">🔒</div>
+    <div id="cl-screen-loading" class="cl-screen cl-active">
+      <div class="cl-loading-bar-track">
+        <div class="cl-loading-bar-fill" id="cl-loading-fill"></div>
+      </div>
     </div>
-    <div class="cl-btn" style="left:67%;top:18%;width:29%;height:70%;" onclick="cl_handleClick(event,()=>cl_selectWorld('theend'),false)">
-      <div class="cl-lock-overlay cl-world-lock" id="cl-lock-theend">🔒</div>
+
+    <div id="cl-screen-mainmenu" class="cl-screen">
+      <div class="cl-coin-display" id="cl-coin-menu">0</div>
+      <!-- PLAY (green button) -->
+      <div class="cl-btn cl-btn-play" style="left:28%;top:32%;width:20%;height:14%;" onclick="cl_handleClick(event,()=>cl_showScreen('worldselect'),true)"></div>
+      <!-- SKIN (purple) -->
+      <div class="cl-btn" style="left:26%;top:49%;width:12%;height:11%;" onclick="cl_handleClick(event,()=>cl_showPopup('🎨 SKINS<br><br>Coming Soon!'),false)"></div>
+      <!-- SHOP (red) -->
+      <div class="cl-btn" style="left:39%;top:49%;width:12%;height:11%;" onclick="cl_handleClick(event,()=>cl_showPopup('🛒 SHOP<br><br>Coming Soon!'),false)"></div>
+      <!-- BACKPACK (teal small) -->
+      <div class="cl-btn" style="left:26%;top:63%;width:8%;height:11%;" onclick="cl_handleClick(event,()=>cl_showPopup('🎒 INVENTORY<br><br>Coming Soon!'),false)"></div>
+      <!-- MY STATS (gold) -->
+      <div class="cl-btn" style="left:35%;top:63%;width:16%;height:11%;" onclick="cl_handleClick(event,()=>cl_showPopup('🏆 MY STATS<br><br>Coming Soon!'),false)"></div>
+      <!-- HOW TO PLAY (text underline) -->
+      <div class="cl-btn" style="left:44%;top:83%;width:20%;height:8%;" onclick="cl_handleClick(event,()=>cl_showPopup('📖 HOW TO PLAY<br><br>• Tap to Jump<br>• Avoid traps<br>• Reach the flag<br>• Collect coins<br>• Don\'t die.'),false)"></div>
+      <div class="cl-mute-btn" onclick="cl_toggleMute()">🔊</div>
     </div>
-    <div class="cl-mute-btn" onclick="cl_toggleMute()">🔊</div>
-  </div>
 
-  <div id="cl-screen-levelselect" class="cl-screen">
-    <div class="cl-coin-display" id="cl-coin-level">0</div>
-    <div class="cl-btn" style="left:2%;top:3%;width:6%;height:12%;" onclick="cl_handleClick(event,()=>cl_showScreen('worldselect'),false)"></div>
-    <div id="cl-level-buttons"></div>
-    <div class="cl-mute-btn" onclick="cl_toggleMute()">🔊</div>
-  </div>
+    <div id="cl-screen-worldselect" class="cl-screen">
+      <div class="cl-coin-display" id="cl-coin-world">0</div>
+      <!-- BACK ARROW top-left -->
+      <div class="cl-btn" style="left:3%;top:5%;width:6%;height:14%;" onclick="cl_handleClick(event,()=>cl_showScreen('mainmenu'),false)"></div>
+      <!-- OVERWORLD card -->
+      <div class="cl-btn" style="left:20%;top:22%;width:19%;height:70%;" onclick="cl_handleClick(event,()=>cl_selectWorld('overworld'),false)"></div>
+      <!-- NETHER card -->
+      <div class="cl-btn" style="left:41%;top:22%;width:19%;height:70%;" onclick="cl_handleClick(event,()=>cl_selectWorld('nether'),false)">
+        <div class="cl-lock-overlay cl-world-lock" id="cl-lock-nether">🔒</div>
+      </div>
+      <!-- THE END card -->
+      <div class="cl-btn" style="left:62%;top:22%;width:19%;height:70%;" onclick="cl_handleClick(event,()=>cl_selectWorld('theend'),false)">
+        <div class="cl-lock-overlay cl-world-lock" id="cl-lock-theend">🔒</div>
+      </div>
+      <div class="cl-mute-btn" onclick="cl_toggleMute()">🔊</div>
+    </div>
 
+    <div id="cl-screen-levelselect" class="cl-screen">
+      <div class="cl-coin-display" id="cl-coin-level">0</div>
+      <!-- BACK -->
+      <div class="cl-btn" style="left:3%;top:5%;width:6%;height:14%;" onclick="cl_handleClick(event,()=>cl_showScreen('worldselect'),false)"></div>
+      <div id="cl-level-buttons"></div>
+      <div class="cl-mute-btn" onclick="cl_toggleMute()">🔊</div>
+    </div>
+
+  </div>
 </div>
 
 <script>
 let CL_coins=0, CL_unlockedLevels=[1], CL_unlockedWorlds=['overworld'], CL_starRatings={};
 let CL_currentWorld='overworld', CL_currentScreen='loading', CL_soundMuted=false, CL_audioCtx=null, CL_transitioning=false;
 
-// FIXED level positions — matches your actual PNG layout
+// LEVEL positions measured from your actual screenshot (landscape 2340x1080)
+// Row 1: Levels 1,2,3,4,5 across the top
+// Row 2 (offset): Level 10 far left, then 6,7,8,9
+// Boss: Hollow King far right
 const CL_LEVEL_POSITIONS = [
-  { n:1,      left:12, top:28, w:8,  h:17 },
-  { n:2,      left:24, top:28, w:8,  h:17 },
-  { n:3,      left:36, top:28, w:8,  h:17 },
-  { n:4,      left:48, top:28, w:8,  h:17 },
-  { n:5,      left:60, top:28, w:8,  h:17 },
-  { n:6,      left:24, top:60, w:8,  h:17 },
-  { n:7,      left:36, top:60, w:8,  h:17 },
-  { n:8,      left:48, top:60, w:8,  h:17 },
-  { n:9,      left:60, top:60, w:8,  h:17 },
-  { n:10,     left:12, top:72, w:8,  h:17 },
-  { n:'boss', left:76, top:38, w:13, h:26 }
+  { n:1,      left:22, top:27, w:8,  h:16 },
+  { n:2,      left:33, top:27, w:8,  h:16 },
+  { n:3,      left:44, top:27, w:8,  h:16 },
+  { n:4,      left:55, top:27, w:8,  h:16 },
+  { n:5,      left:66, top:27, w:8,  h:16 },
+  { n:10,     left:16, top:65, w:8,  h:16 },
+  { n:6,      left:27, top:60, w:8,  h:16 },
+  { n:7,      left:38, top:60, w:8,  h:16 },
+  { n:8,      left:49, top:60, w:8,  h:16 },
+  { n:9,      left:60, top:60, w:8,  h:16 },
+  { n:'boss', left:75, top:36, w:12, h:26 }
 ];
 
 function cl_sizeStage() {
@@ -429,7 +455,6 @@ window.addEventListener('load', () => {
   cl_sizeStage();
   cl_updateCoinDisplay();
   document.querySelectorAll('.cl-mute-btn').forEach(b => b.textContent = CL_soundMuted ? '🔇' : '🔊');
-  // Show loading screen for 3.5s THEN transition to main menu
   setTimeout(() => cl_showScreen('mainmenu'), 3500);
   ['loading.png','main_menu.png','world_select.png','level_select.png'].forEach(src => { const i = new Image(); i.src = src; });
   document.addEventListener('touchstart', cl_initAudio, { once: true });
