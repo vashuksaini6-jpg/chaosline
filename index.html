@@ -16,7 +16,6 @@
   user-select: none;
   -webkit-user-select: none;
 }
-
 html, body {
   width: 100%;
   height: 100%;
@@ -25,15 +24,12 @@ html, body {
   font-family: 'Press Start 2P', monospace;
 }
 
-/* =====================
-   PORTRAIT WARNING
-   ===================== */
+/* PORTRAIT WARNING */
 .cl-portrait-warn {
   display: none;
   position: fixed;
   top: 0; left: 0;
-  width: 100vw;
-  height: 100vh;
+  width: 100vw; height: 100vh;
   background: #050505;
   z-index: 99999;
   flex-direction: column;
@@ -104,15 +100,7 @@ html, body {
   to   { transform: rotate(360deg); }
 }
 
-/* show portrait warning in portrait, hide stage */
-@media (orientation: portrait) {
-  .cl-portrait-warn { display: flex !important; }
-  .cl-stage         { display: none !important; }
-}
-
-/* =====================
-   STAGE
-   ===================== */
+/* STAGE */
 .cl-stage {
   position: fixed;
   background: #000;
@@ -120,9 +108,7 @@ html, body {
   transform-origin: center center;
 }
 
-/* =====================
-   SCREENS
-   ===================== */
+/* SCREENS */
 .cl-screen {
   position: absolute;
   top: 0; left: 0;
@@ -136,29 +122,23 @@ html, body {
   image-rendering: crisp-edges;
 }
 .cl-screen.cl-active { display: block; }
-
 #cl-screen-loading     { background-image: url('loading.png'); }
 #cl-screen-mainmenu    { background-image: url('main_menu.png'); }
 #cl-screen-worldselect { background-image: url('world_select.png'); }
 #cl-screen-levelselect { background-image: url('level_select.png'); }
 
-/* =====================
-   LOADING BAR
-   ===================== */
+/* LOADING BAR */
 .cl-loading-bar-track {
   position: absolute;
-  left: 22%;
-  top: 66%;
-  width: 56%;
-  height: 7%;
+  left: 22%; top: 66%;
+  width: 56%; height: 7%;
   background: rgba(0,0,0,0.35);
   border-radius: 6px;
   overflow: hidden;
   z-index: 10;
 }
 .cl-loading-bar-fill {
-  width: 0%;
-  height: 100%;
+  width: 0%; height: 100%;
   background: linear-gradient(90deg, #FFD700, #FF8C00, #FF4500);
   border-radius: 6px;
   box-shadow: 0 0 22px rgba(255,180,0,0.9);
@@ -170,9 +150,7 @@ html, body {
   100% { width: 100%; }
 }
 
-/* =====================
-   BUTTONS
-   ===================== */
+/* BUTTONS */
 .cl-btn {
   position: absolute;
   background: transparent;
@@ -185,17 +163,14 @@ html, body {
   transition: transform 0.08s ease;
 }
 .cl-btn:active { transform: scale(0.90); }
-
 .cl-btn-play {
   animation: cl-playPulse 2s ease-in-out infinite;
   border-radius: 10px;
 }
 @keyframes cl-playPulse {
   0%,100% { filter: brightness(1); }
-  50%      { filter: brightness(1.22)
-             drop-shadow(0 0 18px rgba(80,220,80,0.75)); }
+  50%      { filter: brightness(1.22) drop-shadow(0 0 18px rgba(80,220,80,0.75)); }
 }
-
 .cl-btn-boss {
   animation: cl-bossPulse 1.8s ease-in-out infinite;
   border-radius: 50%;
@@ -205,9 +180,7 @@ html, body {
   50%      { filter: drop-shadow(0 0 24px rgba(255,0,0,1)); }
 }
 
-/* =====================
-   RIPPLE
-   ===================== */
+/* RIPPLE */
 .cl-ripple {
   position: absolute;
   border-radius: 50%;
@@ -220,13 +193,10 @@ html, body {
   to { transform: scale(4.5); opacity: 0; }
 }
 
-/* =====================
-   PARTICLES
-   ===================== */
+/* PARTICLES */
 .cl-particle {
   position: absolute;
-  width: 7px;
-  height: 7px;
+  width: 7px; height: 7px;
   border-radius: 50%;
   pointer-events: none;
   animation: cl-particleAnim 0.65s ease-out forwards;
@@ -236,26 +206,22 @@ html, body {
   100% { transform: translate(var(--dx),var(--dy)) scale(0); opacity: 0; }
 }
 
-/* =====================
-   STAGE SHAKE
-   ===================== */
+/* SHAKE */
 .cl-stage.cl-shake {
   animation: cl-stageShake 0.38s ease-out;
 }
 @keyframes cl-stageShake {
-  0%,100% { margin-left:0;    margin-top:0; }
+  0%,100% { margin-left:0;    margin-top:0;    }
   12%     { margin-left:-7px; margin-top:-4px; }
-  25%     { margin-left:6px;  margin-top:4px; }
-  37%     { margin-left:-5px; margin-top:3px; }
+  25%     { margin-left:6px;  margin-top:4px;  }
+  37%     { margin-left:-5px; margin-top:3px;  }
   50%     { margin-left:5px;  margin-top:-3px; }
-  62%     { margin-left:-3px; margin-top:2px; }
+  62%     { margin-left:-3px; margin-top:2px;  }
   75%     { margin-left:3px;  margin-top:-2px; }
-  87%     { margin-left:-2px; margin-top:1px; }
+  87%     { margin-left:-2px; margin-top:1px;  }
 }
 
-/* =====================
-   MONSTER JAW TRANSITION
-   ===================== */
+/* JAW TRANSITION */
 .cl-jaw-wrap {
   position: absolute;
   top: 0; left: 0;
@@ -265,7 +231,6 @@ html, body {
   display: none;
 }
 .cl-jaw-wrap.cl-active { display: block; }
-
 .cl-jaw-throat {
   position: absolute;
   top: 50%; left: 50%;
@@ -285,13 +250,13 @@ html, body {
   clip-path: polygon(
     0% 0%, 100% 0%, 100% 75%,
     95.5% 100%, 91% 70%, 86.5% 100%,
-    82%   70%,  77.5% 100%, 73%  70%,
-    68.5% 100%, 64%   70%,  59.5% 100%,
-    55%   70%,  50.5% 100%, 46%   70%,
-    41.5% 100%, 37%   70%,  32.5% 100%,
-    28%   70%,  23.5% 100%, 19%   70%,
-    14.5% 100%, 10%   70%,  5.5%  100%,
-    0%    75%
+    82% 70%, 77.5% 100%, 73% 70%,
+    68.5% 100%, 64% 70%, 59.5% 100%,
+    55% 70%, 50.5% 100%, 46% 70%,
+    41.5% 100%, 37% 70%, 32.5% 100%,
+    28% 70%, 23.5% 100%, 19% 70%,
+    14.5% 100%, 10% 70%, 5.5% 100%,
+    0% 75%
   );
   transform: translateY(-100%);
   box-shadow: 0 12px 45px rgba(180,0,0,0.65);
@@ -304,21 +269,19 @@ html, body {
   background: #080808;
   clip-path: polygon(
     0% 100%, 100% 100%, 100% 25%,
-    95.5% 0%,  91%   30%, 86.5% 0%,
-    82%   30%, 77.5% 0%,  73%   30%,
-    68.5% 0%,  64%   30%, 59.5% 0%,
-    55%   30%, 50.5% 0%,  46%   30%,
-    41.5% 0%,  37%   30%, 32.5% 0%,
-    28%   30%, 23.5% 0%,  19%   30%,
-    14.5% 0%,  10%   30%, 5.5%  0%,
-    0%    25%
+    95.5% 0%, 91% 30%, 86.5% 0%,
+    82% 30%, 77.5% 0%, 73% 30%,
+    68.5% 0%, 64% 30%, 59.5% 0%,
+    55% 30%, 50.5% 0%, 46% 30%,
+    41.5% 0%, 37% 30%, 32.5% 0%,
+    28% 30%, 23.5% 0%, 19% 30%,
+    14.5% 0%, 10% 30%, 5.5% 0%,
+    0% 25%
   );
   transform: translateY(100%);
   box-shadow: 0 -12px 45px rgba(180,0,0,0.65);
   z-index: 2;
 }
-
-/* CLOSE */
 .cl-jaw-wrap.cl-closing .cl-jaw-top {
   animation: cl-jawTopClose 0.38s cubic-bezier(0.55,0,0.75,1) forwards;
 }
@@ -328,8 +291,6 @@ html, body {
 .cl-jaw-wrap.cl-closing .cl-jaw-throat {
   animation: cl-throatIn 0.38s ease forwards;
 }
-
-/* OPEN */
 .cl-jaw-wrap.cl-opening .cl-jaw-top {
   transform: translateY(0%);
   animation: cl-jawTopOpen 0.42s cubic-bezier(0.25,0,0.45,1) forwards;
@@ -342,17 +303,14 @@ html, body {
   opacity: 1;
   animation: cl-throatOut 0.42s ease forwards;
 }
+@keyframes cl-jawTopClose  { from{transform:translateY(-100%)} to{transform:translateY(0%)}   }
+@keyframes cl-jawBotClose  { from{transform:translateY(100%)}  to{transform:translateY(0%)}   }
+@keyframes cl-throatIn     { from{opacity:0}                   to{opacity:1}                  }
+@keyframes cl-jawTopOpen   { from{transform:translateY(0%)}    to{transform:translateY(-100%)} }
+@keyframes cl-jawBotOpen   { from{transform:translateY(0%)}    to{transform:translateY(100%)}  }
+@keyframes cl-throatOut    { from{opacity:1}                   to{opacity:0}                  }
 
-@keyframes cl-jawTopClose  { from{transform:translateY(-100%)} to{transform:translateY(0%)} }
-@keyframes cl-jawBotClose  { from{transform:translateY(100%)}  to{transform:translateY(0%)} }
-@keyframes cl-throatIn     { from{opacity:0} to{opacity:1} }
-@keyframes cl-jawTopOpen   { from{transform:translateY(0%)}  to{transform:translateY(-100%)} }
-@keyframes cl-jawBotOpen   { from{transform:translateY(0%)}  to{transform:translateY(100%)} }
-@keyframes cl-throatOut    { from{opacity:1} to{opacity:0} }
-
-/* =====================
-   POPUP
-   ===================== */
+/* POPUP */
 .cl-popup-backdrop {
   position: absolute;
   top: 0; left: 0;
@@ -368,7 +326,6 @@ html, body {
   animation: cl-fadeIn 0.18s ease forwards;
 }
 @keyframes cl-fadeIn { from{opacity:0} to{opacity:1} }
-
 .cl-popup-box {
   background: linear-gradient(145deg, #1c0a0a, #0a0303);
   border: 3px solid #FFD700;
@@ -402,13 +359,10 @@ html, body {
 }
 .cl-popup-close:active { transform: scale(0.91); }
 
-/* =====================
-   COIN DISPLAY
-   ===================== */
+/* COIN */
 .cl-coin-display {
   position: absolute;
-  top: 4%;
-  right: 3%;
+  top: 4%; right: 3%;
   color: #fff;
   font-family: 'Press Start 2P', monospace;
   font-size: 1.6vh;
@@ -417,9 +371,7 @@ html, body {
   text-shadow: 1px 1px 4px #000, 0 0 8px #000;
 }
 
-/* =====================
-   LOCK OVERLAYS
-   ===================== */
+/* LOCKS */
 .cl-lock-overlay {
   position: absolute;
   top: 0; left: 0;
@@ -433,19 +385,13 @@ html, body {
   z-index: 15;
   pointer-events: none;
 }
-.cl-world-lock {
-  border-radius: 10px;
-}
+.cl-world-lock { border-radius: 10px; }
 
-/* =====================
-   MUTE BUTTON
-   ===================== */
+/* MUTE */
 .cl-mute-btn {
   position: absolute;
-  bottom: 4%;
-  left: 3%;
-  width: 5.5vh;
-  height: 5.5vh;
+  bottom: 4%; left: 3%;
+  width: 5.5vh; height: 5.5vh;
   background: rgba(0,0,0,0.65);
   border: 2px solid rgba(255,255,255,0.22);
   border-radius: 50%;
@@ -463,10 +409,8 @@ html, body {
 </head>
 <body>
 
-<!-- =====================
-     PORTRAIT WARNING
-     ===================== -->
-<div class="cl-portrait-warn">
+<!-- PORTRAIT WARNING -->
+<div class="cl-portrait-warn" id="cl-portrait-warn">
   <div class="cl-pw-phone">📱</div>
   <div class="cl-pw-title">ROTATE YOUR PHONE</div>
   <div class="cl-pw-sub">CHAOSLINE plays in landscape</div>
@@ -476,12 +420,10 @@ html, body {
   </div>
 </div>
 
-<!-- =====================
-     GAME STAGE
-     ===================== -->
+<!-- GAME STAGE -->
 <div class="cl-stage" id="cl-stage">
 
-  <!-- JAW TRANSITION -->
+  <!-- JAW -->
   <div class="cl-jaw-wrap" id="cl-jaw-wrap">
     <div class="cl-jaw-throat"></div>
     <div class="cl-jaw-top"></div>
@@ -496,119 +438,73 @@ html, body {
     </div>
   </div>
 
-  <!-- ====================
-       SCREEN 1: LOADING
-       ==================== -->
+  <!-- SCREEN: LOADING -->
   <div id="cl-screen-loading" class="cl-screen cl-active">
     <div class="cl-loading-bar-track">
       <div class="cl-loading-bar-fill" id="cl-loading-fill"></div>
     </div>
   </div>
 
-  <!-- ====================
-       SCREEN 2: MAIN MENU
-       ==================== -->
+  <!-- SCREEN: MAIN MENU -->
   <div id="cl-screen-mainmenu" class="cl-screen">
     <div class="cl-coin-display" id="cl-coin-menu">0</div>
-
-    <!-- PLAY (big + shake) -->
     <div class="cl-btn cl-btn-play"
       style="left:13%;top:28%;width:22%;height:16%;"
-      onclick="cl_handleClick(event,()=>cl_showScreen('worldselect'),true)">
-    </div>
-
-    <!-- SKIN -->
+      onclick="cl_handleClick(event,()=>cl_showScreen('worldselect'),true)"></div>
     <div class="cl-btn"
       style="left:13%;top:48%;width:11%;height:13%;"
-      onclick="cl_handleClick(event,()=>cl_showPopup('🎨 SKINS<br><br>Coming Soon!'),false)">
-    </div>
-
-    <!-- SHOP -->
+      onclick="cl_handleClick(event,()=>cl_showPopup('🎨 SKINS<br><br>Coming Soon!'),false)"></div>
     <div class="cl-btn"
       style="left:25%;top:48%;width:11%;height:13%;"
-      onclick="cl_handleClick(event,()=>cl_showPopup('🛒 SHOP<br><br>Coming Soon!'),false)">
-    </div>
-
-    <!-- BACKPACK -->
+      onclick="cl_handleClick(event,()=>cl_showPopup('🛒 SHOP<br><br>Coming Soon!'),false)"></div>
     <div class="cl-btn"
       style="left:13%;top:65%;width:7%;height:12%;"
-      onclick="cl_handleClick(event,()=>cl_showPopup('🎒 INVENTORY<br><br>Coming Soon!'),false)">
-    </div>
-
-    <!-- MY STATS -->
+      onclick="cl_handleClick(event,()=>cl_showPopup('🎒 INVENTORY<br><br>Coming Soon!'),false)"></div>
     <div class="cl-btn"
       style="left:21%;top:65%;width:16%;height:12%;"
-      onclick="cl_handleClick(event,()=>cl_showPopup('🏆 MY STATS<br><br>Coming Soon!'),false)">
-    </div>
-
-    <!-- HOW TO PLAY -->
+      onclick="cl_handleClick(event,()=>cl_showPopup('🏆 MY STATS<br><br>Coming Soon!'),false)"></div>
     <div class="cl-btn"
       style="left:55%;top:86%;width:20%;height:8%;"
-      onclick="cl_handleClick(event,()=>cl_showPopup('📖 HOW TO PLAY<br><br>• Tap to Jump<br>• Avoid all traps<br>• Reach the flag<br>• Collect coins<br>• Don\'t die.'),false)">
-    </div>
-
-    <div class="cl-mute-btn" id="cl-mute-0" onclick="cl_toggleMute()">🔊</div>
+      onclick="cl_handleClick(event,()=>cl_showPopup('📖 HOW TO PLAY<br><br>• Tap to Jump<br>• Avoid traps<br>• Reach the flag<br>• Collect coins<br>• Don\'t die.'),false)"></div>
+    <div class="cl-mute-btn" onclick="cl_toggleMute()">🔊</div>
   </div>
 
-  <!-- =======================
-       SCREEN 3: WORLD SELECT
-       ======================= -->
+  <!-- SCREEN: WORLD SELECT -->
   <div id="cl-screen-worldselect" class="cl-screen">
     <div class="cl-coin-display" id="cl-coin-world">0</div>
-
-    <!-- BACK -->
     <div class="cl-btn"
       style="left:2%;top:3%;width:6%;height:12%;"
-      onclick="cl_handleClick(event,()=>cl_showScreen('mainmenu'),false)">
-    </div>
-
-    <!-- OVERWORLD (always unlocked) -->
+      onclick="cl_handleClick(event,()=>cl_showScreen('mainmenu'),false)"></div>
     <div class="cl-btn"
       style="left:4%;top:18%;width:29%;height:70%;"
-      onclick="cl_handleClick(event,()=>cl_selectWorld('overworld'),false)">
-    </div>
-
-    <!-- NETHER -->
+      onclick="cl_handleClick(event,()=>cl_selectWorld('overworld'),false)"></div>
     <div class="cl-btn"
       style="left:36%;top:18%;width:29%;height:70%;"
       onclick="cl_handleClick(event,()=>cl_selectWorld('nether'),false)">
       <div class="cl-lock-overlay cl-world-lock" id="cl-lock-nether">🔒</div>
     </div>
-
-    <!-- THE END -->
     <div class="cl-btn"
       style="left:67%;top:18%;width:29%;height:70%;"
       onclick="cl_handleClick(event,()=>cl_selectWorld('theend'),false)">
       <div class="cl-lock-overlay cl-world-lock" id="cl-lock-theend">🔒</div>
     </div>
-
-    <div class="cl-mute-btn" id="cl-mute-1" onclick="cl_toggleMute()">🔊</div>
+    <div class="cl-mute-btn" onclick="cl_toggleMute()">🔊</div>
   </div>
 
-  <!-- =======================
-       SCREEN 4: LEVEL SELECT
-       ======================= -->
+  <!-- SCREEN: LEVEL SELECT -->
   <div id="cl-screen-levelselect" class="cl-screen">
     <div class="cl-coin-display" id="cl-coin-level">0</div>
-
-    <!-- BACK -->
     <div class="cl-btn"
       style="left:2%;top:3%;width:6%;height:12%;"
-      onclick="cl_handleClick(event,()=>cl_showScreen('worldselect'),false)">
-    </div>
-
-    <!-- Level buttons injected by JS -->
+      onclick="cl_handleClick(event,()=>cl_showScreen('worldselect'),false)"></div>
     <div id="cl-level-buttons"></div>
-
-    <div class="cl-mute-btn" id="cl-mute-2" onclick="cl_toggleMute()">🔊</div>
+    <div class="cl-mute-btn" onclick="cl_toggleMute()">🔊</div>
   </div>
 
-</div><!-- end .cl-stage -->
+</div>
 
 <script>
-// ============================================================
 // GLOBALS
-// ============================================================
 let CL_coins          = 0;
 let CL_unlockedLevels = [1];
 let CL_unlockedWorlds = ['overworld'];
@@ -633,56 +529,68 @@ const CL_LEVEL_POSITIONS = [
   { n:'boss', left:76, top:35, w:14, h:30 }
 ];
 
-// ============================================================
-// STAGE SIZING
-// ============================================================
+// STAGE SIZING — handles both portrait+rotate and native landscape
 function cl_sizeStage() {
   const stage = document.getElementById('cl-stage');
-  const vw = window.innerWidth;
-  const vh = window.innerHeight;
+  const warn  = document.getElementById('cl-portrait-warn');
+  const vw    = window.innerWidth;
+  const vh    = window.innerHeight;
+  const isLandscape = vw > vh;
 
-  // Safe margins to avoid Chrome UI overlap
-  const safeH = vh * 0.88;
-  const safeW = vw * 0.95;
+  if (isLandscape) {
+    // Native landscape — fill entire screen, no rotation
+    warn.style.display    = 'none';
+    stage.style.display   = 'block';
+    stage.style.width     = vw + 'px';
+    stage.style.height    = vh + 'px';
+    stage.style.left      = '0px';
+    stage.style.top       = '0px';
+    stage.style.transform = 'none';
+  } else {
+    // Portrait — show warning, rotate stage to fake landscape
+    warn.style.display  = 'flex';
+    stage.style.display = 'block';
 
-  // After rotate(90deg): CSS width becomes visual height, CSS height becomes visual width
-  // We want landscape 16:9 appearance
-  // CSS height / CSS width = 16/9
-  let cssW = safeH;
-  let cssH = cssW * (16 / 9);
+    // In portrait: CSS width becomes visual height after 90deg rotation
+    // We want the visual result to be 16:9 landscape
+    // CSS width <= vh (portrait screen height)
+    // CSS height <= vw (portrait screen width)
+    // After rotation: visual W = CSS height, visual H = CSS width
+    // So we want CSS_height / CSS_width = 16/9
+    const safeVh = vh * 0.90;
+    const safeVw = vw * 0.92;
 
-  if (cssH > safeW) {
-    cssH = safeW;
-    cssW = cssH * (9 / 16);
+    let cssW = safeVh;
+    let cssH = cssW * (16 / 9);
+
+    if (cssH > safeVw) {
+      cssH = safeVw;
+      cssW = cssH * (9 / 16);
+    }
+
+    stage.style.width     = cssW + 'px';
+    stage.style.height    = cssH + 'px';
+    stage.style.left      = '50%';
+    stage.style.top       = '50%';
+    stage.style.transform = 'translate(-50%, -50%) rotate(90deg)';
   }
-
-  stage.style.width     = cssW + 'px';
-  stage.style.height    = cssH + 'px';
-  stage.style.left      = '50%';
-  stage.style.top       = '50%';
-  stage.style.transform = `translate(-50%, -50%) rotate(90deg)`;
 }
 
-window.addEventListener('load',              cl_sizeStage);
-window.addEventListener('resize',            cl_sizeStage);
+window.addEventListener('resize',            () => cl_sizeStage());
 window.addEventListener('orientationchange', () => setTimeout(cl_sizeStage, 350));
 
-// ============================================================
-// PORTRAIT ROTATE BUTTON
-// ============================================================
+// ROTATE BUTTON
 function cl_tryRotate() {
   if (screen.orientation && screen.orientation.lock) {
     screen.orientation.lock('landscape').catch(() => {});
   }
   const el = document.documentElement;
-  if (el.requestFullscreen)            el.requestFullscreen().catch(()=>{});
+  if (el.requestFullscreen)            el.requestFullscreen().catch(() => {});
   else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
   if (navigator.vibrate) navigator.vibrate([50, 30, 50]);
 }
 
-// ============================================================
 // LOCALSTORAGE
-// ============================================================
 function cl_loadProgress() {
   try {
     CL_coins          = parseInt(localStorage.getItem('CL_coins') || '0');
@@ -692,7 +600,6 @@ function cl_loadProgress() {
     CL_soundMuted     = localStorage.getItem('CL_soundMuted') === 'true';
   } catch(e) {}
 }
-
 function cl_saveProgress() {
   try {
     localStorage.setItem('CL_coins',          CL_coins);
@@ -703,21 +610,15 @@ function cl_saveProgress() {
   } catch(e) {}
 }
 
-// ============================================================
 // AUDIO
-// ============================================================
 function cl_initAudio() {
   if (CL_audioCtx) return;
-  try {
-    CL_audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  } catch(e) {}
+  try { CL_audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e) {}
 }
-
 function cl_playSound(type) {
   if (CL_soundMuted || !CL_audioCtx) return;
   try {
     if (CL_audioCtx.state === 'suspended') CL_audioCtx.resume();
-
     const map = {
       click: { f:820,  e:600,  d:0.09, t:'square',   v:0.14 },
       chomp: { f:80,   e:38,   d:0.40, t:'sawtooth', v:0.30 },
@@ -725,15 +626,12 @@ function cl_playSound(type) {
       lock:  { f:190,  e:95,   d:0.28, t:'square',   v:0.18 },
       open:  { f:1100, e:1450, d:0.22, t:'sine',     v:0.16 }
     };
-
-    const s = map[type] || map.click;
+    const s    = map[type] || map.click;
     const osc  = CL_audioCtx.createOscillator();
     const gain = CL_audioCtx.createGain();
     osc.type = s.t;
     osc.frequency.setValueAtTime(s.f, CL_audioCtx.currentTime);
-    osc.frequency.exponentialRampToValueAtTime(
-      Math.max(20, s.e), CL_audioCtx.currentTime + s.d
-    );
+    osc.frequency.exponentialRampToValueAtTime(Math.max(20, s.e), CL_audioCtx.currentTime + s.d);
     gain.gain.setValueAtTime(s.v, CL_audioCtx.currentTime);
     gain.gain.exponentialRampToValueAtTime(0.001, CL_audioCtx.currentTime + s.d);
     osc.connect(gain);
@@ -742,28 +640,24 @@ function cl_playSound(type) {
     osc.stop(CL_audioCtx.currentTime + s.d + 0.02);
   } catch(e) {}
 }
-
 function cl_toggleMute() {
   cl_initAudio();
   CL_soundMuted = !CL_soundMuted;
   cl_saveProgress();
-  const icon = CL_soundMuted ? '🔇' : '🔊';
-  document.querySelectorAll('.cl-mute-btn').forEach(b => b.textContent = icon);
+  document.querySelectorAll('.cl-mute-btn')
+    .forEach(b => b.textContent = CL_soundMuted ? '🔇' : '🔊');
 }
 
-// ============================================================
 // CLICK HANDLER
-// ============================================================
 function cl_handleClick(e, callback, isBig) {
   cl_initAudio();
   cl_playSound('click');
   if (navigator.vibrate) navigator.vibrate(isBig ? 65 : 22);
-
   const btn   = e.currentTarget;
   const rect  = btn.getBoundingClientRect();
   const touch = (e.touches && e.touches[0]) ? e.touches[0] : e;
-  const x = (touch.clientX ?? rect.left + rect.width  / 2) - rect.left;
-  const y = (touch.clientY ?? rect.top  + rect.height / 2) - rect.top;
+  const x = ((touch.clientX ?? rect.left + rect.width  / 2)) - rect.left;
+  const y = ((touch.clientY ?? rect.top  + rect.height / 2)) - rect.top;
 
   // Ripple
   const rip = document.createElement('div');
@@ -775,22 +669,22 @@ function cl_handleClick(e, callback, isBig) {
   // Particles
   const cols = ['#FFD700','#FF8C00','#ffffff','#FF4444','#44FF88','#44AAFF'];
   for (let i = 0; i < 6; i++) {
-    const p     = document.createElement('div');
+    const p   = document.createElement('div');
     p.className = 'cl-particle';
-    const ang   = (Math.PI * 2 * i) / 6 - Math.PI / 2;
-    const dist  = 36 + Math.random() * 26;
+    const ang = (Math.PI * 2 * i) / 6 - Math.PI / 2;
+    const dist = 36 + Math.random() * 26;
     p.style.cssText = `
-      left:${x - 3}px; top:${y - 3}px;
+      left:${x-3}px;top:${y-3}px;
       background:${cols[i]};
       box-shadow:0 0 6px ${cols[i]};
-      --dx:${Math.cos(ang) * dist}px;
-      --dy:${Math.sin(ang) * dist}px;
+      --dx:${Math.cos(ang)*dist}px;
+      --dy:${Math.sin(ang)*dist}px;
     `;
     btn.appendChild(p);
     setTimeout(() => p.remove(), 700);
   }
 
-  // Screen shake
+  // Shake
   if (isBig) {
     const stage = document.getElementById('cl-stage');
     stage.classList.remove('cl-shake');
@@ -798,57 +692,39 @@ function cl_handleClick(e, callback, isBig) {
     stage.classList.add('cl-shake');
     setTimeout(() => stage.classList.remove('cl-shake'), 420);
   }
-
   if (callback) callback();
 }
 
-// ============================================================
-// MONSTER JAW SCREEN TRANSITION
-// ============================================================
+// MONSTER JAW TRANSITION
 function cl_showScreen(name) {
   if (CL_transitioning) return;
   CL_transitioning = true;
-
   const jaw = document.getElementById('cl-jaw-wrap');
-
-  // Reset jaw state
   jaw.className = 'cl-jaw-wrap';
   void jaw.offsetWidth;
-
-  // Phase 1 — close
   jaw.classList.add('cl-active', 'cl-closing');
   cl_playSound('chomp');
   if (navigator.vibrate) navigator.vibrate(150);
 
   setTimeout(() => {
-    // Swap screen
-    document.querySelectorAll('.cl-screen')
-      .forEach(s => s.classList.remove('cl-active'));
-
+    document.querySelectorAll('.cl-screen').forEach(s => s.classList.remove('cl-active'));
     const target = document.getElementById('cl-screen-' + name);
     if (target) target.classList.add('cl-active');
     CL_currentScreen = name;
-
     cl_updateCoinDisplay();
     if (name === 'levelselect') cl_renderLevelSelect();
     if (name === 'worldselect') cl_renderWorldSelect();
-
-    // Phase 2 — open
     jaw.classList.remove('cl-closing');
     jaw.classList.add('cl-opening');
     cl_playSound('open');
-
     setTimeout(() => {
       jaw.className    = 'cl-jaw-wrap';
       CL_transitioning = false;
     }, 450);
-
   }, 420);
 }
 
-// ============================================================
 // COIN DISPLAY
-// ============================================================
 function cl_updateCoinDisplay() {
   ['cl-coin-menu','cl-coin-world','cl-coin-level'].forEach(id => {
     const el = document.getElementById(id);
@@ -856,16 +732,13 @@ function cl_updateCoinDisplay() {
   });
 }
 
-// ============================================================
 // WORLD SELECT
-// ============================================================
 function cl_renderWorldSelect() {
   const n = document.getElementById('cl-lock-nether');
   const t = document.getElementById('cl-lock-theend');
   if (n) n.style.display = CL_unlockedWorlds.includes('nether') ? 'none' : 'flex';
   if (t) t.style.display = CL_unlockedWorlds.includes('theend') ? 'none' : 'flex';
 }
-
 function cl_selectWorld(world) {
   if (!CL_unlockedWorlds.includes(world)) {
     cl_playSound('lock');
@@ -880,32 +753,21 @@ function cl_selectWorld(world) {
   cl_showScreen('levelselect');
 }
 
-// ============================================================
 // LEVEL SELECT
-// ============================================================
 function cl_renderLevelSelect() {
   const container = document.getElementById('cl-level-buttons');
   container.innerHTML = '';
-
   CL_LEVEL_POSITIONS.forEach(pos => {
     const unlocked = CL_unlockedLevels.includes(pos.n);
     const div = document.createElement('div');
     div.className = 'cl-btn' + (pos.n === 'boss' ? ' cl-btn-boss' : '');
-    div.style.cssText = `
-      position:absolute;
-      left:${pos.left}%;
-      top:${pos.top}%;
-      width:${pos.w}%;
-      height:${pos.h}%;
-    `;
-
+    div.style.cssText = `position:absolute;left:${pos.left}%;top:${pos.top}%;width:${pos.w}%;height:${pos.h}%;`;
     if (!unlocked) {
       const lock = document.createElement('div');
       lock.className   = 'cl-lock-overlay';
       lock.textContent = '🔒';
       div.appendChild(lock);
     }
-
     div.addEventListener('click', (e) => {
       if (unlocked) {
         cl_handleClick(e, () => {
@@ -917,33 +779,27 @@ function cl_renderLevelSelect() {
       } else {
         cl_handleClick(e, () => {
           cl_playSound('lock');
-          const prev = pos.n === 'boss' ? 10 : pos.n - 1;
+          const prev = pos.n === 'boss' ? 10 : Number(pos.n) - 1;
           cl_showPopup(`🔒 LOCKED<br><br>Complete Level ${prev} first!`);
         }, false);
       }
     });
-
     container.appendChild(div);
   });
 }
 
-// ============================================================
 // POPUP
-// ============================================================
 function cl_showPopup(html) {
   cl_playSound('pop');
   document.getElementById('cl-popup-text').innerHTML = html;
   document.getElementById('cl-popup').classList.add('cl-visible');
 }
-
 function cl_closePopup() {
   cl_playSound('click');
   document.getElementById('cl-popup').classList.remove('cl-visible');
 }
 
-// ============================================================
-// DEBUG CHEATS
-// ============================================================
+// DEBUG
 window.cl_cheatUnlockAll = function() {
   CL_unlockedLevels = [1,2,3,4,5,6,7,8,9,10,'boss'];
   CL_unlockedWorlds = ['overworld','nether','theend'];
@@ -956,30 +812,18 @@ window.cl_cheatReset = function() {
   location.reload();
 };
 
-// ============================================================
 // INIT
-// ============================================================
 window.addEventListener('load', () => {
   cl_loadProgress();
   cl_sizeStage();
   cl_updateCoinDisplay();
-
-  // Sync mute buttons
-  const icon = CL_soundMuted ? '🔇' : '🔊';
-  document.querySelectorAll('.cl-mute-btn').forEach(b => b.textContent = icon);
-
-  // Start loading bar
+  document.querySelectorAll('.cl-mute-btn')
+    .forEach(b => b.textContent = CL_soundMuted ? '🔇' : '🔊');
   const fill = document.getElementById('cl-loading-fill');
   if (fill) fill.style.animationPlayState = 'running';
-
-  // Auto-go to main menu after 3.5s
   setTimeout(() => cl_showScreen('mainmenu'), 3500);
-
-  // Preload PNGs
   ['loading.png','main_menu.png','world_select.png','level_select.png']
     .forEach(src => { const i = new Image(); i.src = src; });
-
-  // Unlock audio on first touch/click
   document.addEventListener('touchstart', cl_initAudio, { once: true });
   document.addEventListener('click',      cl_initAudio, { once: true });
 });
