@@ -25,27 +25,66 @@ img{image-rendering:pixelated;image-rendering:-moz-crisp-edges;image-rendering:c
 .cl-rot-btn{margin-top:24px;padding:14px 22px;background:#ffd700;color:#000;font-family:inherit;font-size:11px;border:3px solid #fff;cursor:pointer}
 
 /* SCREENS */
-.cl-screen{position:absolute;inset:0;width:100%;height:100%;display:none;background-size:100% 100%;background-position:center;background-repeat:no-repeat}
+.cl-screen{position:absolute;inset:0;width:100%;height:100%;display:none}
 .cl-screen.cl-active{display:block}
 .cl-screen img.cl-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:fill;pointer-events:none}
 
-/* OVERLAY BUTTONS (invisible hitboxes, positioned in %) */
-.cl-hit{position:absolute;cursor:pointer;background:transparent;transition:transform 80ms;z-index:5}
-.cl-hit:active{transform:scale(0.94)}
-.cl-hit.cl-locked{cursor:not-allowed}
+/* OVERLAY HITBOXES */
+.cl-hit{position:absolute;cursor:pointer;background:transparent;z-index:5}
+.cl-hit:active{transform:scale(0.94);transition:transform 80ms}
 
-/* Debug outline toggle (comment out in production) */
-/* .cl-hit{border:1px dashed #0f0} */
+/* DEBUG mode: uncomment to see hitboxes */
+/* .cl-hit{border:1px dashed #0f0;background:rgba(0,255,0,0.1)} */
 
-/* LOADING BAR FILL */
-#cl-loadbar{position:absolute;left:20%;top:76.5%;width:0%;height:8%;background:linear-gradient(180deg,#ffea55 0%,#ffb020 50%,#c46010 100%);box-shadow:0 0 10px #ffb020,inset 0 -3px 0 #7a3a05,inset 0 3px 0 #ffe090;z-index:4;transition:width 100ms linear;border-radius:2px}
+/* LOADING BAR */
+#cl-loadbar{position:absolute;left:20%;top:76.5%;width:0%;height:8%;background:linear-gradient(180deg,#ffea55 0%,#ffb020 50%,#c46010 100%);box-shadow:0 0 12px #ffb020,inset 0 -3px 0 #7a3a05,inset 0 3px 0 #ffe090;z-index:4;border-radius:2px;transition:width 120ms linear}
 
-/* LOCK OVERLAY on world/level buttons */
-.cl-lockov{position:absolute;inset:0;background:rgba(0,0,0,0.62);display:flex;align-items:center;justify-content:center;font-size:32px;color:#fff;z-index:6;pointer-events:none;border-radius:8px}
+/* LOCK OVERLAY */
+.cl-lockov{position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.55);display:flex;align-items:center;justify-content:center;font-size:28px;z-index:6;pointer-events:none;border-radius:50%}
 .cl-lockov.cl-hide{display:none}
+.cl-lockov.cl-square{border-radius:8px}
 
-/* STAR OVERLAY on level buttons */
-.cl-stars{position:absolute;bottom:-6%;left:0;width:100%;text-align:center;font-size:10px;color:#ffd700;pointer-events:none;z-index:7;letter-spacing:2px}
+/* STARS */
+.cl-stars{position:absolute;bottom:-18%;left:0;width:100%;text-align:center;font-size:8px;color:#ffd700;pointer-events:none;z-index:7;letter-spacing:2px;text-shadow:1px 1px 0 #000}
+
+/* ==== IDLE ANIMATION OVERLAYS ==== */
+/* Container over each screen for particles */
+.cl-anim{position:absolute;inset:0;pointer-events:none;z-index:3;overflow:hidden}
+
+/* Menu button pulse */
+.cl-pulse{animation:cl-pulse-anim 1.4s ease-in-out infinite}
+@keyframes cl-pulse-anim{0%,100%{transform:scale(1);filter:brightness(1)}50%{transform:scale(1.04);filter:brightness(1.15)}}
+
+/* Coin spin on top-right coin badge (via CSS mask over PNG area) */
+.cl-coinshine{position:absolute;top:3%;right:5%;width:3%;height:12%;background:radial-gradient(circle,rgba(255,255,255,0.7) 0%,transparent 60%);animation:cl-shine 2s linear infinite;pointer-events:none;z-index:8}
+@keyframes cl-shine{0%{opacity:0;transform:translateX(-30px)}50%{opacity:1}100%{opacity:0;transform:translateX(30px)}}
+
+/* Floating embers (menu + world screens) */
+.cl-ember{position:absolute;width:4px;height:4px;background:#ff8020;border-radius:50%;box-shadow:0 0 6px #ff6010;opacity:0.8}
+
+/* Loading phoenix pulse (over center of loading PNG) */
+.cl-phoenix-glow{position:absolute;top:8%;left:35%;width:30%;height:50%;background:radial-gradient(ellipse,rgba(255,220,120,0.35) 0%,transparent 60%);animation:cl-phoenix-pulse 1.6s ease-in-out infinite;pointer-events:none;z-index:2}
+@keyframes cl-phoenix-pulse{0%,100%{opacity:0.4;transform:scale(1)}50%{opacity:0.9;transform:scale(1.08)}}
+
+/* Level button pulse (unlocked ones) */
+.cl-lvlpulse{animation:cl-lvlpulse-anim 1.8s ease-in-out infinite}
+@keyframes cl-lvlpulse-anim{0%,100%{filter:drop-shadow(0 0 0 rgba(255,255,255,0))}50%{filter:drop-shadow(0 0 12px rgba(255,255,255,0.7))}}
+
+/* Boss button pulse (red glow) */
+.cl-bosspulse{animation:cl-boss-anim 1.2s ease-in-out infinite}
+@keyframes cl-boss-anim{0%,100%{filter:drop-shadow(0 0 4px #ff0000)}50%{filter:drop-shadow(0 0 20px #ff0000)}}
+
+/* World card idle sway */
+.cl-worldpulse{animation:cl-worldsway 3s ease-in-out infinite}
+@keyframes cl-worldsway{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+
+/* Character breathing (menu screen) */
+.cl-charbreath{position:absolute;right:4%;bottom:5%;width:22%;height:70%;pointer-events:none;z-index:2;animation:cl-breath 2.4s ease-in-out infinite}
+@keyframes cl-breath{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+
+/* Screen fade-in */
+.cl-screen.cl-active{animation:cl-fadein 0.5s ease-out}
+@keyframes cl-fadein{0%{opacity:0}100%{opacity:1}}
 
 /* JAW TRANSITION */
 #cl-jaw{position:fixed;inset:0;z-index:8000;pointer-events:none;display:none}
@@ -59,28 +98,19 @@ img{image-rendering:pixelated;image-rendering:-moz-crisp-edges;image-rendering:c
 /* POPUP */
 #cl-popup{position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:7000;display:none;align-items:center;justify-content:center}
 #cl-popup.cl-show{display:flex}
-.cl-popup-box{background:#1a0505;border:4px solid #ffd700;padding:24px;max-width:80%;text-align:center;box-shadow:0 0 30px rgba(255,215,0,0.4)}
+.cl-popup-box{background:#1a0505;border:4px solid #ffd700;padding:24px;max-width:80%;text-align:center;box-shadow:0 0 30px rgba(255,215,0,0.4);animation:cl-pop-in 0.3s ease-out}
+@keyframes cl-pop-in{0%{transform:scale(0.5);opacity:0}100%{transform:scale(1);opacity:1}}
 .cl-popup-title{font-size:14px;color:#ffd700;margin-bottom:16px}
-.cl-popup-text{font-size:9px;color:#fff;line-height:1.8;margin-bottom:20px}
+.cl-popup-text{font-size:9px;color:#fff;line-height:1.8;margin-bottom:20px;white-space:pre-line}
 .cl-popup-btn{padding:12px 20px;background:#c94040;color:#fff;font-family:inherit;font-size:10px;border:3px solid #fff;cursor:pointer}
 
-/* MUTE BUTTON */
-#cl-mute{position:fixed;bottom:8px;left:8px;width:40px;height:40px;background:rgba(0,0,0,0.6);border:2px solid #fff;color:#fff;font-size:16px;z-index:6000;cursor:pointer;display:flex;align-items:center;justify-content:center}
+/* MUTE */
+#cl-mute{position:fixed;bottom:8px;left:8px;width:40px;height:40px;background:rgba(0,0,0,0.6);border:2px solid #fff;color:#fff;font-size:16px;z-index:6000;cursor:pointer;display:flex;align-items:center;justify-content:center;border-radius:4px}
 
 /* RIPPLE + SPARKS */
 .cl-ripple{position:absolute;border-radius:50%;background:rgba(255,255,255,0.5);pointer-events:none;transform:scale(0);animation:cl-ripple-anim 0.55s ease-out forwards;z-index:100}
 @keyframes cl-ripple-anim{to{transform:scale(4);opacity:0}}
 .cl-spark{position:absolute;width:6px;height:6px;border-radius:50%;pointer-events:none;z-index:101}
-
-/* GAME CANVAS */
-#cl-canvas{position:absolute;inset:0;width:100%;height:100%;display:block;background:#7ec0ee;z-index:2}
-#cl-gameui{position:absolute;top:10px;left:10px;right:10px;display:flex;justify-content:space-between;z-index:10;font-size:10px;pointer-events:none}
-.cl-gui-box{background:rgba(0,0,0,0.6);padding:8px 12px;border:2px solid #fff}
-#cl-gamehint{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:14px;color:#fff;text-shadow:2px 2px 0 #000;z-index:9;pointer-events:none;animation:cl-fade 2s forwards}
-@keyframes cl-fade{0%{opacity:1}70%{opacity:1}100%{opacity:0}}
-#cl-deathflash{position:absolute;inset:0;background:#ff0000;opacity:0;pointer-events:none;z-index:20}
-#cl-deathflash.cl-flash{animation:cl-flash-anim 0.4s}
-@keyframes cl-flash-anim{0%{opacity:0}30%{opacity:0.6}100%{opacity:0}}
 </style>
 </head>
 <body>
@@ -97,13 +127,17 @@ img{image-rendering:pixelated;image-rendering:-moz-crisp-edges;image-rendering:c
   <!-- LOADING SCREEN -->
   <div class="cl-screen cl-active" id="cl-scr-loading">
     <img class="cl-bg" src="loading.png" alt="">
+    <div class="cl-phoenix-glow"></div>
+    <div class="cl-anim" id="cl-anim-loading"></div>
     <div id="cl-loadbar"></div>
   </div>
 
   <!-- MAIN MENU -->
   <div class="cl-screen" id="cl-scr-menu">
     <img class="cl-bg" src="main_menu.png" alt="">
-    <div class="cl-hit" style="left:3%;top:31%;width:29%;height:14%" data-cl-act="play"></div>
+    <div class="cl-anim" id="cl-anim-menu"></div>
+    <div class="cl-coinshine"></div>
+    <div class="cl-hit cl-pulse" style="left:3%;top:31%;width:29%;height:14%" data-cl-act="play"></div>
     <div class="cl-hit" style="left:3%;top:48%;width:16%;height:12%" data-cl-act="skin"></div>
     <div class="cl-hit" style="left:21%;top:48%;width:19%;height:12%" data-cl-act="shop"></div>
     <div class="cl-hit" style="left:3%;top:63%;width:11%;height:14%" data-cl-act="backpack"></div>
@@ -114,52 +148,45 @@ img{image-rendering:pixelated;image-rendering:-moz-crisp-edges;image-rendering:c
   <!-- WORLD SELECT -->
   <div class="cl-screen" id="cl-scr-world">
     <img class="cl-bg" src="world_select.png" alt="">
-    <div class="cl-hit" style="left:1%;top:2%;width:6%;height:12%" data-cl-act="back-menu"></div>
-    <div class="cl-hit" style="left:7%;top:20%;width:23%;height:68%" data-cl-act="world1">
-      <div class="cl-lockov cl-hide" id="cl-lock-w1">🔒</div>
+    <div class="cl-anim" id="cl-anim-world"></div>
+    <div class="cl-coinshine"></div>
+    <div class="cl-hit" style="left:1%;top:2%;width:7%;height:14%" data-cl-act="back-menu"></div>
+    <div class="cl-hit cl-worldpulse" style="left:7%;top:20%;width:23%;height:68%;animation-delay:0s" data-cl-act="world1">
+      <div class="cl-lockov cl-hide cl-square" id="cl-lock-w1">🔒</div>
     </div>
-    <div class="cl-hit" style="left:38%;top:20%;width:23%;height:68%" data-cl-act="world2">
-      <div class="cl-lockov" id="cl-lock-w2">🔒</div>
+    <div class="cl-hit cl-worldpulse" style="left:38%;top:20%;width:23%;height:68%;animation-delay:0.4s" data-cl-act="world2">
+      <div class="cl-lockov cl-square" id="cl-lock-w2">🔒</div>
     </div>
-    <div class="cl-hit" style="left:69%;top:20%;width:23%;height:68%" data-cl-act="world3">
-      <div class="cl-lockov" id="cl-lock-w3">🔒</div>
+    <div class="cl-hit cl-worldpulse" style="left:69%;top:20%;width:23%;height:68%;animation-delay:0.8s" data-cl-act="world3">
+      <div class="cl-lockov cl-square" id="cl-lock-w3">🔒</div>
     </div>
   </div>
 
-  <!-- LEVEL SELECT -->
+  <!-- LEVEL SELECT (RECALIBRATED to actual PNG positions) -->
   <div class="cl-screen" id="cl-scr-level">
     <img class="cl-bg" src="level_select.png" alt="">
-    <div class="cl-hit" style="left:1%;top:2%;width:7%;height:13%" data-cl-act="back-world"></div>
-    <!-- Row 1 -->
-    <div class="cl-hit" style="left:7%;top:32%;width:9%;height:17%" data-cl-lvl="1"><div class="cl-stars"></div></div>
-    <div class="cl-hit" style="left:18%;top:32%;width:9%;height:17%" data-cl-lvl="2"><div class="cl-lockov">🔒</div><div class="cl-stars"></div></div>
-    <div class="cl-hit" style="left:29%;top:32%;width:9%;height:17%" data-cl-lvl="3"><div class="cl-lockov">🔒</div><div class="cl-stars"></div></div>
-    <div class="cl-hit" style="left:40%;top:32%;width:9%;height:17%" data-cl-lvl="4"><div class="cl-lockov">🔒</div><div class="cl-stars"></div></div>
-    <div class="cl-hit" style="left:51%;top:32%;width:9%;height:17%" data-cl-lvl="5"><div class="cl-lockov">🔒</div><div class="cl-stars"></div></div>
-    <!-- Row 2 -->
-    <div class="cl-hit" style="left:7%;top:60%;width:9%;height:17%" data-cl-lvl="10"><div class="cl-lockov">🔒</div><div class="cl-stars"></div></div>
-    <div class="cl-hit" style="left:18%;top:60%;width:9%;height:17%" data-cl-lvl="6"><div class="cl-lockov">🔒</div><div class="cl-stars"></div></div>
-    <div class="cl-hit" style="left:29%;top:60%;width:9%;height:17%" data-cl-lvl="7"><div class="cl-lockov">🔒</div><div class="cl-stars"></div></div>
-    <div class="cl-hit" style="left:40%;top:60%;width:9%;height:17%" data-cl-lvl="8"><div class="cl-lockov">🔒</div><div class="cl-stars"></div></div>
-    <div class="cl-hit" style="left:51%;top:60%;width:9%;height:17%" data-cl-lvl="9"><div class="cl-lockov">🔒</div><div class="cl-stars"></div></div>
+    <div class="cl-anim" id="cl-anim-level"></div>
+    <div class="cl-coinshine"></div>
+    <div class="cl-hit" style="left:1%;top:2%;width:7%;height:14%" data-cl-act="back-world"></div>
+    <!-- Row 1: levels 1-5 -->
+    <div class="cl-hit" style="left:7%;top:30%;width:10%;height:24%;border-radius:50%" data-cl-lvl="1"><div class="cl-lockov cl-hide">🔒</div><div class="cl-stars"></div></div>
+    <div class="cl-hit" style="left:17.5%;top:30%;width:10%;height:24%;border-radius:50%" data-cl-lvl="2"><div class="cl-lockov">🔒</div><div class="cl-stars"></div></div>
+    <div class="cl-hit" style="left:28%;top:30%;width:10%;height:24%;border-radius:50%" data-cl-lvl="3"><div class="cl-lockov">🔒</div><div class="cl-stars"></div></div>
+    <div class="cl-hit" style="left:38.5%;top:30%;width:10%;height:24%;border-radius:50%" data-cl-lvl="4"><div class="cl-lockov">🔒</div><div class="cl-stars"></div></div>
+    <div class="cl-hit" style="left:49%;top:30%;width:10%;height:24%;border-radius:50%" data-cl-lvl="5"><div class="cl-lockov">🔒</div><div class="cl-stars"></div></div>
+    <!-- Row 2: 10, 6, 7, 8, 9 -->
+    <div class="cl-hit" style="left:7%;top:62%;width:10%;height:24%;border-radius:50%" data-cl-lvl="10"><div class="cl-lockov">🔒</div><div class="cl-stars"></div></div>
+    <div class="cl-hit" style="left:17.5%;top:62%;width:10%;height:24%;border-radius:50%" data-cl-lvl="6"><div class="cl-lockov">🔒</div><div class="cl-stars"></div></div>
+    <div class="cl-hit" style="left:28%;top:62%;width:10%;height:24%;border-radius:50%" data-cl-lvl="7"><div class="cl-lockov">🔒</div><div class="cl-stars"></div></div>
+    <div class="cl-hit" style="left:38.5%;top:62%;width:10%;height:24%;border-radius:50%" data-cl-lvl="8"><div class="cl-lockov">🔒</div><div class="cl-stars"></div></div>
+    <div class="cl-hit" style="left:49%;top:62%;width:10%;height:24%;border-radius:50%" data-cl-lvl="9"><div class="cl-lockov">🔒</div><div class="cl-stars"></div></div>
     <!-- Boss -->
-    <div class="cl-hit" style="left:75%;top:38%;width:17%;height:34%" data-cl-lvl="boss"><div class="cl-lockov">🔒</div></div>
-  </div>
-
-  <!-- GAMEPLAY -->
-  <div class="cl-screen" id="cl-scr-game">
-    <canvas id="cl-canvas"></canvas>
-    <div id="cl-gameui">
-      <div class="cl-gui-box" id="cl-gui-back" style="pointer-events:auto;cursor:pointer" onclick="cl_backToLevel()">← QUIT</div>
-      <div class="cl-gui-box" id="cl-gui-info">LVL 1 | ☠ 0</div>
-    </div>
-    <div id="cl-gamehint">TAP TO JUMP</div>
-    <div id="cl-deathflash"></div>
+    <div class="cl-hit cl-bosspulse" style="left:76%;top:36%;width:14%;height:38%;border-radius:50%" data-cl-lvl="boss"><div class="cl-lockov">🔒</div></div>
   </div>
 
 </div>
 
-<!-- JAW TRANSITION -->
+<!-- JAW -->
 <div id="cl-jaw">
   <div class="cl-jaw-top"></div>
   <div class="cl-jaw-bot"></div>
@@ -178,14 +205,14 @@ img{image-rendering:pixelated;image-rendering:-moz-crisp-edges;image-rendering:c
 
 <script>
 // ========== GLOBALS ==========
-var CL_coins = parseInt(localStorage.getItem('CL_coins')||'0');
-var CL_unlockedLevels = JSON.parse(localStorage.getItem('CL_unlockedLevels')||'[1]');
-var CL_unlockedWorlds = JSON.parse(localStorage.getItem('CL_unlockedWorlds')||'[1]');
-var CL_starRatings = JSON.parse(localStorage.getItem('CL_starRatings')||'{}');
-var CL_soundMuted = localStorage.getItem('CL_soundMuted')==='1';
-var CL_currentScreen = 'loading';
-var CL_currentLevel = 1;
-var CL_audioCtx = null;
+var CL_coins=parseInt(localStorage.getItem('CL_coins')||'0');
+var CL_unlockedLevels=JSON.parse(localStorage.getItem('CL_unlockedLevels')||'[1]');
+var CL_unlockedWorlds=JSON.parse(localStorage.getItem('CL_unlockedWorlds')||'[1]');
+var CL_starRatings=JSON.parse(localStorage.getItem('CL_starRatings')||'{}');
+var CL_soundMuted=localStorage.getItem('CL_soundMuted')==='1';
+var CL_currentScreen='loading';
+var CL_audioCtx=null;
+var CL_loadStarted=false;
 
 // ========== AUDIO ==========
 function cl_audio(){if(!CL_audioCtx){try{CL_audioCtx=new(window.AudioContext||window.webkitAudioContext)()}catch(e){}}return CL_audioCtx}
@@ -202,7 +229,7 @@ function cl_sound(freq,endFreq,dur,vol,type){
   o.start();o.stop(ctx.currentTime+dur);
 }
 function cl_sfx(name){
-  var s={click:[820,600,0.09,0.14,'square'],chomp:[80,38,0.4,0.3,'sawtooth'],pop:[560,920,0.18,0.18,'sine'],lock:[190,95,0.28,0.18,'square'],unlock:[1000,1400,0.4,0.25,'sine'],jump:[400,800,0.12,0.15,'sine'],death:[500,50,0.6,0.35,'sawtooth'],coin:[1200,2000,0.1,0.2,'square'],win:[600,1200,0.3,0.25,'sine']};
+  var s={click:[820,600,0.09,0.14,'square'],chomp:[80,38,0.4,0.3,'sawtooth'],pop:[560,920,0.18,0.18,'sine'],lock:[190,95,0.28,0.18,'square'],unlock:[1000,1400,0.4,0.25,'sine']};
   if(s[name])cl_sound.apply(null,s[name]);
 }
 function cl_toggleMute(){CL_soundMuted=!CL_soundMuted;localStorage.setItem('CL_soundMuted',CL_soundMuted?'1':'0');document.getElementById('cl-mute').textContent=CL_soundMuted?'🔇':'🔊'}
@@ -225,7 +252,7 @@ function cl_forceRotate(){
 window.addEventListener('resize',cl_checkRotate);
 window.addEventListener('orientationchange',cl_checkRotate);
 
-// ========== SCREEN MANAGEMENT ==========
+// ========== SCREEN MGMT ==========
 function cl_show(id){
   document.querySelectorAll('.cl-screen').forEach(function(s){s.classList.remove('cl-active')});
   document.getElementById('cl-scr-'+id).classList.add('cl-active');
@@ -284,31 +311,33 @@ document.getElementById('cl-app').addEventListener('click',function(e){
 function cl_handleAction(act,el){
   cl_sfx('click');cl_vibe(22);
   switch(act){
-    case 'play':cl_sfx('click');cl_vibe(65);cl_jawTransition('world');break;
+    case 'play':cl_vibe(65);cl_jawTransition('world');break;
     case 'skin':cl_popup('SKINS','Coming Soon');break;
     case 'shop':cl_popup('SHOP','Coming Soon');break;
     case 'backpack':cl_popup('BACKPACK','Coming Soon');break;
-    case 'stats':cl_popup('STATS','Deaths: '+(localStorage.getItem('CL_deaths')||0)+'\nCoins: '+CL_coins);break;
-    case 'howto':cl_popup('HOW TO PLAY','TAP screen to JUMP\nAvoid spikes\nReach the flag\nExpect lies');break;
+    case 'stats':cl_popup('MY STATS','Coins: '+CL_coins+'\nLevels: '+(CL_unlockedLevels.length-1)+' cleared');break;
+    case 'howto':cl_popup('HOW TO PLAY','TAP to JUMP\nAvoid the traps\nReach the flag\nExpect lies');break;
     case 'back-menu':cl_jawTransition('menu');break;
     case 'back-world':cl_jawTransition('world');break;
-    case 'world1':if(CL_unlockedWorlds.indexOf(1)>-1){cl_jawTransition('level')}else{cl_sfx('lock');cl_popup('LOCKED','Complete previous world')};break;
-    case 'world2':if(CL_unlockedWorlds.indexOf(2)>-1){cl_jawTransition('level')}else{cl_sfx('lock');cl_popup('LOCKED','Complete OVERWORLD first')};break;
-    case 'world3':if(CL_unlockedWorlds.indexOf(3)>-1){cl_jawTransition('level')}else{cl_sfx('lock');cl_popup('LOCKED','Complete NETHER first')};break;
+    case 'world1':if(CL_unlockedWorlds.indexOf(1)>-1)cl_jawTransition('level');else{cl_sfx('lock');cl_popup('LOCKED','Complete previous world')}break;
+    case 'world2':if(CL_unlockedWorlds.indexOf(2)>-1)cl_jawTransition('level');else{cl_sfx('lock');cl_popup('LOCKED','Complete OVERWORLD first')}break;
+    case 'world3':if(CL_unlockedWorlds.indexOf(3)>-1)cl_jawTransition('level');else{cl_sfx('lock');cl_popup('LOCKED','Complete NETHER first')}break;
   }
 }
 
 function cl_handleLevel(lvl,el){
   if(lvl==='boss'){
-    if(CL_unlockedLevels.indexOf(11)>-1){cl_sfx('click');cl_startLevel('boss')}
+    if(CL_unlockedLevels.indexOf(11)>-1){cl_sfx('click');cl_popup('BOSS','Gameplay coming soon')}
     else{cl_sfx('lock');cl_vibe(60);cl_popup('LOCKED','Complete all 10 levels first')}
     return;
   }
   var n=parseInt(lvl);
   if(CL_unlockedLevels.indexOf(n)>-1){
-    cl_sfx('click');cl_vibe(65);cl_startLevel(n);
+    cl_sfx('click');cl_vibe(65);
+    cl_popup('LEVEL '+n,'Gameplay coming soon');
   }else{
-    cl_sfx('lock');cl_vibe(60);cl_popup('LOCKED','Complete Level '+(n-1)+' first');
+    cl_sfx('lock');cl_vibe(60);
+    cl_popup('LOCKED','Complete Level '+(n-1)+' first');
   }
 }
 
@@ -319,8 +348,14 @@ function cl_refreshLevels(){
     var lock=el.querySelector('.cl-lockov');
     var stars=el.querySelector('.cl-stars');
     var n=lvl==='boss'?11:parseInt(lvl);
-    if(CL_unlockedLevels.indexOf(n)>-1){if(lock)lock.classList.add('cl-hide')}
-    else{if(lock)lock.classList.remove('cl-hide')}
+    var unlocked=CL_unlockedLevels.indexOf(n)>-1;
+    if(unlocked){
+      if(lock)lock.classList.add('cl-hide');
+      el.classList.add('cl-lvlpulse');
+    }else{
+      if(lock)lock.classList.remove('cl-hide');
+      el.classList.remove('cl-lvlpulse');
+    }
     if(stars){var r=CL_starRatings[lvl]||0;stars.textContent=r>0?'★'.repeat(r)+'☆'.repeat(3-r):''}
   });
 }
@@ -339,185 +374,89 @@ function cl_popup(title,text){
 }
 function cl_closePopup(){document.getElementById('cl-popup').classList.remove('cl-show');cl_sfx('click');cl_vibe(22)}
 
-// ========== LOADING BAR ==========
+// ========== LOADING BAR (fixed: starts immediately, resilient) ==========
 function cl_loadStart(){
+  if(CL_loadStarted)return;
+  CL_loadStarted=true;
   var bar=document.getElementById('cl-loadbar');
+  if(!bar)return;
   var p=0;
+  bar.style.width='0%';
   var iv=setInterval(function(){
-    p+=2+Math.random()*3;
+    p+=1.5+Math.random()*2.5;
     if(p>=100){p=100;clearInterval(iv);
-      setTimeout(function(){cl_jawTransition('menu')},400);
+      setTimeout(function(){cl_jawTransition('menu')},450);
     }
     bar.style.width=p+'%';
-  },70);
+  },60);
 }
 
-// ========== GAMEPLAY (Canvas) ==========
-var CL_game={running:false,player:null,camera:0,level:null,deaths:0,startTime:0};
-
-function cl_startLevel(n){
-  CL_currentLevel=n;
-  cl_jawTransition('game');
-  setTimeout(function(){cl_gameInit(n)},500);
-}
-function cl_backToLevel(){
-  CL_game.running=false;
-  cl_jawTransition('level');
-}
-
-function cl_gameInit(n){
-  var c=document.getElementById('cl-canvas');
-  c.width=window.innerWidth;c.height=window.innerHeight;
-  CL_game.player={x:60,y:100,vy:0,w:22,h:30,onGround:false,alive:true};
-  CL_game.camera=0;CL_game.deaths=0;CL_game.startTime=Date.now();
-  CL_game.level=cl_buildLevel(n);
-  CL_game.running=true;
-  document.getElementById('cl-gui-info').textContent='LVL '+n+' | ☠ 0';
-  document.getElementById('cl-gamehint').style.animation='none';
-  setTimeout(function(){document.getElementById('cl-gamehint').style.animation='cl-fade 2s forwards'},10);
-  cl_gameLoop();
-}
-
-function cl_buildLevel(n){
-  // Level = list of platforms and traps
-  var w=window.innerWidth,h=window.innerHeight;
-  var ground=h*0.8;
-  var lvl={
-    width:2400,groundY:ground,
-    platforms:[{x:0,y:ground,w:2400,h:h-ground}],
-    traps:[],
-    flag:{x:2300,y:ground-50,w:20,h:50}
-  };
-  // Difficulty scales with n
-  var seed=n*7;
-  var trapCount=Math.min(3+n,10);
-  for(var i=0;i<trapCount;i++){
-    var tx=250+i*(1800/trapCount)+((seed*i)%80);
-    var type=(i+n)%3;
-    if(type===0){lvl.traps.push({type:'spike',x:tx,y:ground-16,w:32,h:16})}
-    else if(type===1){lvl.traps.push({type:'pit',x:tx,y:ground,w:60,h:h-ground})}
-    else{lvl.traps.push({type:'spike',x:tx,y:ground-16,w:24,h:16})}
+// ========== IDLE ANIMATIONS ==========
+// Floating embers on menu + world + loading
+function cl_spawnEmbers(containerId,count,color){
+  var c=document.getElementById(containerId);
+  if(!c)return;
+  for(var i=0;i<count;i++){
+    (function(idx){
+      var e=document.createElement('div');
+      e.className='cl-ember';
+      if(color)e.style.background=color,e.style.boxShadow='0 0 6px '+color;
+      var startX=Math.random()*100;
+      var dur=4000+Math.random()*3000;
+      var delay=Math.random()*4000;
+      e.style.left=startX+'%';
+      e.style.bottom='-10px';
+      c.appendChild(e);
+      var animate=function(){
+        e.animate([
+          {transform:'translateY(0) translateX(0)',opacity:0},
+          {transform:'translateY(-40px) translateX(10px)',opacity:1,offset:0.2},
+          {transform:'translateY(-'+(window.innerHeight*0.9)+'px) translateX('+(Math.random()*60-30)+'px)',opacity:0}
+        ],{duration:dur,iterations:Infinity,delay:delay});
+      };
+      animate();
+    })(i);
   }
-  return lvl;
 }
 
-function cl_gameLoop(){
-  if(!CL_game.running)return;
-  var c=document.getElementById('cl-canvas');
-  var ctx=c.getContext('2d');
-  var W=c.width,H=c.height;
-  var p=CL_game.player,L=CL_game.level;
-  
-  // Physics
-  if(p.alive){
-    p.vy+=0.6;
-    p.y+=p.vy;
-    p.x+=3.2; // auto-run
-    p.onGround=false;
-    if(p.y+p.h>=L.groundY){
-      // check pit
-      var inPit=false;
-      L.traps.forEach(function(t){
-        if(t.type==='pit'&&p.x+p.w>t.x&&p.x<t.x+t.w){inPit=true}
-      });
-      if(!inPit){p.y=L.groundY-p.h;p.vy=0;p.onGround=true}
-    }
-    // spike collision
-    L.traps.forEach(function(t){
-      if(t.type==='spike'&&p.x+p.w>t.x&&p.x<t.x+t.w&&p.y+p.h>t.y){cl_die()}
-    });
-    // pit fall
-    if(p.y>H+100)cl_die();
-    // win
-    if(p.x>=L.flag.x)cl_win();
+// Sparkle particles on level select (grass sparkles)
+function cl_spawnSparkles(containerId,count){
+  var c=document.getElementById(containerId);
+  if(!c)return;
+  for(var i=0;i<count;i++){
+    var s=document.createElement('div');
+    s.style.position='absolute';
+    s.style.width='3px';s.style.height='3px';
+    s.style.background='#ffff88';
+    s.style.borderRadius='50%';
+    s.style.boxShadow='0 0 4px #ffff88';
+    s.style.left=(Math.random()*100)+'%';
+    s.style.top=(60+Math.random()*35)+'%';
+    s.style.opacity='0';
+    c.appendChild(s);
+    s.animate([
+      {opacity:0,transform:'scale(0)'},
+      {opacity:1,transform:'scale(1.5)',offset:0.5},
+      {opacity:0,transform:'scale(0)'}
+    ],{duration:1500+Math.random()*1500,delay:Math.random()*3000,iterations:Infinity});
   }
-  
-  // Camera
-  CL_game.camera=Math.max(0,p.x-W*0.3);
-  
-  // Render
-  var world=cl_worldOf(CL_currentLevel);
-  ctx.fillStyle=world.sky;ctx.fillRect(0,0,W,H);
-  // ground
-  ctx.fillStyle=world.ground;
-  L.platforms.forEach(function(pl){ctx.fillRect(pl.x-CL_game.camera,pl.y,pl.w,pl.h)});
-  // traps
-  L.traps.forEach(function(t){
-    if(t.type==='spike'){
-      ctx.fillStyle='#666';
-      var sx=t.x-CL_game.camera;
-      ctx.beginPath();ctx.moveTo(sx,t.y+t.h);ctx.lineTo(sx+t.w/2,t.y);ctx.lineTo(sx+t.w,t.y+t.h);ctx.closePath();ctx.fill();
-    } else if(t.type==='pit'){
-      ctx.fillStyle='#000';ctx.fillRect(t.x-CL_game.camera,t.y,t.w,t.h);
-    }
-  });
-  // flag
-  ctx.fillStyle='#8b4513';ctx.fillRect(L.flag.x-CL_game.camera,L.flag.y,4,L.flag.h);
-  ctx.fillStyle='#ff2222';ctx.fillRect(L.flag.x-CL_game.camera+4,L.flag.y,26,18);
-  // player
-  ctx.fillStyle='#c94040';ctx.fillRect(p.x-CL_game.camera,p.y+10,p.w,p.h-10); // hoodie
-  ctx.fillStyle='#f0c860';ctx.fillRect(p.x-CL_game.camera+2,p.y,p.w-4,14); // hair
-  ctx.fillStyle='#cc0000';ctx.fillRect(p.x-CL_game.camera,p.y+8,p.w,4); // bandana
-  ctx.fillStyle='#3a2010';ctx.fillRect(p.x-CL_game.camera+2,p.y+p.h-8,p.w-4,8); // pants
-  
-  requestAnimationFrame(cl_gameLoop);
 }
 
-function cl_worldOf(n){
-  if(n>=1&&n<=10)return{sky:'#7ec0ee',ground:'#4a7c3f'};
-  if(n>=11&&n<=20)return{sky:'#2a0a0a',ground:'#4a1010'};
-  return{sky:'#1a0033',ground:'#3a1a5c'};
+function cl_initAnimations(){
+  cl_spawnEmbers('cl-anim-loading',12,'#ff6020');
+  cl_spawnEmbers('cl-anim-menu',15,'#ff9040');
+  cl_spawnEmbers('cl-anim-world',18,'#ff4020');
+  cl_spawnSparkles('cl-anim-level',20);
 }
-
-function cl_die(){
-  if(!CL_game.player.alive)return;
-  CL_game.player.alive=false;
-  CL_game.deaths++;
-  cl_sfx('death');cl_vibe(200);
-  document.getElementById('cl-deathflash').classList.add('cl-flash');
-  document.getElementById('cl-gui-info').textContent='LVL '+CL_currentLevel+' | ☠ '+CL_game.deaths;
-  localStorage.setItem('CL_deaths',(parseInt(localStorage.getItem('CL_deaths')||'0')+1));
-  setTimeout(function(){
-    document.getElementById('cl-deathflash').classList.remove('cl-flash');
-    CL_game.player.x=60;CL_game.player.y=100;CL_game.player.vy=0;CL_game.player.alive=true;
-    CL_game.camera=0;
-  },900);
-}
-
-function cl_win(){
-  if(!CL_game.running)return;
-  CL_game.running=false;
-  cl_sfx('win');cl_vibe([50,30,50,30,80]);
-  CL_coins+=10;localStorage.setItem('CL_coins',CL_coins);
-  // stars based on deaths
-  var stars=CL_game.deaths===0?3:CL_game.deaths<=2?2:1;
-  var key=String(CL_currentLevel);
-  if(!CL_starRatings[key]||CL_starRatings[key]<stars)CL_starRatings[key]=stars;
-  localStorage.setItem('CL_starRatings',JSON.stringify(CL_starRatings));
-  // unlock next
-  var next=CL_currentLevel+1;
-  if(next<=11&&CL_unlockedLevels.indexOf(next)===-1){
-    CL_unlockedLevels.push(next);
-    localStorage.setItem('CL_unlockedLevels',JSON.stringify(CL_unlockedLevels));
-    cl_sfx('unlock');
-  }
-  setTimeout(function(){cl_popup('LEVEL COMPLETE!','⭐'.repeat(stars)+'\n+10 coins');},400);
-  setTimeout(function(){cl_closePopup();cl_jawTransition('level')},2400);
-}
-
-// Tap to jump
-document.getElementById('cl-scr-game').addEventListener('click',function(e){
-  if(e.target.id==='cl-gui-back')return;
-  if(CL_game.running&&CL_game.player.alive&&CL_game.player.onGround){
-    CL_game.player.vy=-12;cl_sfx('jump');cl_vibe(22);
-  }
-});
 
 // ========== INIT ==========
 window.addEventListener('load',function(){
   cl_checkRotate();
+  cl_initAnimations();
   cl_loadStart();
 });
+// Fallback if 'load' never fires
+setTimeout(function(){if(!CL_loadStarted){cl_checkRotate();cl_initAnimations();cl_loadStart()}},800);
 // Unlock audio on first tap
 document.addEventListener('touchstart',function(){cl_audio()},{once:true});
 document.addEventListener('click',function(){cl_audio()},{once:true});
