@@ -3,275 +3,211 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="mobile-web-app-capable" content="yes">
-<title>CHAOSLINE</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<title>CHAOSLINE — Tuner v14.1b</title>
+<link rel="preload" as="image" href="loading.png">
+<link rel="preload" as="image" href="main_menu.png">
+<link rel="preload" as="image" href="world_select.png">
+<link rel="preload" as="image" href="level_select.png">
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
 <style>
-*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none;touch-action:manipulation;font-family:'Press Start 2P',monospace;image-rendering:pixelated;image-rendering:-moz-crisp-edges;image-rendering:crisp-edges}
-html,body{width:100%;height:100%;overflow:hidden;background:#000;color:#fff}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none;font-family:'Press Start 2P',monospace}
+html,body{width:100%;height:100%;overflow:hidden;background:#000;color:#fff;touch-action:none}
 #cl-app{position:fixed;inset:0;width:100vw;height:100vh;overflow:hidden;background:#000}
 
-/* ROTATION WARNING */
-#cl-rotate{position:fixed;inset:0;background:#000;z-index:9999;display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:20px}
-#cl-rotate.cl-show{display:flex}
-.cl-phone{font-size:80px;animation:cl-bounce 1s infinite}
-@keyframes cl-bounce{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-20px) rotate(90deg)}}
-.cl-rotate-title{color:gold;font-size:18px;margin:24px 0 12px;letter-spacing:2px}
-.cl-rotate-sub{color:#aaa;font-size:10px;margin-bottom:32px;line-height:1.6}
-.cl-rotate-btn{background:gold;color:#000;border:none;padding:18px 32px;font-family:'Press Start 2P',monospace;font-size:12px;cursor:pointer;box-shadow:0 4px 0 #a67c00}
-.cl-rotate-btn:active{transform:translateY(2px);box-shadow:0 2px 0 #a67c00}
-
-/* SCREENS */
-.cl-screen{position:absolute;inset:0;width:100%;height:100%;background-size:cover;background-position:center;background-repeat:no-repeat;background-color:#000;display:none}
+.cl-screen{position:absolute;inset:0;width:100%;height:100%;background-size:contain;background-position:center;background-repeat:no-repeat;background-color:#000;display:none}
 .cl-screen.cl-active{display:block}
 
-/* HITBOXES */
-.cl-hit{position:absolute;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform .08s ease}
-.cl-hit:active{transform:scale(.92)}
-body.cl-debug .cl-hit{outline:2px solid #ff0044;background:rgba(255,0,68,.12)}
-body.cl-debug .cl-hit::after{content:attr(data-cl-label);position:absolute;top:2px;left:2px;font-size:8px;color:#fff;background:#ff0044;padding:2px 4px;pointer-events:none}
+.cl-hit{position:absolute;background:rgba(255,0,68,.22);border:2px solid #ff0044;cursor:move;touch-action:none;display:flex;align-items:center;justify-content:center;flex-direction:column}
+.cl-hit.cl-selected{background:rgba(255,220,0,.35);border:3px solid #ffdd00;box-shadow:0 0 12px #ffdd00;z-index:100}
+.cl-hit-label{font-size:9px;color:#fff;background:#ff0044;padding:2px 5px;pointer-events:none;white-space:nowrap;font-weight:bold}
+.cl-hit.cl-selected .cl-hit-label{background:#ffdd00;color:#000}
+.cl-hit-coords{font-size:8px;color:#fff;background:rgba(0,0,0,.85);padding:2px 4px;margin-top:2px;pointer-events:none;white-space:nowrap;line-height:1.3;text-align:center}
+.cl-hit.cl-selected .cl-hit-coords{background:#ffdd00;color:#000}
+.cl-resize{position:absolute;right:-12px;bottom:-12px;width:26px;height:26px;background:#00ff88;border:2px solid #000;border-radius:50%;display:none;touch-action:none;z-index:200}
+.cl-hit.cl-selected .cl-resize{display:block}
 
-/* LOCK — welded to center of parent hitbox */
-.cl-lock{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:32px;color:#fff;text-shadow:0 0 8px #000,0 0 4px #000,2px 2px 0 #000;pointer-events:none;filter:drop-shadow(0 0 6px rgba(0,0,0,.9));z-index:5}
-.cl-hit.cl-locked{cursor:not-allowed}
-.cl-hit.cl-locked::before{content:"";position:absolute;inset:0;background:rgba(0,0,0,.55);pointer-events:none;z-index:4}
+#cl-tools{position:fixed;top:0;left:0;right:0;background:rgba(0,0,0,.92);border-bottom:2px solid #ff0044;padding:5px;z-index:9000;display:flex;gap:3px;flex-wrap:wrap;justify-content:center}
+.cl-tbtn{background:#222;color:#fff;border:1px solid #ff0044;padding:6px 8px;font-family:'Press Start 2P',monospace;font-size:8px;cursor:pointer}
+.cl-tbtn.cl-nav{background:#004488;border-color:#0088ff}
+.cl-tbtn.cl-exp{background:#00aa44;border-color:#00ff88}
 
-/* LOADING BAR OVERLAY */
-#cl-loadbar-fill{position:absolute;left:12.5%;bottom:11%;width:0%;height:5.5%;background:linear-gradient(90deg,#8b0000,#ff2222,#ff6644);box-shadow:0 0 12px #ff0000,inset 0 0 8px rgba(0,0,0,.4);transition:width .1s linear;z-index:3}
+#cl-export{position:fixed;inset:20px;background:#000;border:3px solid #00ff88;padding:12px;z-index:9500;display:none;overflow:auto;font-size:10px;line-height:1.6;color:#0f0;white-space:pre-wrap}
+#cl-export.cl-show{display:block}
+#cl-export-close{position:fixed;top:28px;right:28px;background:#ff0044;color:#fff;border:none;padding:8px 12px;font-family:'Press Start 2P',monospace;font-size:9px;cursor:pointer;z-index:9600;display:none}
+#cl-export-close.cl-show{display:block}
 
-/* POPUP */
-#cl-popup{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:8000;display:none;align-items:center;justify-content:center;padding:20px}
-#cl-popup.cl-show{display:flex}
-.cl-popup-box{background:#1a0505;border:3px solid #ff2222;padding:24px 32px;max-width:80%;text-align:center;box-shadow:0 0 24px #ff0000}
-.cl-popup-title{color:#ff4444;font-size:14px;margin-bottom:14px;letter-spacing:2px}
-.cl-popup-msg{color:#fff;font-size:10px;line-height:1.7;margin-bottom:20px}
-.cl-popup-close{background:#ff2222;color:#fff;border:none;padding:12px 24px;font-family:'Press Start 2P',monospace;font-size:10px;cursor:pointer;box-shadow:0 3px 0 #8b0000}
-.cl-popup-close:active{transform:translateY(2px);box-shadow:0 1px 0 #8b0000}
-
-/* MUTE + DEBUG TOGGLE */
-.cl-corner-btn{position:fixed;bottom:8px;background:rgba(0,0,0,.6);border:1px solid #ff2222;color:#fff;padding:6px 8px;font-family:'Press Start 2P',monospace;font-size:9px;cursor:pointer;z-index:7000}
-#cl-mute{left:8px}
-#cl-dbg{left:60px}
-
-/* JAW TRANSITION */
-#cl-jaw{position:fixed;inset:0;pointer-events:none;z-index:8500;display:none}
-#cl-jaw.cl-show{display:block}
-.cl-jaw-top,.cl-jaw-bot{position:absolute;left:0;width:100%;height:52%;background:#000;transition:transform .4s cubic-bezier(.7,0,.3,1)}
-.cl-jaw-top{top:0;transform:translateY(-100%);border-bottom:3px solid #ff0000;box-shadow:0 4px 20px #ff0000}
-.cl-jaw-bot{bottom:0;transform:translateY(100%);border-top:3px solid #ff0000;box-shadow:0 -4px 20px #ff0000}
-#cl-jaw.cl-closing .cl-jaw-top{transform:translateY(0)}
-#cl-jaw.cl-closing .cl-jaw-bot{transform:translateY(0)}
+#cl-screenlabel{position:fixed;bottom:6px;left:6px;background:rgba(0,0,0,.85);border:1px solid #ffdd00;padding:5px 8px;font-size:9px;color:#ffdd00;z-index:8000}
 </style>
 </head>
-<body class="cl-debug">
+<body>
+
+<div id="cl-tools">
+  <button class="cl-tbtn cl-nav" onclick="cl_show('menu')">MENU</button>
+  <button class="cl-tbtn cl-nav" onclick="cl_show('worlds')">WORLDS</button>
+  <button class="cl-tbtn cl-nav" onclick="cl_show('levels')">LEVELS</button>
+  <button class="cl-tbtn" onclick="cl_addHit()">+ADD</button>
+  <button class="cl-tbtn" onclick="cl_delHit()">DEL</button>
+  <button class="cl-tbtn cl-exp" onclick="cl_export()">EXPORT ALL</button>
+  <button class="cl-tbtn" onclick="if(confirm('Reset all?'))cl_reset()">RESET</button>
+</div>
 
 <div id="cl-app">
-
-  <!-- LOADING -->
-  <div id="cl-screen-loading" class="cl-screen cl-active" style="background-image:url('loading.png')">
-    <div id="cl-loadbar-fill"></div>
-  </div>
-
-  <!-- MAIN MENU -->
-  <div id="cl-screen-menu" class="cl-screen" style="background-image:url('main_menu.png')">
-    <div class="cl-hit" data-cl-label="PLAY"     style="left:18%;top:32%;width:28%;height:15%" data-cl-action="play"></div>
-    <div class="cl-hit" data-cl-label="SKIN"     style="left:18%;top:51%;width:13%;height:10%" data-cl-action="soon"></div>
-    <div class="cl-hit" data-cl-label="SHOP"     style="left:33%;top:51%;width:13%;height:10%" data-cl-action="soon"></div>
-    <div class="cl-hit" data-cl-label="BACKPACK" style="left:18%;top:65%;width:13%;height:10%" data-cl-action="soon"></div>
-    <div class="cl-hit" data-cl-label="STATS"    style="left:33%;top:65%;width:15%;height:10%" data-cl-action="soon"></div>
-    <div class="cl-hit" data-cl-label="HOW"      style="left:25%;top:82%;width:15%;height:5%"  data-cl-action="howto"></div>
-    <div class="cl-hit" data-cl-label="COINS"    style="left:82%;top:5%;width:15%;height:11%"  data-cl-action="coins"></div>
-  </div>
-
-  <!-- WORLD SELECT -->
-  <div id="cl-screen-worlds" class="cl-screen" style="background-image:url('world_select.png')">
-    <div class="cl-hit" data-cl-label="BACK"      style="left:10%;top:5%;width:6%;height:12%"    data-cl-action="back-menu"></div>
-    <div class="cl-hit" data-cl-label="OVERWORLD" style="left:15%;top:18%;width:20%;height:75%" data-cl-action="world" data-cl-world="0"></div>
-    <div class="cl-hit cl-locked" data-cl-label="INFERNO" style="left:40%;top:18%;width:20%;height:75%" data-cl-action="world" data-cl-world="1">
-      <span class="cl-lock">🔒</span>
-    </div>
-    <div class="cl-hit cl-locked" data-cl-label="ABYSS"   style="left:65%;top:18%;width:20%;height:75%" data-cl-action="world" data-cl-world="2">
-      <span class="cl-lock">🔒</span>
-    </div>
-  </div>
-
-  <!-- LEVEL SELECT -->
-  <div id="cl-screen-levels" class="cl-screen" style="background-image:url('level_select.png')">
-    <div class="cl-hit" data-cl-label="BACK" style="left:10%;top:6%;width:5%;height:12%" data-cl-action="back-worlds"></div>
-
-    <div class="cl-hit" data-cl-label="L1"  style="left:27%;top:40%;width:6%;height:12%" data-cl-action="level" data-cl-level="1"></div>
-    <div class="cl-hit cl-locked" data-cl-label="L2" style="left:37%;top:40%;width:6%;height:12%" data-cl-action="level" data-cl-level="2"><span class="cl-lock">🔒</span></div>
-    <div class="cl-hit cl-locked" data-cl-label="L3" style="left:47%;top:40%;width:6%;height:12%" data-cl-action="level" data-cl-level="3"><span class="cl-lock">🔒</span></div>
-    <div class="cl-hit cl-locked" data-cl-label="L4" style="left:57%;top:40%;width:6%;height:12%" data-cl-action="level" data-cl-level="4"><span class="cl-lock">🔒</span></div>
-    <div class="cl-hit cl-locked" data-cl-label="L5" style="left:67%;top:40%;width:6%;height:12%" data-cl-action="level" data-cl-level="5"><span class="cl-lock">🔒</span></div>
-
-    <div class="cl-hit cl-locked" data-cl-label="L10" style="left:27%;top:66%;width:6%;height:12%" data-cl-action="level" data-cl-level="10"><span class="cl-lock">🔒</span></div>
-    <div class="cl-hit cl-locked" data-cl-label="L6"  style="left:37%;top:66%;width:6%;height:12%" data-cl-action="level" data-cl-level="6"><span class="cl-lock">🔒</span></div>
-    <div class="cl-hit cl-locked" data-cl-label="L7"  style="left:47%;top:66%;width:6%;height:12%" data-cl-action="level" data-cl-level="7"><span class="cl-lock">🔒</span></div>
-    <div class="cl-hit cl-locked" data-cl-label="L8"  style="left:57%;top:66%;width:6%;height:12%" data-cl-action="level" data-cl-level="8"><span class="cl-lock">🔒</span></div>
-    <div class="cl-hit cl-locked" data-cl-label="L9"  style="left:67%;top:66%;width:6%;height:12%" data-cl-action="level" data-cl-level="9"><span class="cl-lock">🔒</span></div>
-
-    <div class="cl-hit cl-locked" data-cl-label="BOSS" style="left:82%;top:52%;width:10%;height:22%" data-cl-action="boss"><span class="cl-lock">🔒</span></div>
-  </div>
-
+  <div id="cl-screen-menu" class="cl-screen cl-active" style="background-image:url('main_menu.png')"></div>
+  <div id="cl-screen-worlds" class="cl-screen" style="background-image:url('world_select.png')"></div>
+  <div id="cl-screen-levels" class="cl-screen" style="background-image:url('level_select.png')"></div>
 </div>
 
-<!-- ROTATION WARNING -->
-<div id="cl-rotate">
-  <div class="cl-phone">📱</div>
-  <div class="cl-rotate-title">ROTATE YOUR PHONE</div>
-  <div class="cl-rotate-sub">CHAOSLINE plays in landscape</div>
-  <button class="cl-rotate-btn" onclick="cl_forceLandscape()">↻ TAP TO ROTATE</button>
-</div>
+<div id="cl-screenlabel">SCREEN: MENU</div>
 
-<!-- POPUP -->
-<div id="cl-popup">
-  <div class="cl-popup-box">
-    <div class="cl-popup-title" id="cl-popup-title">TITLE</div>
-    <div class="cl-popup-msg" id="cl-popup-msg">Message</div>
-    <button class="cl-popup-close" onclick="cl_closePopup()">OK</button>
-  </div>
-</div>
-
-<!-- JAW TRANSITION -->
-<div id="cl-jaw"><div class="cl-jaw-top"></div><div class="cl-jaw-bot"></div></div>
-
-<!-- CORNER CONTROLS -->
-<button id="cl-mute" class="cl-corner-btn" onclick="cl_toggleMute()">🔊</button>
-<button id="cl-dbg" class="cl-corner-btn" onclick="cl_toggleDebug()">DBG</button>
+<div id="cl-export"></div>
+<button id="cl-export-close" onclick="document.getElementById('cl-export').classList.remove('cl-show');this.classList.remove('cl-show')">CLOSE</button>
 
 <script>
-/* ============ CHAOSLINE v14 CORE ============ */
-var CL_coins = parseInt(localStorage.getItem('CL_coins')||'0');
-var CL_unlockedLevels = JSON.parse(localStorage.getItem('CL_unlockedLevels')||'[1]');
-var CL_unlockedWorlds = JSON.parse(localStorage.getItem('CL_unlockedWorlds')||'[0]');
-var CL_soundMuted = localStorage.getItem('CL_soundMuted')==='1';
-var CL_currentScreen = 'loading';
-var CL_audioCtx = null;
+var CL_current='menu';
+var CL_selected=null;
+var CL_hits={menu:[],worlds:[],levels:[]};
 
-function cl_audio(){ if(!CL_audioCtx){try{CL_audioCtx=new (window.AudioContext||window.webkitAudioContext)()}catch(e){}} return CL_audioCtx; }
-function cl_beep(freq,endFreq,type,dur,vol){
-  if(CL_soundMuted)return; var ctx=cl_audio(); if(!ctx)return;
-  var o=ctx.createOscillator(),g=ctx.createGain();
-  o.type=type||'square'; o.frequency.setValueAtTime(freq,ctx.currentTime);
-  if(endFreq)o.frequency.exponentialRampToValueAtTime(Math.max(1,endFreq),ctx.currentTime+dur);
-  g.gain.setValueAtTime(vol||.15,ctx.currentTime);
-  g.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+dur);
-  o.connect(g);g.connect(ctx.destination); o.start(); o.stop(ctx.currentTime+dur);
-}
-function cl_snd(name){
-  switch(name){
-    case 'click': cl_beep(820,600,'square',.09,.14);break;
-    case 'chomp': cl_beep(80,38,'sawtooth',.4,.3);break;
-    case 'pop':   cl_beep(560,920,'sine',.18,.18);break;
-    case 'lock':  cl_beep(190,95,'square',.28,.18);break;
-    case 'unlock':cl_beep(1000,1400,'sine',.4,.25);break;
-  }
-}
-function cl_vibe(ms){ if(navigator.vibrate)navigator.vibrate(ms); }
+var CL_defaults={
+  menu:[
+    {l:'PLAY',x:18,y:32,w:28,h:15},
+    {l:'SKIN',x:18,y:51,w:13,h:10},
+    {l:'SHOP',x:33,y:51,w:13,h:10},
+    {l:'BACKPACK',x:18,y:65,w:13,h:10},
+    {l:'STATS',x:33,y:65,w:15,h:10},
+    {l:'HOW',x:25,y:82,w:15,h:5},
+    {l:'COINS',x:82,y:5,w:15,h:11}
+  ],
+  worlds:[
+    {l:'BACK',x:10,y:5,w:6,h:12},
+    {l:'OVERWORLD',x:15,y:18,w:20,h:75},
+    {l:'INFERNO',x:40,y:18,w:20,h:75},
+    {l:'ABYSS',x:65,y:18,w:20,h:75}
+  ],
+  levels:[
+    {l:'BACK',x:10,y:6,w:5,h:12},
+    {l:'L1',x:27,y:40,w:6,h:12},
+    {l:'L2',x:37,y:40,w:6,h:12},
+    {l:'L3',x:47,y:40,w:6,h:12},
+    {l:'L4',x:57,y:40,w:6,h:12},
+    {l:'L5',x:67,y:40,w:6,h:12},
+    {l:'L10',x:27,y:66,w:6,h:12},
+    {l:'L6',x:37,y:66,w:6,h:12},
+    {l:'L7',x:47,y:66,w:6,h:12},
+    {l:'L8',x:57,y:66,w:6,h:12},
+    {l:'L9',x:67,y:66,w:6,h:12},
+    {l:'BOSS',x:82,y:52,w:10,h:22}
+  ]
+};
 
-/* SCREEN SWITCHING */
-function cl_showScreen(id){
+function cl_loadStored(){
+  var s=localStorage.getItem('CL_tuner2');
+  if(s){try{CL_hits=JSON.parse(s);return}catch(e){}}
+  cl_reset(true);
+}
+function cl_save(){localStorage.setItem('CL_tuner2',JSON.stringify(CL_hits))}
+function cl_reset(silent){
+  CL_hits=JSON.parse(JSON.stringify(CL_defaults));
+  cl_save();
+  if(!silent)cl_render();
+}
+
+function cl_show(name){
+  CL_current=name;
+  CL_selected=null;
   document.querySelectorAll('.cl-screen').forEach(function(s){s.classList.remove('cl-active')});
-  var el=document.getElementById('cl-screen-'+id);
-  if(el){el.classList.add('cl-active'); CL_currentScreen=id;}
-}
-function cl_transition(toId){
-  var jaw=document.getElementById('cl-jaw');
-  jaw.classList.add('cl-show','cl-closing');
-  cl_snd('chomp'); cl_vibe(150);
-  setTimeout(function(){ cl_showScreen(toId); },420);
-  setTimeout(function(){ jaw.classList.remove('cl-closing'); },520);
-  setTimeout(function(){ jaw.classList.remove('cl-show'); },950);
+  document.getElementById('cl-screen-'+name).classList.add('cl-active');
+  document.getElementById('cl-screenlabel').textContent='SCREEN: '+name.toUpperCase();
+  cl_render();
 }
 
-/* POPUP */
-function cl_popup(title,msg){
-  document.getElementById('cl-popup-title').textContent=title;
-  document.getElementById('cl-popup-msg').textContent=msg;
-  document.getElementById('cl-popup').classList.add('cl-show');
-  cl_snd('pop'); cl_vibe(40);
-}
-function cl_closePopup(){
-  document.getElementById('cl-popup').classList.remove('cl-show');
-  cl_snd('click'); cl_vibe(22);
+function cl_render(){
+  document.querySelectorAll('.cl-hit').forEach(function(h){h.remove()});
+  var screen=document.getElementById('cl-screen-'+CL_current);
+  var arr=CL_hits[CL_current];
+  arr.forEach(function(h,i){
+    var d=document.createElement('div');
+    d.className='cl-hit';
+    d.style.left=h.x+'%';d.style.top=h.y+'%';
+    d.style.width=h.w+'%';d.style.height=h.h+'%';
+    d.setAttribute('data-idx',i);
+    var coordStr='x:'+h.x.toFixed(1)+' y:'+h.y.toFixed(1)+'<br>w:'+h.w.toFixed(1)+' h:'+h.h.toFixed(1);
+    d.innerHTML='<div class="cl-hit-label">'+h.l+'</div><div class="cl-hit-coords">'+coordStr+'</div><div class="cl-resize"></div>';
+    if(CL_selected===i)d.classList.add('cl-selected');
+    screen.appendChild(d);
+  });
 }
 
-/* HIT HANDLERS */
-document.addEventListener('click',function(e){
-  var t=e.target.closest('.cl-hit'); if(!t)return;
-  var act=t.getAttribute('data-cl-action');
-  if(t.classList.contains('cl-locked')){ cl_snd('lock'); cl_vibe(60); cl_popup('LOCKED','Complete previous stage to unlock.'); return; }
-  cl_snd('click'); cl_vibe(22);
-  switch(act){
-    case 'play': cl_transition('worlds'); break;
-    case 'soon': cl_popup('COMING SOON','This feature ships in the next update.'); break;
-    case 'howto': cl_popup('HOW TO PLAY','Tap anywhere = jump. Reach the flag. Avoid traps. Die = restart. Rage responsibly.'); break;
-    case 'coins': cl_popup('COINS','You have '+CL_coins+' coins. Earn by completing levels.'); break;
-    case 'back-menu': cl_transition('menu'); break;
-    case 'back-worlds': cl_transition('worlds'); break;
-    case 'world':
-      var w=parseInt(t.getAttribute('data-cl-world'));
-      if(CL_unlockedWorlds.indexOf(w)<0){ cl_snd('lock'); cl_popup('LOCKED','Complete previous world first.'); return; }
-      cl_transition('levels'); break;
-    case 'level':
-      var lv=parseInt(t.getAttribute('data-cl-level'));
-      cl_popup('LEVEL '+lv,'Gameplay ships in next build. Menu system verified.');
-      break;
-    case 'boss':
-      cl_popup('HOLLOW KING','Boss fight ships after Level 10.');
-      break;
+var CL_drag=null;
+document.addEventListener('touchstart',function(e){
+  var t=e.target;
+  if(t.closest('#cl-tools')||t.closest('#cl-export')||t.id==='cl-export-close'||t.id==='cl-screenlabel')return;
+  var hit=t.closest('.cl-hit');
+  if(hit){
+    e.preventDefault();
+    var idx=parseInt(hit.getAttribute('data-idx'));
+    CL_selected=idx;
+    var touch=e.touches[0];
+    var app=document.getElementById('cl-app').getBoundingClientRect();
+    var mode=t.classList.contains('cl-resize')?'resize':'move';
+    CL_drag={idx:idx,mode:mode,startX:touch.clientX,startY:touch.clientY,
+             orig:Object.assign({},CL_hits[CL_current][idx]),
+             appW:app.width,appH:app.height};
+    cl_render();
   }
+},{passive:false});
+
+document.addEventListener('touchmove',function(e){
+  if(!CL_drag)return;
+  e.preventDefault();
+  var t=e.touches[0];
+  var dx=(t.clientX-CL_drag.startX)/CL_drag.appW*100;
+  var dy=(t.clientY-CL_drag.startY)/CL_drag.appH*100;
+  var h=CL_hits[CL_current][CL_drag.idx];
+  if(CL_drag.mode==='move'){
+    h.x=Math.max(0,Math.min(99,CL_drag.orig.x+dx));
+    h.y=Math.max(0,Math.min(99,CL_drag.orig.y+dy));
+  } else {
+    h.w=Math.max(2,Math.min(100,CL_drag.orig.w+dx));
+    h.h=Math.max(2,Math.min(100,CL_drag.orig.h+dy));
+  }
+  cl_render();
+},{passive:false});
+
+document.addEventListener('touchend',function(){
+  if(CL_drag){cl_save();CL_drag=null;}
 });
 
-/* ROTATION */
-function cl_checkRotation(){
-  var isLandscape = window.innerWidth > window.innerHeight;
-  document.getElementById('cl-rotate').classList.toggle('cl-show', !isLandscape);
+function cl_addHit(){
+  var name=prompt('Label:','NEW');
+  if(!name)return;
+  CL_hits[CL_current].push({l:name,x:40,y:40,w:15,h:10});
+  CL_selected=CL_hits[CL_current].length-1;
+  cl_save();cl_render();
 }
-function cl_forceLandscape(){
-  cl_vibe([50,30,50]);
-  try{
-    var el=document.documentElement;
-    if(el.requestFullscreen)el.requestFullscreen();
-    else if(el.webkitRequestFullscreen)el.webkitRequestFullscreen();
-    setTimeout(function(){ if(screen.orientation&&screen.orientation.lock)screen.orientation.lock('landscape').catch(function(){}); },300);
-  }catch(e){}
-}
-window.addEventListener('resize',cl_checkRotation);
-window.addEventListener('orientationchange',cl_checkRotation);
-
-/* MUTE + DEBUG */
-function cl_toggleMute(){
-  CL_soundMuted=!CL_soundMuted;
-  localStorage.setItem('CL_soundMuted',CL_soundMuted?'1':'0');
-  document.getElementById('cl-mute').textContent=CL_soundMuted?'🔇':'🔊';
-  cl_vibe(22);
-}
-function cl_toggleDebug(){
-  document.body.classList.toggle('cl-debug');
-  cl_vibe(22);
-}
-document.getElementById('cl-mute').textContent=CL_soundMuted?'🔇':'🔊';
-
-/* URL PARAM: ?debug=0 hides hitboxes */
-if(location.search.indexOf('debug=0')>-1) document.body.classList.remove('cl-debug');
-
-/* LOADING SEQUENCE */
-function cl_runLoading(){
-  var bar=document.getElementById('cl-loadbar-fill'); var p=0;
-  var iv=setInterval(function(){
-    p+=2; bar.style.width=p+'%';
-    if(p>=100){ clearInterval(iv); setTimeout(function(){ cl_transition('menu'); },300); }
-  },60);
+function cl_delHit(){
+  if(CL_selected===null)return;
+  CL_hits[CL_current].splice(CL_selected,1);
+  CL_selected=null;
+  cl_save();cl_render();
 }
 
-/* INIT */
-cl_checkRotation();
-setTimeout(cl_runLoading, 200);
+function cl_export(){
+  var out='=== CHAOSLINE FINAL COORDS ===\n\n';
+  ['menu','worlds','levels'].forEach(function(s){
+    out+='['+s.toUpperCase()+']\n';
+    CL_hits[s].forEach(function(h){
+      out+=h.l+': x='+h.x.toFixed(2)+' y='+h.y.toFixed(2)+' w='+h.w.toFixed(2)+' h='+h.h.toFixed(2)+'\n';
+    });
+    out+='\n';
+  });
+  var el=document.getElementById('cl-export');
+  el.textContent=out;
+  el.classList.add('cl-show');
+  document.getElementById('cl-export-close').classList.add('cl-show');
+}
+
+cl_loadStored();
+cl_show('menu');
 </script>
 </body>
 </html>
