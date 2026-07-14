@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<title>CHAOSLINE — Tuner v14.1b</title>
+<title>CHAOSLINE Tuner</title>
 <link rel="preload" as="image" href="loading.png">
 <link rel="preload" as="image" href="main_menu.png">
 <link rel="preload" as="image" href="world_select.png">
@@ -11,44 +11,61 @@
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none;font-family:'Press Start 2P',monospace}
-html,body{width:100%;height:100%;overflow:hidden;background:#000;color:#fff;touch-action:none}
-#cl-app{position:fixed;inset:0;width:100vw;height:100vh;overflow:hidden;background:#000}
+html,body{width:100%;height:100%;overflow:hidden;background:#000;color:#fff}
+#cl-app{position:fixed;inset:0;overflow:hidden;background:#000}
 
-.cl-screen{position:absolute;inset:0;width:100%;height:100%;background-size:contain;background-position:center;background-repeat:no-repeat;background-color:#000;display:none}
+.cl-screen{position:absolute;inset:0;background-size:contain;background-position:center;background-repeat:no-repeat;background-color:#000;display:none}
 .cl-screen.cl-active{display:block}
 
-.cl-hit{position:absolute;background:rgba(255,0,68,.22);border:2px solid #ff0044;cursor:move;touch-action:none;display:flex;align-items:center;justify-content:center;flex-direction:column}
-.cl-hit.cl-selected{background:rgba(255,220,0,.35);border:3px solid #ffdd00;box-shadow:0 0 12px #ffdd00;z-index:100}
-.cl-hit-label{font-size:9px;color:#fff;background:#ff0044;padding:2px 5px;pointer-events:none;white-space:nowrap;font-weight:bold}
+.cl-hit{position:absolute;background:rgba(255,0,68,.22);border:2px solid #ff0044;display:flex;align-items:center;justify-content:center;flex-direction:column;overflow:visible}
+.cl-hit *{pointer-events:none}
+.cl-hit.cl-selected{background:rgba(255,220,0,.4);border:3px solid #ffdd00;box-shadow:0 0 14px #ffdd00;z-index:100}
+.cl-hit-label{font-size:8px;color:#fff;background:#ff0044;padding:1px 3px;white-space:nowrap;font-weight:bold}
 .cl-hit.cl-selected .cl-hit-label{background:#ffdd00;color:#000}
-.cl-hit-coords{font-size:8px;color:#fff;background:rgba(0,0,0,.85);padding:2px 4px;margin-top:2px;pointer-events:none;white-space:nowrap;line-height:1.3;text-align:center}
+.cl-hit-coords{font-size:7px;color:#fff;background:rgba(0,0,0,.9);padding:1px 3px;margin-top:1px;white-space:nowrap;line-height:1.2;text-align:center}
 .cl-hit.cl-selected .cl-hit-coords{background:#ffdd00;color:#000}
-.cl-resize{position:absolute;right:-12px;bottom:-12px;width:26px;height:26px;background:#00ff88;border:2px solid #000;border-radius:50%;display:none;touch-action:none;z-index:200}
-.cl-hit.cl-selected .cl-resize{display:block}
 
-#cl-tools{position:fixed;top:0;left:0;right:0;background:rgba(0,0,0,.92);border-bottom:2px solid #ff0044;padding:5px;z-index:9000;display:flex;gap:3px;flex-wrap:wrap;justify-content:center}
-.cl-tbtn{background:#222;color:#fff;border:1px solid #ff0044;padding:6px 8px;font-family:'Press Start 2P',monospace;font-size:8px;cursor:pointer}
+/* LEFT SIDE VERTICAL TOOLBAR — doesn't cover PNG top/bottom */
+#cl-tools{position:fixed;left:0;top:0;bottom:0;width:56px;background:rgba(0,0,0,.85);border-right:2px solid #ff0044;padding:4px;z-index:9000;display:flex;flex-direction:column;gap:3px;align-items:stretch}
+.cl-tbtn{background:#222;color:#fff;border:1px solid #ff0044;padding:5px 2px;font-family:'Press Start 2P',monospace;font-size:7px;text-align:center}
 .cl-tbtn.cl-nav{background:#004488;border-color:#0088ff}
 .cl-tbtn.cl-exp{background:#00aa44;border-color:#00ff88}
 
-#cl-export{position:fixed;inset:20px;background:#000;border:3px solid #00ff88;padding:12px;z-index:9500;display:none;overflow:auto;font-size:10px;line-height:1.6;color:#0f0;white-space:pre-wrap}
-#cl-export.cl-show{display:block}
-#cl-export-close{position:fixed;top:28px;right:28px;background:#ff0044;color:#fff;border:none;padding:8px 12px;font-family:'Press Start 2P',monospace;font-size:9px;cursor:pointer;z-index:9600;display:none}
-#cl-export-close.cl-show{display:block}
+/* RIGHT SIDE NUDGE PAD */
+#cl-nudge{position:fixed;right:6px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.85);border:2px solid #ffdd00;padding:4px;z-index:9000;display:grid;grid-template-columns:repeat(3,36px);grid-gap:3px}
+.cl-nb{background:#222;color:#ffdd00;border:1px solid #ffdd00;font-family:'Press Start 2P',monospace;font-size:11px;padding:8px 0;text-align:center}
+.cl-nb.cl-empty{visibility:hidden}
 
-#cl-screenlabel{position:fixed;bottom:6px;left:6px;background:rgba(0,0,0,.85);border:1px solid #ffdd00;padding:5px 8px;font-size:9px;color:#ffdd00;z-index:8000}
+/* BOTTOM STATUS BAR (tiny) */
+#cl-label{position:fixed;left:60px;bottom:4px;background:rgba(0,0,0,.85);border:1px solid #ffdd00;padding:3px 6px;font-size:7px;color:#ffdd00;z-index:8000}
+
+/* STEP SIZE BUTTONS TOP */
+#cl-steps{position:fixed;top:4px;right:130px;background:rgba(0,0,0,.85);border:1px solid #ffdd00;padding:3px;z-index:9000;display:flex;gap:3px}
+.cl-sb{background:#222;color:#ffdd00;border:1px solid #ffdd00;padding:4px 6px;font-family:'Press Start 2P',monospace;font-size:7px}
+.cl-sb.cl-on{background:#ffdd00;color:#000}
+
+#cl-export{position:fixed;inset:20px;background:#000;border:3px solid #00ff88;padding:12px;z-index:9500;display:none;overflow:auto;font-size:9px;line-height:1.6;color:#0f0;white-space:pre-wrap}
+#cl-export.cl-show{display:block}
+#cl-export-close{position:fixed;top:28px;right:28px;background:#ff0044;color:#fff;border:none;padding:8px 12px;font-family:'Press Start 2P',monospace;font-size:9px;z-index:9600;display:none}
+#cl-export-close.cl-show{display:block}
 </style>
 </head>
 <body>
 
 <div id="cl-tools">
   <button class="cl-tbtn cl-nav" onclick="cl_show('menu')">MENU</button>
-  <button class="cl-tbtn cl-nav" onclick="cl_show('worlds')">WORLDS</button>
-  <button class="cl-tbtn cl-nav" onclick="cl_show('levels')">LEVELS</button>
+  <button class="cl-tbtn cl-nav" onclick="cl_show('worlds')">WRLD</button>
+  <button class="cl-tbtn cl-nav" onclick="cl_show('levels')">LVLS</button>
   <button class="cl-tbtn" onclick="cl_addHit()">+ADD</button>
   <button class="cl-tbtn" onclick="cl_delHit()">DEL</button>
-  <button class="cl-tbtn cl-exp" onclick="cl_export()">EXPORT ALL</button>
-  <button class="cl-tbtn" onclick="if(confirm('Reset all?'))cl_reset()">RESET</button>
+  <button class="cl-tbtn cl-exp" onclick="cl_export()">EXP</button>
+  <button class="cl-tbtn" onclick="if(confirm('Reset?'))cl_reset()">RST</button>
+</div>
+
+<div id="cl-steps">
+  <button class="cl-sb" id="cl-s01" onclick="cl_setStep(0.1)">.1</button>
+  <button class="cl-sb cl-on" id="cl-s1" onclick="cl_setStep(1)">1</button>
+  <button class="cl-sb" id="cl-s5" onclick="cl_setStep(5)">5</button>
 </div>
 
 <div id="cl-app">
@@ -57,7 +74,19 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;color:#fff;touc
   <div id="cl-screen-levels" class="cl-screen" style="background-image:url('level_select.png')"></div>
 </div>
 
-<div id="cl-screenlabel">SCREEN: MENU</div>
+<div id="cl-label">MENU</div>
+
+<div id="cl-nudge">
+  <button class="cl-nb cl-empty"></button>
+  <button class="cl-nb" onclick="cl_nudge('y',-1)">↑</button>
+  <button class="cl-nb cl-empty"></button>
+  <button class="cl-nb" onclick="cl_nudge('x',-1)">←</button>
+  <button class="cl-nb" id="cl-mode" onclick="cl_mode()">M</button>
+  <button class="cl-nb" onclick="cl_nudge('x',1)">→</button>
+  <button class="cl-nb cl-empty"></button>
+  <button class="cl-nb" onclick="cl_nudge('y',1)">↓</button>
+  <button class="cl-nb cl-empty"></button>
+</div>
 
 <div id="cl-export"></div>
 <button id="cl-export-close" onclick="document.getElementById('cl-export').classList.remove('cl-show');this.classList.remove('cl-show')">CLOSE</button>
@@ -65,6 +94,8 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;color:#fff;touc
 <script>
 var CL_current='menu';
 var CL_selected=null;
+var CL_mode='M';
+var CL_step=1;
 var CL_hits={menu:[],worlds:[],levels:[]};
 
 var CL_defaults={
@@ -100,11 +131,11 @@ var CL_defaults={
 };
 
 function cl_loadStored(){
-  var s=localStorage.getItem('CL_tuner2');
+  var s=localStorage.getItem('CL_tuner4');
   if(s){try{CL_hits=JSON.parse(s);return}catch(e){}}
   cl_reset(true);
 }
-function cl_save(){localStorage.setItem('CL_tuner2',JSON.stringify(CL_hits))}
+function cl_save(){localStorage.setItem('CL_tuner4',JSON.stringify(CL_hits))}
 function cl_reset(silent){
   CL_hits=JSON.parse(JSON.stringify(CL_defaults));
   cl_save();
@@ -116,8 +147,13 @@ function cl_show(name){
   CL_selected=null;
   document.querySelectorAll('.cl-screen').forEach(function(s){s.classList.remove('cl-active')});
   document.getElementById('cl-screen-'+name).classList.add('cl-active');
-  document.getElementById('cl-screenlabel').textContent='SCREEN: '+name.toUpperCase();
+  cl_updateLabel();
   cl_render();
+}
+
+function cl_updateLabel(){
+  var sel=CL_selected!==null?' SEL:'+CL_hits[CL_current][CL_selected].l:'';
+  document.getElementById('cl-label').textContent=CL_current.toUpperCase()+sel+' MODE:'+CL_mode+' STEP:'+CL_step;
 }
 
 function cl_render(){
@@ -130,69 +166,65 @@ function cl_render(){
     d.style.left=h.x+'%';d.style.top=h.y+'%';
     d.style.width=h.w+'%';d.style.height=h.h+'%';
     d.setAttribute('data-idx',i);
-    var coordStr='x:'+h.x.toFixed(1)+' y:'+h.y.toFixed(1)+'<br>w:'+h.w.toFixed(1)+' h:'+h.h.toFixed(1);
-    d.innerHTML='<div class="cl-hit-label">'+h.l+'</div><div class="cl-hit-coords">'+coordStr+'</div><div class="cl-resize"></div>';
+    var c='x'+h.x.toFixed(1)+' y'+h.y.toFixed(1)+'<br>w'+h.w.toFixed(1)+' h'+h.h.toFixed(1);
+    d.innerHTML='<div class="cl-hit-label">'+h.l+'</div><div class="cl-hit-coords">'+c+'</div>';
     if(CL_selected===i)d.classList.add('cl-selected');
     screen.appendChild(d);
   });
 }
 
-var CL_drag=null;
-document.addEventListener('touchstart',function(e){
-  var t=e.target;
-  if(t.closest('#cl-tools')||t.closest('#cl-export')||t.id==='cl-export-close'||t.id==='cl-screenlabel')return;
-  var hit=t.closest('.cl-hit');
+document.getElementById('cl-app').addEventListener('click',function(e){
+  var hit=e.target.closest('.cl-hit');
   if(hit){
-    e.preventDefault();
-    var idx=parseInt(hit.getAttribute('data-idx'));
-    CL_selected=idx;
-    var touch=e.touches[0];
-    var app=document.getElementById('cl-app').getBoundingClientRect();
-    var mode=t.classList.contains('cl-resize')?'resize':'move';
-    CL_drag={idx:idx,mode:mode,startX:touch.clientX,startY:touch.clientY,
-             orig:Object.assign({},CL_hits[CL_current][idx]),
-             appW:app.width,appH:app.height};
+    CL_selected=parseInt(hit.getAttribute('data-idx'));
+    cl_updateLabel();
     cl_render();
   }
-},{passive:false});
-
-document.addEventListener('touchmove',function(e){
-  if(!CL_drag)return;
-  e.preventDefault();
-  var t=e.touches[0];
-  var dx=(t.clientX-CL_drag.startX)/CL_drag.appW*100;
-  var dy=(t.clientY-CL_drag.startY)/CL_drag.appH*100;
-  var h=CL_hits[CL_current][CL_drag.idx];
-  if(CL_drag.mode==='move'){
-    h.x=Math.max(0,Math.min(99,CL_drag.orig.x+dx));
-    h.y=Math.max(0,Math.min(99,CL_drag.orig.y+dy));
-  } else {
-    h.w=Math.max(2,Math.min(100,CL_drag.orig.w+dx));
-    h.h=Math.max(2,Math.min(100,CL_drag.orig.h+dy));
-  }
-  cl_render();
-},{passive:false});
-
-document.addEventListener('touchend',function(){
-  if(CL_drag){cl_save();CL_drag=null;}
 });
+
+function cl_nudge(axis,dir){
+  if(CL_selected===null)return;
+  var h=CL_hits[CL_current][CL_selected];
+  var d=dir*CL_step;
+  if(CL_mode==='M'){
+    if(axis==='x')h.x=Math.max(0,Math.min(99,h.x+d));
+    else h.y=Math.max(0,Math.min(99,h.y+d));
+  } else {
+    if(axis==='x')h.w=Math.max(0.5,Math.min(100,h.w+d));
+    else h.h=Math.max(0.5,Math.min(100,h.h+d));
+  }
+  cl_save();cl_render();
+}
+
+function cl_mode(){
+  CL_mode=CL_mode==='M'?'S':'M';
+  document.getElementById('cl-mode').textContent=CL_mode;
+  cl_updateLabel();
+}
+
+function cl_setStep(v){
+  CL_step=v;
+  ['cl-s01','cl-s1','cl-s5'].forEach(function(id){document.getElementById(id).classList.remove('cl-on')});
+  document.getElementById(v===0.1?'cl-s01':v===1?'cl-s1':'cl-s5').classList.add('cl-on');
+  cl_updateLabel();
+}
 
 function cl_addHit(){
   var name=prompt('Label:','NEW');
   if(!name)return;
   CL_hits[CL_current].push({l:name,x:40,y:40,w:15,h:10});
   CL_selected=CL_hits[CL_current].length-1;
-  cl_save();cl_render();
+  cl_save();cl_render();cl_updateLabel();
 }
 function cl_delHit(){
   if(CL_selected===null)return;
   CL_hits[CL_current].splice(CL_selected,1);
   CL_selected=null;
-  cl_save();cl_render();
+  cl_save();cl_render();cl_updateLabel();
 }
 
 function cl_export(){
-  var out='=== CHAOSLINE FINAL COORDS ===\n\n';
+  var out='=== CHAOSLINE COORDS ===\n\n';
   ['menu','worlds','levels'].forEach(function(s){
     out+='['+s.toUpperCase()+']\n';
     CL_hits[s].forEach(function(h){
