@@ -12,86 +12,143 @@
 <style>
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none;touch-action:manipulation;font-family:'Press Start 2P',monospace}
 html,body{width:100%;height:100%;overflow:hidden;background:#000;color:#fff}
-#cl-app{position:fixed;inset:0;overflow:hidden;background:#000;transition:transform .1s}
-#cl-app.cl-shake{animation:cl-shake .35s ease-in-out}
-@keyframes cl-shake{0%,100%{transform:translate(0,0)}10%{transform:translate(-6px,3px)}20%{transform:translate(5px,-4px)}30%{transform:translate(-5px,-3px)}40%{transform:translate(4px,4px)}50%{transform:translate(-4px,2px)}60%{transform:translate(3px,-3px)}70%{transform:translate(-3px,3px)}80%{transform:translate(2px,-2px)}90%{transform:translate(-2px,1px)}}
+#cl-app{position:fixed;inset:0;overflow:hidden;background:#000}
+#cl-app.cl-shake{animation:cl-shake .4s ease-in-out}
+@keyframes cl-shake{0%,100%{transform:translate(0)}10%{transform:translate(-8px,4px)}20%{transform:translate(7px,-5px)}30%{transform:translate(-6px,-4px)}40%{transform:translate(5px,5px)}50%{transform:translate(-5px,3px)}60%{transform:translate(4px,-4px)}70%{transform:translate(-3px,4px)}80%{transform:translate(3px,-3px)}90%{transform:translate(-2px,2px)}}
 
 .cl-screen{position:absolute;inset:0;background-size:cover;background-position:center;background-repeat:no-repeat;background-color:#000;display:none;opacity:0;transition:opacity .5s ease}
 .cl-screen.cl-active{display:block;opacity:1}
 
-.cl-hit{position:absolute;cursor:pointer;background:transparent;border:none}
-.cl-hit:active{transform:scale(.94);transition:transform .08s ease}
+/* VIGNETTE OVERLAY — breathing dark edges */
+#cl-vignette{position:fixed;inset:0;pointer-events:none;z-index:3;background:radial-gradient(ellipse at center,transparent 50%,rgba(0,0,0,.4) 80%,rgba(0,0,0,.8) 100%);animation:cl-vig 4s ease-in-out infinite}
+@keyframes cl-vig{0%,100%{opacity:.6}50%{opacity:1}}
+
+/* HITBOXES */
+.cl-hit{position:absolute;cursor:pointer;background:transparent;border:none;transition:transform .15s ease,filter .15s ease}
 .cl-hit.cl-locked{cursor:not-allowed}
-.cl-hit.cl-locked::after{content:"🔒";position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:clamp(20px,5vw,40px);text-shadow:0 0 6px #000,0 0 10px #000;filter:drop-shadow(0 0 4px rgba(0,0,0,.9));z-index:5;pointer-events:none}
+.cl-hit.cl-locked::after{content:"🔒";position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:clamp(20px,5vw,40px);text-shadow:0 0 6px #000,0 0 10px #000;filter:drop-shadow(0 0 4px rgba(0,0,0,.9));z-index:5;pointer-events:none;animation:cl-lockfloat 2s ease-in-out infinite}
+@keyframes cl-lockfloat{0%,100%{transform:translate(-50%,-50%) translateY(0)}50%{transform:translate(-50%,-50%) translateY(-4px)}}
 .cl-hit.cl-locked::before{content:"";position:absolute;inset:0;background:rgba(0,0,0,.5);z-index:4}
-.cl-hit:not(.cl-locked){animation:cl-pulse 2.5s ease-in-out infinite}
-@keyframes cl-pulse{0%,100%{filter:brightness(1)}50%{filter:brightness(1.15)}}
 
-.cl-ripple{position:absolute;border-radius:50%;background:radial-gradient(circle,rgba(255,60,60,.7),rgba(255,255,255,.4) 30%,transparent 70%);pointer-events:none;transform:translate(-50%,-50%) scale(0);animation:cl-rip .55s ease-out forwards;z-index:9000}
-@keyframes cl-rip{to{transform:translate(-50%,-50%) scale(4);opacity:0}}
+/* BUTTON CLICK ANIMATION */
+.cl-hit.cl-tapped{animation:cl-btnclick .3s ease-out}
+@keyframes cl-btnclick{0%{transform:scale(1);filter:brightness(1)}20%{transform:scale(.88);filter:brightness(1.8)}50%{transform:scale(1.06);filter:brightness(1.3)}100%{transform:scale(1);filter:brightness(1)}}
 
-.cl-spark{position:fixed;width:6px;height:6px;pointer-events:none;z-index:9600;border-radius:50%;box-shadow:0 0 8px currentColor,0 0 14px currentColor}
+/* HOVER GLOW for unlocked */
+.cl-hit:not(.cl-locked){animation:cl-pulse 3s ease-in-out infinite}
+@keyframes cl-pulse{0%,100%{filter:brightness(1) drop-shadow(0 0 0 transparent)}50%{filter:brightness(1.1) drop-shadow(0 0 8px rgba(255,60,0,.3))}}
 
-#cl-loadbar{position:absolute;left:12.5%;bottom:11%;width:75%;height:5.5%;overflow:hidden;z-index:3}
-#cl-loadbar-fill{width:0%;height:100%;background:linear-gradient(90deg,#8b0000,#ff2222 40%,#ff6644 70%,#ffaa66);box-shadow:0 0 14px #ff0000,inset 0 0 6px rgba(255,255,255,.2);transition:width .1s linear;position:relative}
-#cl-loadbar-fill::after{content:"";position:absolute;top:0;right:-2px;width:6px;height:100%;background:#fff;box-shadow:0 0 14px #fff,0 0 22px #ff4444;animation:cl-flick .3s ease-in-out infinite}
-@keyframes cl-flick{0%,100%{opacity:1}50%{opacity:.5}}
+/* CLICK RIPPLE */
+.cl-ripple{position:fixed;border-radius:50%;pointer-events:none;transform:translate(-50%,-50%) scale(0);z-index:9000}
+.cl-ripple-inner{width:100%;height:100%;border-radius:50%;background:radial-gradient(circle,rgba(255,80,40,.8),rgba(255,255,255,.4) 30%,transparent 70%);animation:cl-rip .6s ease-out forwards}
+@keyframes cl-rip{to{transform:scale(5);opacity:0}}
 
-.cl-ember{position:absolute;background:#ff4400;border-radius:50%;box-shadow:0 0 6px #ff6600,0 0 12px #ff2200;pointer-events:none;z-index:2;opacity:.8;animation:cl-float linear infinite}
-@keyframes cl-float{0%{transform:translateY(0) translateX(0);opacity:0}10%{opacity:.9}90%{opacity:.5}100%{transform:translateY(-100vh) translateX(20px);opacity:0}}
+/* CLICK PARTICLES */
+.cl-particle{position:fixed;width:5px;height:5px;border-radius:50%;pointer-events:none;z-index:9001}
 
-/* UPGRADED JAW TRANSITION */
+/* LOADING BAR */
+#cl-loadbar{position:absolute;left:12.5%;bottom:11%;width:75%;height:5.5%;overflow:hidden;z-index:3;border:1px solid rgba(255,0,0,.3)}
+#cl-loadbar-fill{width:0%;height:100%;background:linear-gradient(90deg,#4a0000,#8b0000 20%,#ff2222 50%,#ff6644 80%,#ffaa66);box-shadow:0 0 14px #ff0000,0 0 30px rgba(255,0,0,.5),inset 0 0 6px rgba(255,255,255,.2);transition:width .1s linear;position:relative}
+#cl-loadbar-fill::after{content:"";position:absolute;top:0;right:-2px;width:8px;height:100%;background:#fff;box-shadow:0 0 14px #fff,0 0 25px #ff4444;animation:cl-flick .2s ease-in-out infinite}
+@keyframes cl-flick{0%,100%{opacity:1;height:100%}50%{opacity:.6;height:80%}}
+#cl-loadbar-fill::before{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(255,255,255,.15) 0%,transparent 50%,rgba(0,0,0,.2) 100%)}
+
+/* LOADING GLOW PULSE */
+#cl-screen-loading::after{content:"";position:absolute;inset:0;background:radial-gradient(circle at 50% 40%,rgba(255,0,0,.08),transparent 60%);animation:cl-lglow 2s ease-in-out infinite;pointer-events:none}
+@keyframes cl-lglow{0%,100%{opacity:.3}50%{opacity:.8}}
+
+/* EMBERS */
+.cl-ember{position:absolute;background:#ff4400;border-radius:50%;box-shadow:0 0 6px #ff6600,0 0 12px #ff2200;pointer-events:none;z-index:2;animation:cl-float linear infinite}
+@keyframes cl-float{0%{transform:translateY(0) translateX(0) scale(1);opacity:0}10%{opacity:.9}50%{transform:translateY(-50vh) translateX(15px) scale(.8);opacity:.7}90%{opacity:.3}100%{transform:translateY(-105vh) translateX(-10px) scale(.4);opacity:0}}
+
+/* SCANLINE OVERLAY */
+#cl-scanlines{position:fixed;inset:0;pointer-events:none;z-index:4;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.06) 2px,rgba(0,0,0,.06) 4px);animation:cl-scanmove 8s linear infinite}
+@keyframes cl-scanmove{from{background-position-y:0}to{background-position-y:100px}}
+
+/* FLOATING DUST MOTES */
+.cl-dust{position:absolute;width:2px;height:2px;background:rgba(255,200,150,.4);border-radius:50%;pointer-events:none;z-index:2;animation:cl-dustmove linear infinite}
+@keyframes cl-dustmove{0%{transform:translate(0,0);opacity:0}20%{opacity:.6}80%{opacity:.4}100%{transform:translate(30px,-80vh);opacity:0}}
+
+/* TITLE GLOW — behind menu title */
+#cl-titleglow{position:absolute;left:5%;top:0;width:50%;height:25%;background:radial-gradient(ellipse,rgba(255,0,0,.12),transparent 70%);pointer-events:none;z-index:1;animation:cl-tglow 3s ease-in-out infinite}
+@keyframes cl-tglow{0%,100%{opacity:.3;transform:scale(1)}50%{opacity:.8;transform:scale(1.05)}}
+
+/* CHARACTER IDLE — subtle sway behind hit area */
+#cl-charsway{position:absolute;right:15%;bottom:10%;width:30%;height:70%;pointer-events:none;z-index:1;animation:cl-sway 4s ease-in-out infinite}
+@keyframes cl-sway{0%,100%{transform:translateX(0) rotate(0)}25%{transform:translateX(2px) rotate(.3deg)}75%{transform:translateX(-2px) rotate(-.3deg)}}
+
+/* WORLD CARD GLOW — each world softly breathes */
+.cl-worldglow{position:absolute;pointer-events:none;z-index:1;border-radius:8px;animation:cl-wglow 3s ease-in-out infinite}
+@keyframes cl-wglow{0%,100%{box-shadow:inset 0 0 20px transparent,0 0 0 transparent}50%{box-shadow:inset 0 0 30px rgba(255,255,255,.05),0 0 15px var(--wc,rgba(255,0,0,.2))}}
+
+/* ======= UPGRADED JAW ======= */
 #cl-jaw{position:fixed;inset:0;pointer-events:none;z-index:9500;display:none;overflow:hidden}
 #cl-jaw.cl-show{display:block}
-.cl-jaw-top,.cl-jaw-bot{position:absolute;left:-2%;width:104%;height:54%;background:linear-gradient(to bottom,#000 0%,#1a0000 50%,#2a0000 100%);transition:transform .5s cubic-bezier(.6,-.1,.4,1)}
-.cl-jaw-top{top:0;transform:translateY(-102%);box-shadow:0 8px 40px #ff0000,0 0 80px rgba(255,0,0,.6),inset 0 -20px 40px rgba(255,0,0,.3)}
-.cl-jaw-bot{bottom:0;transform:translateY(102%);box-shadow:0 -8px 40px #ff0000,0 0 80px rgba(255,0,0,.6),inset 0 20px 40px rgba(255,0,0,.3)}
-/* SHARP PIXEL TEETH via SVG-like gradient */
-.cl-teeth-top,.cl-teeth-bot{position:absolute;left:0;right:0;height:40px;pointer-events:none}
-.cl-teeth-top{bottom:-40px;background:linear-gradient(180deg,#0a0000 0%,#1a0000 100%);clip-path:polygon(0 0,100% 0,100% 30%,97% 100%,94% 30%,91% 100%,88% 30%,85% 100%,82% 30%,79% 100%,76% 30%,73% 100%,70% 30%,67% 100%,64% 30%,61% 100%,58% 30%,55% 100%,52% 30%,49% 100%,46% 30%,43% 100%,40% 30%,37% 100%,34% 30%,31% 100%,28% 30%,25% 100%,22% 30%,19% 100%,16% 30%,13% 100%,10% 30%,7% 100%,4% 30%,1% 100%,0 30%);filter:drop-shadow(0 4px 8px #ff0000)}
-.cl-teeth-bot{top:-40px;background:linear-gradient(0deg,#0a0000 0%,#1a0000 100%);clip-path:polygon(0 100%,100% 100%,100% 70%,97% 0,94% 70%,91% 0,88% 70%,85% 0,82% 70%,79% 0,76% 70%,73% 0,70% 70%,67% 0,64% 70%,61% 0,58% 70%,55% 0,52% 70%,49% 0,46% 70%,43% 0,40% 70%,37% 0,34% 70%,31% 0,28% 70%,25% 0,22% 70%,19% 0,16% 70%,13% 0,10% 70%,7% 0,4% 70%,1% 0,0 70%);filter:drop-shadow(0 -4px 8px #ff0000)}
-/* GLOWING THROAT */
-.cl-throat{position:absolute;left:0;right:0;top:50%;height:6%;background:radial-gradient(ellipse at center,#ff2200 0%,#8b0000 40%,transparent 80%);transform:translateY(-50%) scaleY(0);transition:transform .3s ease-out;pointer-events:none;filter:blur(2px)}
-#cl-jaw.cl-closed .cl-throat{transform:translateY(-50%) scaleY(1)}
-#cl-jaw.cl-closing .cl-jaw-top{transform:translateY(-46%)}
-#cl-jaw.cl-closing .cl-jaw-bot{transform:translateY(46%)}
+.cl-jaw-top,.cl-jaw-bot{position:absolute;left:-3%;width:106%;background:linear-gradient(to bottom,#050000 0%,#0a0000 40%,#1a0000 100%);transition:transform .55s cubic-bezier(.7,-.15,.4,1.1)}
+.cl-jaw-top{top:0;height:55%;transform:translateY(-102%);box-shadow:0 10px 50px #ff0000,0 0 100px rgba(255,0,0,.5)}
+.cl-jaw-bot{bottom:0;height:55%;transform:translateY(102%);box-shadow:0 -10px 50px #ff0000,0 0 100px rgba(255,0,0,.5)}
+.cl-teeth-top,.cl-teeth-bot{position:absolute;left:0;right:0;height:50px;pointer-events:none}
+.cl-teeth-top{bottom:-50px;background:#0a0000;clip-path:polygon(0 0,3% 0,4% 100%,7% 0,8% 100%,11% 0,14% 100%,17% 0,19% 100%,22% 0,25% 100%,28% 0,30% 100%,33% 0,36% 100%,39% 0,41% 100%,44% 0,47% 100%,50% 0,53% 100%,56% 0,58% 100%,61% 0,64% 100%,67% 0,69% 100%,72% 0,75% 100%,78% 0,80% 100%,83% 0,86% 100%,89% 0,91% 100%,94% 0,97% 100%,100% 0);filter:drop-shadow(0 6px 10px #ff0000)}
+.cl-teeth-bot{top:-50px;background:#0a0000;clip-path:polygon(0 100%,3% 100%,4% 0,7% 100%,8% 0,11% 100%,14% 0,17% 100%,19% 0,22% 100%,25% 0,28% 100%,30% 0,33% 100%,36% 0,39% 100%,41% 0,44% 100%,47% 0,50% 100%,53% 0,56% 100%,58% 0,61% 100%,64% 0,67% 100%,69% 0,72% 100%,75% 0,78% 100%,80% 0,83% 100%,86% 0,89% 100%,91% 0,94% 100%,97% 0,100% 100%);filter:drop-shadow(0 -6px 10px #ff0000)}
+.cl-throat{position:absolute;left:0;right:0;top:45%;height:10%;background:radial-gradient(ellipse at center,#ff2200 0%,#8b0000 30%,#440000 60%,transparent 100%);pointer-events:none;opacity:0;transition:opacity .3s;filter:blur(3px)}
+#cl-jaw.cl-closed .cl-throat{opacity:1}
+#cl-jaw.cl-closing .cl-jaw-top{transform:translateY(-45%)}
+#cl-jaw.cl-closing .cl-jaw-bot{transform:translateY(45%)}
+/* BLOOD DRIPS */
+.cl-drip{position:absolute;width:4px;background:linear-gradient(180deg,#8b0000,#ff2200);border-radius:0 0 3px 3px;pointer-events:none;z-index:9550;opacity:0;animation:cl-drip 1.5s ease-in forwards}
+@keyframes cl-drip{0%{height:0;opacity:0;top:50%}10%{opacity:1}100%{height:60px;top:80%;opacity:0}}
+/* EYE FLASH */
+#cl-eyeflash{position:fixed;inset:0;background:radial-gradient(circle at 50% 50%,rgba(255,0,0,.5),transparent 50%);pointer-events:none;z-index:9550;opacity:0;transition:opacity .15s}
+#cl-eyeflash.cl-flash{opacity:1}
 
+/* POPUP */
 #cl-popup{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:9000;display:none;align-items:center;justify-content:center;padding:20px;opacity:0;transition:opacity .3s}
 #cl-popup.cl-show{display:flex;opacity:1}
-.cl-popup-box{background:linear-gradient(135deg,#1a0505,#2a0808);border:3px solid #ff2222;padding:20px 28px;max-width:80%;text-align:center;box-shadow:0 0 30px #ff0000,inset 0 0 20px rgba(255,0,0,.2);transform:scale(.8);transition:transform .3s cubic-bezier(.4,2,.6,1)}
-#cl-popup.cl-show .cl-popup-box{transform:scale(1)}
+.cl-popup-box{background:linear-gradient(135deg,#1a0505,#2a0808);border:3px solid #ff2222;padding:20px 28px;max-width:80%;text-align:center;box-shadow:0 0 30px #ff0000,0 0 60px rgba(255,0,0,.3),inset 0 0 20px rgba(255,0,0,.15);transform:scale(.7) rotate(-2deg);transition:transform .4s cubic-bezier(.2,1.8,.4,1)}
+#cl-popup.cl-show .cl-popup-box{transform:scale(1) rotate(0)}
 .cl-popup-title{color:#ff4444;font-size:13px;margin-bottom:12px;letter-spacing:2px;text-shadow:0 0 8px #ff0000}
-.cl-popup-msg{color:#fff;font-size:9px;line-height:1.7;margin-bottom:18px;white-space:pre-line}
-.cl-popup-close{background:linear-gradient(180deg,#ff4444,#cc0000);color:#fff;border:none;padding:10px 22px;font-family:'Press Start 2P',monospace;font-size:10px;cursor:pointer;box-shadow:0 3px 0 #660000;letter-spacing:1px}
+.cl-popup-msg{color:#ccc;font-size:9px;line-height:1.7;margin-bottom:18px;white-space:pre-line}
+.cl-popup-close{background:linear-gradient(180deg,#ff4444,#cc0000);color:#fff;border:none;padding:10px 22px;font-family:'Press Start 2P',monospace;font-size:10px;cursor:pointer;box-shadow:0 3px 0 #660000;letter-spacing:1px;transition:transform .1s}
+.cl-popup-close:active{transform:translateY(2px);box-shadow:0 1px 0 #660000}
 
 #cl-corner{position:fixed;bottom:6px;left:6px;z-index:8000;display:flex;gap:4px}
-.cl-cbtn{background:rgba(0,0,0,.7);border:1px solid #ff2222;color:#fff;padding:6px 8px;font-family:'Press Start 2P',monospace;font-size:11px;cursor:pointer;border-radius:3px}
+.cl-cbtn{background:rgba(0,0,0,.7);border:1px solid #ff2222;color:#fff;padding:6px 8px;font-family:'Press Start 2P',monospace;font-size:11px;cursor:pointer;border-radius:3px;transition:background .2s}
+.cl-cbtn:active{background:rgba(255,0,0,.3)}
 
-#cl-rotate{position:fixed;inset:0;background:#000;z-index:9999;display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:20px}
-@media (orientation: portrait){#cl-rotate{display:flex}}
+/* ROTATION */
+#cl-rotate{position:fixed;inset:0;background:linear-gradient(180deg,#000,#0a0000);z-index:9999;display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:20px}
+@media(orientation:portrait){#cl-rotate{display:flex}}
 .cl-phone{font-size:80px;animation:cl-bounce 1s infinite}
 @keyframes cl-bounce{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-20px) rotate(90deg)}}
-.cl-rotate-title{color:gold;font-size:18px;margin:24px 0 12px;letter-spacing:2px}
+.cl-rotate-title{color:gold;font-size:18px;margin:24px 0 12px;letter-spacing:2px;text-shadow:0 0 10px rgba(255,215,0,.5)}
 .cl-rotate-sub{color:#aaa;font-size:10px;margin-bottom:32px;line-height:1.6}
 .cl-rotate-btn{background:gold;color:#000;border:none;padding:16px 28px;font-family:'Press Start 2P',monospace;font-size:12px;box-shadow:0 4px 0 #a67c00;border-radius:4px;display:flex;align-items:center;gap:10px}
+.cl-rotate-btn:active{transform:translateY(2px);box-shadow:0 2px 0 #a67c00}
 .cl-spin{display:inline-block;animation:cl-spin 2s linear infinite;font-size:16px}
 @keyframes cl-spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
 
-body{animation:cl-fadein 1s ease-in}
-@keyframes cl-fadein{from{opacity:0;filter:brightness(0)}to{opacity:1;filter:brightness(1)}}
-
+/* START GATE */
 #cl-startgate{position:fixed;inset:0;background:#000;z-index:10000;display:flex;align-items:center;justify-content:center;flex-direction:column;cursor:pointer}
 #cl-startgate.cl-hide{display:none}
-.cl-gate-title{color:#ff2222;font-size:24px;letter-spacing:4px;text-shadow:0 0 20px #ff0000;animation:cl-gpulse 1.5s ease-in-out infinite}
-.cl-gate-sub{color:#fff;font-size:10px;margin-top:20px;animation:cl-blink 1s infinite}
-@keyframes cl-gpulse{0%,100%{text-shadow:0 0 20px #ff0000}50%{text-shadow:0 0 40px #ff4444,0 0 60px #ff0000}}
-@keyframes cl-blink{0%,100%{opacity:1}50%{opacity:.3}}
+.cl-gate-title{color:#ff2222;font-size:clamp(20px,5vw,32px);letter-spacing:4px;text-shadow:0 0 20px #ff0000,0 0 40px #880000;animation:cl-gpulse 1.5s ease-in-out infinite}
+.cl-gate-line{width:60%;height:2px;background:linear-gradient(90deg,transparent,#ff0000,transparent);margin:16px 0;animation:cl-linepulse 2s ease-in-out infinite}
+@keyframes cl-linepulse{0%,100%{opacity:.3;width:40%}50%{opacity:1;width:70%}}
+.cl-gate-sub{color:#888;font-size:10px;animation:cl-blink 1.2s infinite}
+@keyframes cl-gpulse{0%,100%{text-shadow:0 0 20px #ff0000,0 0 40px #880000}50%{text-shadow:0 0 40px #ff4444,0 0 80px #ff0000,0 0 120px #880000}}
+@keyframes cl-blink{0%,100%{opacity:1}50%{opacity:.2}}
+
+body{animation:cl-fadein 1.2s ease-in}
+@keyframes cl-fadein{from{opacity:0;filter:brightness(0) blur(4px)}to{opacity:1;filter:brightness(1) blur(0)}}
+
+/* SPARK */
+.cl-spark{position:fixed;pointer-events:none;z-index:9600;border-radius:50%;box-shadow:0 0 8px currentColor,0 0 16px currentColor}
 </style>
 </head>
 <body>
 
 <div id="cl-startgate" onclick="cl_startBoot()">
   <div class="cl-gate-title">CHAOSLINE</div>
+  <div class="cl-gate-line"></div>
   <div class="cl-gate-sub">▶ TAP TO ENTER</div>
 </div>
 
@@ -102,6 +159,8 @@ body{animation:cl-fadein 1s ease-in}
   </div>
 
   <div id="cl-screen-menu" class="cl-screen" style="background-image:url('main_menu.png')">
+    <div id="cl-titleglow"></div>
+    <div id="cl-charsway"></div>
     <div class="cl-hit" style="left:13%;top:32%;width:28%;height:15%" data-cl-action="play"></div>
     <div class="cl-hit" style="left:14%;top:51%;width:13%;height:10%" data-cl-action="soon" data-cl-name="SKIN"></div>
     <div class="cl-hit" style="left:27%;top:51%;width:13%;height:10%" data-cl-action="soon" data-cl-name="SHOP"></div>
@@ -112,6 +171,9 @@ body{animation:cl-fadein 1s ease-in}
   </div>
 
   <div id="cl-screen-worlds" class="cl-screen" style="background-image:url('world_select.png')">
+    <div class="cl-worldglow" style="left:15%;top:13%;width:20%;height:75%;--wc:rgba(0,255,0,.2)"></div>
+    <div class="cl-worldglow" style="left:40%;top:13%;width:20%;height:75%;--wc:rgba(255,60,0,.2)"></div>
+    <div class="cl-worldglow" style="left:66%;top:12%;width:20%;height:75%;--wc:rgba(150,0,255,.2)"></div>
     <div class="cl-hit" style="left:10%;top:5%;width:6%;height:12%" data-cl-action="back-menu"></div>
     <div class="cl-hit" style="left:15%;top:13%;width:20%;height:75%" data-cl-action="world" data-cl-world="0"></div>
     <div class="cl-hit cl-locked" style="left:40%;top:13%;width:20%;height:75%" data-cl-action="world" data-cl-world="1"></div>
@@ -133,7 +195,13 @@ body{animation:cl-fadein 1s ease-in}
     <div class="cl-hit cl-locked" style="left:70%;top:52%;width:10%;height:22%" data-cl-action="boss"></div>
   </div>
 
+  <!-- PART 2 CODE WILL BE ATTACHED HERE -->
+
 </div>
+
+<div id="cl-vignette"></div>
+<div id="cl-scanlines"></div>
+<div id="cl-eyeflash"></div>
 
 <div id="cl-jaw">
   <div class="cl-jaw-top"><div class="cl-teeth-top"></div></div>
@@ -168,13 +236,21 @@ var CL_unlockedWorlds=JSON.parse(localStorage.getItem('CL_unlockedWorlds')||'[0]
 var CL_soundMuted=localStorage.getItem('CL_soundMuted')==='1';
 var CL_musicMuted=localStorage.getItem('CL_musicMuted')==='1';
 var CL_audioCtx=null;
-var CL_musicNodes=null;
+var CL_musicPlaying=false;
+var CL_musicGain=null;
+var CL_musicTimers=[];
 
-function cl_audio(){if(!CL_audioCtx){try{CL_audioCtx=new (window.AudioContext||window.webkitAudioContext)()}catch(e){}}return CL_audioCtx}
+function cl_audio(){
+  if(!CL_audioCtx){
+    try{CL_audioCtx=new(window.AudioContext||window.webkitAudioContext)()}catch(e){}
+  }
+  if(CL_audioCtx&&CL_audioCtx.state==='suspended')CL_audioCtx.resume();
+  return CL_audioCtx;
+}
 function cl_beep(freq,endFreq,type,dur,vol){
   if(CL_soundMuted)return;var ctx=cl_audio();if(!ctx)return;
   var o=ctx.createOscillator(),g=ctx.createGain();
-  o.type=type||'square';o.frequency.setValueAtTime(freq,ctx.currentTime);
+  o.type=type;o.frequency.setValueAtTime(freq,ctx.currentTime);
   if(endFreq)o.frequency.exponentialRampToValueAtTime(Math.max(1,endFreq),ctx.currentTime+dur);
   g.gain.setValueAtTime(vol||.15,ctx.currentTime);
   g.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+dur);
@@ -185,91 +261,130 @@ function cl_arp(freqs,type,each,vol){
 }
 function cl_snd(n){
   switch(n){
-    case 'click':cl_beep(820,600,'square',.09,.14);break;
-    case 'chomp':cl_beep(90,30,'sawtooth',.5,.35);setTimeout(function(){cl_beep(60,20,'sawtooth',.3,.25)},80);break;
-    case 'pop':cl_beep(560,920,'sine',.18,.18);break;
-    case 'lock':cl_beep(190,95,'square',.28,.18);break;
-    case 'unlock':cl_arp([880,1108,1318],'sine',.12,.2);break;
-    case 'load':cl_beep(440,660,'sine',.15,.1);break;
-    case 'boot':cl_arp([523,659,784,1046,1318],'sine',.12,.18);break;
-    case 'spark':cl_beep(2000,3000,'square',.05,.1);break;
+    case'click':cl_beep(820,600,'square',.09,.14);break;
+    case'chomp':cl_beep(90,25,'sawtooth',.55,.38);setTimeout(function(){cl_beep(55,18,'sawtooth',.35,.28)},100);break;
+    case'pop':cl_beep(560,920,'sine',.18,.18);break;
+    case'lock':cl_beep(190,95,'square',.28,.18);break;
+    case'unlock':cl_arp([880,1108,1318],'sine',.12,.2);break;
+    case'load':cl_beep(440,660,'sine',.15,.08);break;
+    case'boot':cl_arp([440,523,659,784,1046],'sine',.15,.18);break;
+    case'spark':cl_beep(2200,3500,'square',.04,.08);break;
+    case'impact':cl_beep(40,15,'sawtooth',.3,.4);break;
   }
 }
 function cl_vibe(ms){if(navigator.vibrate)navigator.vibrate(ms)}
 
-/* BACKGROUND MUSIC — dark ambient loop, procedural */
+/* ======= BACKGROUND MUSIC — DARK AMBIENT ======= */
 function cl_startMusic(){
-  if(CL_musicMuted||CL_musicNodes)return;
+  if(CL_musicMuted||CL_musicPlaying)return;
   var ctx=cl_audio();if(!ctx)return;
-  var master=ctx.createGain();master.gain.value=0;master.connect(ctx.destination);
-  master.gain.linearRampToValueAtTime(.09,ctx.currentTime+3);
+  CL_musicPlaying=true;
 
-  // Deep drone bass (root A1 = 55Hz)
-  var drone=ctx.createOscillator();drone.type='sawtooth';drone.frequency.value=55;
-  var droneG=ctx.createGain();droneG.gain.value=.5;
-  var droneF=ctx.createBiquadFilter();droneF.type='lowpass';droneF.frequency.value=180;droneF.Q.value=6;
-  drone.connect(droneF);droneF.connect(droneG);droneG.connect(master);drone.start();
+  var master=ctx.createGain();
+  master.gain.setValueAtTime(0,ctx.currentTime);
+  master.gain.linearRampToValueAtTime(.12,ctx.currentTime+4);
+  master.connect(ctx.destination);
+  CL_musicGain=master;
 
-  // Fifth drone (E2 = 82Hz)
-  var fifth=ctx.createOscillator();fifth.type='sawtooth';fifth.frequency.value=82;
-  var fifthG=ctx.createGain();fifthG.gain.value=.25;
-  var fifthF=ctx.createBiquadFilter();fifthF.type='lowpass';fifthF.frequency.value=220;
-  fifth.connect(fifthF);fifthF.connect(fifthG);fifthG.connect(master);fifth.start();
+  // LAYER 1: Deep sub drone A1 55Hz
+  var drone1=ctx.createOscillator();drone1.type='sawtooth';drone1.frequency.value=55;
+  var d1f=ctx.createBiquadFilter();d1f.type='lowpass';d1f.frequency.value=160;d1f.Q.value=8;
+  var d1g=ctx.createGain();d1g.gain.value=.6;
+  drone1.connect(d1f);d1f.connect(d1g);d1g.connect(master);
+  drone1.start();
 
-  // Slow LFO on filter for breathing effect
-  var lfo=ctx.createOscillator();lfo.type='sine';lfo.frequency.value=.08;
-  var lfoG=ctx.createGain();lfoG.gain.value=80;
-  lfo.connect(lfoG);lfoG.connect(droneF.frequency);lfo.start();
+  // LAYER 2: Fifth E2 82Hz
+  var drone2=ctx.createOscillator();drone2.type='triangle';drone2.frequency.value=82.4;
+  var d2f=ctx.createBiquadFilter();d2f.type='lowpass';d2f.frequency.value=200;
+  var d2g=ctx.createGain();d2g.gain.value=.3;
+  drone2.connect(d2f);d2f.connect(d2g);d2g.connect(master);
+  drone2.start();
 
-  // Melodic minor arpeggio ostinato — A minor pentatonic
-  var notes=[220,261.63,329.63,392,329.63,261.63]; // A3 C4 E4 G4 E4 C4
-  var noteIdx=0;
-  var arpG=ctx.createGain();arpG.gain.value=.06;arpG.connect(master);
-  var delay=ctx.createDelay();delay.delayTime.value=.375;
-  var delayFB=ctx.createGain();delayFB.gain.value=.45;
-  var delayG=ctx.createGain();delayG.gain.value=.5;
-  arpG.connect(delay);delay.connect(delayFB);delayFB.connect(delay);delay.connect(delayG);delayG.connect(master);
+  // LAYER 3: High eerie pad C4 sine with vibrato
+  var pad=ctx.createOscillator();pad.type='sine';pad.frequency.value=261.63;
+  var padVib=ctx.createOscillator();padVib.type='sine';padVib.frequency.value=.5;
+  var padVibG=ctx.createGain();padVibG.gain.value=3;
+  padVib.connect(padVibG);padVibG.connect(pad.frequency);padVib.start();
+  var padG=ctx.createGain();padG.gain.value=.04;
+  pad.connect(padG);padG.connect(master);
+  pad.start();
 
-  var arpInterval=setInterval(function(){
-    if(!CL_musicNodes)return;
-    var f=notes[noteIdx%notes.length];noteIdx++;
+  // LAYER 4: LFO on filter for breathing
+  var lfo=ctx.createOscillator();lfo.type='sine';lfo.frequency.value=.06;
+  var lfoG=ctx.createGain();lfoG.gain.value=100;
+  lfo.connect(lfoG);lfoG.connect(d1f.frequency);lfo.start();
+
+  // LAYER 5: Melodic arpeggio — Am pentatonic with delay
+  var arpNotes=[220,261.63,329.63,392,440,392,329.63,261.63];
+  var arpIdx=0;
+  var arpG=ctx.createGain();arpG.gain.value=.04;
+  var delay=ctx.createDelay();delay.delayTime.value=.4;
+  var delFB=ctx.createGain();delFB.gain.value=.5;
+  var delG=ctx.createGain();delG.gain.value=.6;
+  arpG.connect(delay);delay.connect(delFB);delFB.connect(delay);delay.connect(delG);delG.connect(master);
+  arpG.connect(master);
+
+  var arpTimer=setInterval(function(){
+    if(!CL_musicPlaying)return;
+    var f=arpNotes[arpIdx%arpNotes.length];arpIdx++;
     var o=ctx.createOscillator();o.type='triangle';o.frequency.value=f;
     var g=ctx.createGain();
     g.gain.setValueAtTime(0,ctx.currentTime);
-    g.gain.linearRampToValueAtTime(.4,ctx.currentTime+.02);
-    g.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+.5);
-    o.connect(g);g.connect(arpG);
-    o.start();o.stop(ctx.currentTime+.5);
-  },500);
+    g.gain.linearRampToValueAtTime(.5,ctx.currentTime+.03);
+    g.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+.6);
+    o.connect(g);g.connect(arpG);o.start();o.stop(ctx.currentTime+.6);
+  },600);
 
-  // Occasional distant bell (random chords)
-  var bellInterval=setInterval(function(){
-    if(!CL_musicNodes||Math.random()>.4)return;
-    var bell=ctx.createOscillator();bell.type='sine';
-    var bellF=[880,1108,1318][Math.floor(Math.random()*3)];
-    bell.frequency.value=bellF;
-    var bg=ctx.createGain();
-    bg.gain.setValueAtTime(0,ctx.currentTime);
-    bg.gain.linearRampToValueAtTime(.05,ctx.currentTime+.1);
-    bg.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+3);
-    bell.connect(bg);bg.connect(master);
-    bell.start();bell.stop(ctx.currentTime+3);
-  },4000);
+  // LAYER 6: Distant bells / chimes (random)
+  var bellTimer=setInterval(function(){
+    if(!CL_musicPlaying||Math.random()>.35)return;
+    var bf=[880,1046.5,1318.5,1568,2093][Math.floor(Math.random()*5)];
+    var o=ctx.createOscillator();o.type='sine';o.frequency.value=bf;
+    var g=ctx.createGain();
+    g.gain.setValueAtTime(0,ctx.currentTime);
+    g.gain.linearRampToValueAtTime(.04,ctx.currentTime+.15);
+    g.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+4);
+    o.connect(g);g.connect(master);o.start();o.stop(ctx.currentTime+4);
+  },5000);
 
-  CL_musicNodes={master:master,drone:drone,fifth:fifth,lfo:lfo,arpInt:arpInterval,bellInt:bellInterval,ctx:ctx};
+  // LAYER 7: Reverse-style swell (every 12s)
+  var swellTimer=setInterval(function(){
+    if(!CL_musicPlaying)return;
+    var o=ctx.createOscillator();o.type='sawtooth';
+    o.frequency.value=[110,146.83,164.81][Math.floor(Math.random()*3)];
+    var f=ctx.createBiquadFilter();f.type='lowpass';
+    f.frequency.setValueAtTime(50,ctx.currentTime);
+    f.frequency.linearRampToValueAtTime(800,ctx.currentTime+3);
+    f.frequency.linearRampToValueAtTime(50,ctx.currentTime+6);
+    var g=ctx.createGain();
+    g.gain.setValueAtTime(0,ctx.currentTime);
+    g.gain.linearRampToValueAtTime(.06,ctx.currentTime+3);
+    g.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+6);
+    o.connect(f);f.connect(g);g.connect(master);o.start();o.stop(ctx.currentTime+6);
+  },12000);
+
+  CL_musicTimers=[arpTimer,bellTimer,swellTimer];
+  CL_musicNodes=[drone1,drone2,pad,padVib,lfo];
 }
+
 function cl_stopMusic(){
-  if(!CL_musicNodes)return;
-  var m=CL_musicNodes;
-  m.master.gain.linearRampToValueAtTime(0,m.ctx.currentTime+.5);
-  clearInterval(m.arpInt);clearInterval(m.bellInt);
-  setTimeout(function(){try{m.drone.stop();m.fifth.stop();m.lfo.stop()}catch(e){}},600);
-  CL_musicNodes=null;
+  if(!CL_musicPlaying)return;
+  CL_musicPlaying=false;
+  CL_musicTimers.forEach(function(t){clearInterval(t)});CL_musicTimers=[];
+  if(CL_musicGain){
+    var ctx=cl_audio();
+    CL_musicGain.gain.linearRampToValueAtTime(0,ctx.currentTime+.8);
+  }
+  setTimeout(function(){
+    if(CL_musicNodes){CL_musicNodes.forEach(function(n){try{n.stop()}catch(e){}});CL_musicNodes=null}
+    CL_musicGain=null;
+  },900);
 }
+
 function cl_toggleMusic(){
   CL_musicMuted=!CL_musicMuted;
   localStorage.setItem('CL_musicMuted',CL_musicMuted?'1':'0');
-  document.getElementById('cl-music').textContent=CL_musicMuted?'🎵̸':'🎵';
+  document.getElementById('cl-music').textContent=CL_musicMuted?'⛔':'🎵';
   if(CL_musicMuted)cl_stopMusic();else cl_startMusic();
   cl_vibe(22);
 }
@@ -280,53 +395,67 @@ function cl_show(id){
   var el=document.getElementById('cl-screen-'+id);if(el)el.classList.add('cl-active');
 }
 
-/* UPGRADED JAW TRANSITION */
+/* JAW TRANSITION */
 function cl_shake(){
   var app=document.getElementById('cl-app');
+  app.classList.remove('cl-shake');
+  void app.offsetWidth;
   app.classList.add('cl-shake');
-  setTimeout(function(){app.classList.remove('cl-shake')},350);
+  setTimeout(function(){app.classList.remove('cl-shake')},400);
 }
-function cl_bite(x,y){
-  // sparks bursting from center
-  var colors=['#ffdd00','#ff4400','#ffffff','#ff0000','#ffaa00','#ff6600'];
-  for(var i=0;i<12;i++){
-    var s=document.createElement('div');
-    s.className='cl-spark';
-    s.style.color=colors[i%colors.length];
-    s.style.background=colors[i%colors.length];
-    s.style.left=(50+Math.random()*4-2)+'%';
-    s.style.top='50%';
-    var ang=(i/12)*Math.PI*2;
-    var dist=80+Math.random()*120;
-    var tx=Math.cos(ang)*dist;
-    var ty=Math.sin(ang)*dist;
-    s.animate([
-      {transform:'translate(-50%,-50%) scale(1)',opacity:1},
-      {transform:'translate('+(tx-50)+'%,'+(ty-50)+'%) scale(0)',opacity:0}
-    ],{duration:700,easing:'cubic-bezier(.3,.7,.4,1)'});
-    document.body.appendChild(s);
-    setTimeout(function(sp){return function(){sp.remove()}}(s),700);
+function cl_eyeFlash(){
+  var f=document.getElementById('cl-eyeflash');
+  f.classList.add('cl-flash');
+  setTimeout(function(){f.classList.remove('cl-flash')},200);
+}
+function cl_bloodDrips(){
+  for(var i=0;i<8;i++){
+    var d=document.createElement('div');d.className='cl-drip';
+    d.style.left=(10+Math.random()*80)+'%';
+    d.style.animationDelay=(Math.random()*.3)+'s';
+    d.style.width=(3+Math.random()*3)+'px';
+    document.getElementById('cl-jaw').appendChild(d);
+    setTimeout(function(el){return function(){el.remove()}}(d),1800);
   }
-  cl_snd('spark');
 }
+function cl_sparks(){
+  var colors=['#ffdd00','#ff4400','#ffffff','#ff0000','#ffaa00','#ff6600','#ff2200','#ffcc00'];
+  for(var i=0;i<16;i++){
+    var s=document.createElement('div');s.className='cl-spark';
+    var c=colors[i%colors.length];
+    s.style.color=c;s.style.background=c;
+    s.style.left='50%';s.style.top='50%';
+    var sz=3+Math.random()*5;s.style.width=sz+'px';s.style.height=sz+'px';
+    var ang=(i/16)*Math.PI*2;
+    var dist=100+Math.random()*180;
+    var tx=Math.cos(ang)*dist;var ty=Math.sin(ang)*dist;
+    s.animate([
+      {transform:'translate(-50%,-50%) scale(1.5)',opacity:1},
+      {transform:'translate(calc(-50% + '+tx+'px),calc(-50% + '+ty+'px)) scale(0)',opacity:0}
+    ],{duration:800,easing:'cubic-bezier(.2,.8,.3,1)'});
+    document.body.appendChild(s);
+    setTimeout(function(el){return function(){el.remove()}}(s),800);
+  }
+}
+
 function cl_transition(toId){
   var jaw=document.getElementById('cl-jaw');
   jaw.classList.add('cl-show','cl-closing');
-  cl_snd('chomp');cl_vibe([80,20,120]);
-  // impact at close
+  cl_snd('chomp');cl_vibe([100,30,150]);
+
   setTimeout(function(){
     jaw.classList.add('cl-closed');
-    cl_shake();
-    cl_bite();
-    cl_vibe(60);
+    cl_shake();cl_eyeFlash();cl_sparks();cl_bloodDrips();
+    cl_snd('impact');cl_vibe(80);
     cl_show(toId);
-  },500);
-  // reopen
+  },550);
+
   setTimeout(function(){
     jaw.classList.remove('cl-closing','cl-closed');
     cl_snd('pop');
-  },750);
-  setTimeout(function(){jaw.classList.remove('cl-show')},1300);
+  },900);
+
+  setTimeout(function(){jaw.classList.remove('cl-show')},1500);
 }
 
 /* POPUP */
@@ -341,17 +470,39 @@ function cl_closePopup(){
   cl_snd('click');cl_vibe(22);
 }
 
+/* CLICK EFFECTS */
 function cl_ripple(x,y){
   var r=document.createElement('div');r.className='cl-ripple';
   r.style.left=x+'px';r.style.top=y+'px';
-  r.style.width='140px';r.style.height='140px';
+  r.style.width='160px';r.style.height='160px';
+  r.innerHTML='<div class="cl-ripple-inner"></div>';
   document.body.appendChild(r);
-  setTimeout(function(){r.remove()},600);
+  setTimeout(function(){r.remove()},650);
+}
+function cl_btnParticles(x,y){
+  var colors=['#ff4400','#ffdd00','#ffffff','#ff0000','#00ff88','#4488ff'];
+  for(var i=0;i<8;i++){
+    var p=document.createElement('div');p.className='cl-particle';
+    p.style.background=colors[i%colors.length];
+    p.style.boxShadow='0 0 6px '+colors[i%colors.length];
+    p.style.left=x+'px';p.style.top=y+'px';
+    var ang=Math.random()*Math.PI*2;
+    var dist=40+Math.random()*70;
+    var tx=Math.cos(ang)*dist;var ty=Math.sin(ang)*dist;
+    p.animate([
+      {transform:'translate(-50%,-50%) scale(1.5)',opacity:1},
+      {transform:'translate(calc(-50% + '+tx+'px),calc(-50% + '+ty+'px)) scale(0)',opacity:0}
+    ],{duration:550,easing:'ease-out'});
+    document.body.appendChild(p);
+    setTimeout(function(el){return function(){el.remove()}}(p),550);
+  }
 }
 
 document.addEventListener('click',function(e){
   var t=e.target.closest('.cl-hit');if(!t)return;
   cl_ripple(e.clientX,e.clientY);
+  cl_btnParticles(e.clientX,e.clientY);
+  t.classList.remove('cl-tapped');void t.offsetWidth;t.classList.add('cl-tapped');
   var act=t.getAttribute('data-cl-action');
   if(t.classList.contains('cl-locked')){
     cl_snd('lock');cl_vibe(60);
@@ -360,20 +511,20 @@ document.addEventListener('click',function(e){
   }
   cl_snd('click');cl_vibe(22);
   switch(act){
-    case 'play':cl_transition('worlds');break;
-    case 'soon':cl_popup('COMING SOON',(t.getAttribute('data-cl-name')||'This feature')+' ships in the next update.');break;
-    case 'howto':cl_popup('HOW TO PLAY','Tap = jump.\nReach the flag.\nAvoid every trap.\nDie = restart.\nRage responsibly.');break;
-    case 'coins':cl_popup('COINS','Balance: '+CL_coins+' coins.\n\nEarn by beating levels + finding hidden pickups.');break;
-    case 'back-menu':cl_transition('menu');break;
-    case 'back-worlds':cl_transition('worlds');break;
-    case 'world':
+    case'play':cl_transition('worlds');break;
+    case'soon':cl_popup('COMING SOON',(t.getAttribute('data-cl-name')||'Feature')+' ships in the next update.');break;
+    case'howto':cl_popup('HOW TO PLAY','Tap = jump.\nReach the flag.\nAvoid every trap.\nDie = restart.\nRage responsibly.');break;
+    case'coins':cl_popup('COINS','Balance: '+CL_coins+' coins.\n\nEarn by beating levels.');break;
+    case'back-menu':cl_transition('menu');break;
+    case'back-worlds':cl_transition('worlds');break;
+    case'world':
       var w=parseInt(t.getAttribute('data-cl-world'));
       if(CL_unlockedWorlds.indexOf(w)<0){cl_snd('lock');cl_popup('WORLD LOCKED','Beat the previous world first.');return}
       cl_transition('levels');break;
-    case 'level':
+    case'level':
       var lv=parseInt(t.getAttribute('data-cl-level'));
-      cl_popup('LEVEL '+lv,'Gameplay engine ships next build.\nMenu system verified.');break;
-    case 'boss':cl_popup('HOLLOW KING','Boss fight unlocks after Level 10.');break;
+      cl_popup('LEVEL '+lv,'Gameplay ships in next build.');break;
+    case'boss':cl_popup('HOLLOW KING','Boss fight unlocks after Level 10.');break;
   }
 });
 
@@ -394,20 +545,27 @@ function cl_toggleMute(){
   cl_vibe(22);
 }
 document.getElementById('cl-mute').textContent=CL_soundMuted?'🔇':'🔊';
-document.getElementById('cl-music').textContent=CL_musicMuted?'🎵̸':'🎵';
+document.getElementById('cl-music').textContent=CL_musicMuted?'⛔':'🎵';
 
 function cl_spawnEmbers(){
   var app=document.getElementById('cl-app');
-  for(var i=0;i<18;i++){
-    var e=document.createElement('div');
-    e.className='cl-ember';
-    e.style.left=(Math.random()*100)+'%';
-    e.style.bottom='-10px';
-    e.style.animationDuration=(6+Math.random()*7)+'s';
-    e.style.animationDelay=(Math.random()*10)+'s';
-    var sz=(2+Math.random()*3);
-    e.style.width=sz+'px';e.style.height=sz+'px';
+  for(var i=0;i<22;i++){
+    var e=document.createElement('div');e.className='cl-ember';
+    e.style.left=(Math.random()*100)+'%';e.style.bottom='-10px';
+    e.style.animationDuration=(5+Math.random()*8)+'s';
+    e.style.animationDelay=(Math.random()*12)+'s';
+    var sz=2+Math.random()*4;e.style.width=sz+'px';e.style.height=sz+'px';
     app.appendChild(e);
+  }
+}
+function cl_spawnDust(){
+  var app=document.getElementById('cl-app');
+  for(var i=0;i<12;i++){
+    var d=document.createElement('div');d.className='cl-dust';
+    d.style.left=(Math.random()*100)+'%';d.style.bottom=(Math.random()*30)+'%';
+    d.style.animationDuration=(10+Math.random()*15)+'s';
+    d.style.animationDelay=(Math.random()*10)+'s';
+    app.appendChild(d);
   }
 }
 
@@ -416,22 +574,21 @@ function cl_runLoading(){
   var p=0;
   cl_snd('boot');
   var iv=setInterval(function(){
-    p+=2.5;
-    bar.style.width=p+'%';
+    p+=2.5;bar.style.width=p+'%';
     if(p%20===0)cl_snd('load');
     if(p>=100){
       clearInterval(iv);
-      setTimeout(function(){cl_transition('menu');cl_spawnEmbers()},400);
+      setTimeout(function(){cl_transition('menu');cl_spawnEmbers();cl_spawnDust()},500);
     }
   },100);
 }
 
-/* START GATE — required to enable audio on mobile */
 function cl_startBoot(){
   document.getElementById('cl-startgate').classList.add('cl-hide');
-  cl_audio(); // init AudioContext with user gesture
+  var ctx=cl_audio();
+  if(ctx&&ctx.state==='suspended')ctx.resume();
   cl_startMusic();
-  setTimeout(cl_runLoading,300);
+  setTimeout(cl_runLoading,400);
 }
 </script>
 </body>
