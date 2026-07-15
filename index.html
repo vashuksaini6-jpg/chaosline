@@ -2,594 +2,363 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#000000">
 <title>CHAOSLINE</title>
-<link rel="preload" as="image" href="loading.png">
-<link rel="preload" as="image" href="main_menu.png">
-<link rel="preload" as="image" href="world_select.png">
-<link rel="preload" as="image" href="level_select.png">
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
 <style>
-*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none;touch-action:manipulation;font-family:'Press Start 2P',monospace}
-html,body{width:100%;height:100%;overflow:hidden;background:#000;color:#fff}
-#cl-app{position:fixed;inset:0;overflow:hidden;background:#000}
-#cl-app.cl-shake{animation:cl-shake .4s ease-in-out}
-@keyframes cl-shake{0%,100%{transform:translate(0)}10%{transform:translate(-8px,4px)}20%{transform:translate(7px,-5px)}30%{transform:translate(-6px,-4px)}40%{transform:translate(5px,5px)}50%{transform:translate(-5px,3px)}60%{transform:translate(4px,-4px)}70%{transform:translate(-3px,4px)}80%{transform:translate(3px,-3px)}90%{transform:translate(-2px,2px)}}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none;touch-action:manipulation}
+html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Press Start 2P',monospace;color:#fff}
+img{image-rendering:pixelated;image-rendering:-moz-crisp-edges;image-rendering:crisp-edges}
 
-.cl-screen{position:absolute;inset:0;background-size:cover;background-position:center;background-repeat:no-repeat;background-color:#000;display:none;opacity:0;transition:opacity .5s ease}
-.cl-screen.cl-active{display:block;opacity:1}
+/* SCREEN CONTAINER */
+.cl-stage{position:fixed;inset:0;background:#000;overflow:hidden}
+.cl-screen{position:absolute;inset:0;display:none;opacity:0;transform:scale(0.92);transition:opacity .45s ease,transform .45s ease;will-change:opacity,transform}
+.cl-screen.cl-active{display:block}
+.cl-screen.cl-shown{opacity:1;transform:scale(1)}
+.cl-screen.cl-closing{opacity:0;transform:scale(1.08);transition:opacity .35s ease,transform .35s ease}
 
-/* VIGNETTE OVERLAY — breathing dark edges */
-#cl-vignette{position:fixed;inset:0;pointer-events:none;z-index:3;background:radial-gradient(ellipse at center,transparent 50%,rgba(0,0,0,.4) 80%,rgba(0,0,0,.8) 100%);animation:cl-vig 4s ease-in-out infinite}
-@keyframes cl-vig{0%,100%{opacity:.6}50%{opacity:1}}
+/* BACKGROUND IMG */
+.cl-bg{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:100%;height:100%;object-fit:contain;pointer-events:none;display:block}
 
-/* HITBOXES */
-.cl-hit{position:absolute;cursor:pointer;background:transparent;border:none;transition:transform .15s ease,filter .15s ease}
+/* HITBOX WRAPPER — sits over the bg using % relative to viewport */
+.cl-hit{position:absolute;background:transparent;cursor:pointer;transition:transform .08s ease,filter .15s ease;z-index:5}
+.cl-hit:active{transform:scale(0.93);filter:brightness(1.6) drop-shadow(0 0 12px #ff2244)}
 .cl-hit.cl-locked{cursor:not-allowed}
-.cl-hit.cl-locked::after{content:"🔒";position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:clamp(20px,5vw,40px);text-shadow:0 0 6px #000,0 0 10px #000;filter:drop-shadow(0 0 4px rgba(0,0,0,.9));z-index:5;pointer-events:none;animation:cl-lockfloat 2s ease-in-out infinite}
-@keyframes cl-lockfloat{0%,100%{transform:translate(-50%,-50%) translateY(0)}50%{transform:translate(-50%,-50%) translateY(-4px)}}
-.cl-hit.cl-locked::before{content:"";position:absolute;inset:0;background:rgba(0,0,0,.5);z-index:4}
+.cl-hit.cl-locked:active{transform:scale(0.98);filter:brightness(0.7)}
 
-/* BUTTON CLICK ANIMATION */
-.cl-hit.cl-tapped{animation:cl-btnclick .3s ease-out}
-@keyframes cl-btnclick{0%{transform:scale(1);filter:brightness(1)}20%{transform:scale(.88);filter:brightness(1.8)}50%{transform:scale(1.06);filter:brightness(1.3)}100%{transform:scale(1);filter:brightness(1)}}
+/* PORTRAIT WARNING */
+.cl-rotate{position:fixed;inset:0;background:#000;display:none;z-index:9999;align-items:center;justify-content:center;text-align:center;padding:20px;font-size:14px;line-height:1.8;color:#ff2244}
+@media (orientation:portrait){.cl-rotate{display:flex}}
 
-/* HOVER GLOW for unlocked */
-.cl-hit:not(.cl-locked){animation:cl-pulse 3s ease-in-out infinite}
-@keyframes cl-pulse{0%,100%{filter:brightness(1) drop-shadow(0 0 0 transparent)}50%{filter:brightness(1.1) drop-shadow(0 0 8px rgba(255,60,0,.3))}}
+/* LOADING SCREEN */
+#cl-loading .cl-loader-bar{position:absolute;left:26%;top:80.5%;width:48%;height:5%;border:2px solid #ff2244;background:transparent;overflow:hidden;box-shadow:0 0 12px rgba(255,34,68,.6);z-index:6}
+#cl-loading .cl-loader-fill{width:0%;height:100%;background:linear-gradient(90deg,#8a0011,#ff2244,#ff5566);box-shadow:0 0 20px #ff2244,inset 0 0 10px rgba(255,255,255,.3);transition:width .1s linear}
 
-/* CLICK RIPPLE */
-.cl-ripple{position:fixed;border-radius:50%;pointer-events:none;transform:translate(-50%,-50%) scale(0);z-index:9000}
-.cl-ripple-inner{width:100%;height:100%;border-radius:50%;background:radial-gradient(circle,rgba(255,80,40,.8),rgba(255,255,255,.4) 30%,transparent 70%);animation:cl-rip .6s ease-out forwards}
-@keyframes cl-rip{to{transform:scale(5);opacity:0}}
+/* COMING SOON TOAST */
+.cl-toast{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(0.6);background:rgba(20,0,0,.95);border:2px solid #ff2244;color:#fff;padding:18px 28px;font-size:12px;letter-spacing:2px;z-index:10000;opacity:0;pointer-events:none;transition:opacity .25s,transform .25s;box-shadow:0 0 30px rgba(255,34,68,.7);text-align:center;line-height:1.6}
+.cl-toast.cl-toast-show{opacity:1;transform:translate(-50%,-50%) scale(1)}
 
-/* CLICK PARTICLES */
-.cl-particle{position:fixed;width:5px;height:5px;border-radius:50%;pointer-events:none;z-index:9001}
+/* FLASH TRANSITION */
+.cl-flash{position:fixed;inset:0;background:#ff2244;opacity:0;pointer-events:none;z-index:9998;transition:opacity .18s}
+.cl-flash.cl-flash-on{opacity:0.35}
 
-/* LOADING BAR */
-#cl-loadbar{position:absolute;left:12.5%;bottom:11%;width:75%;height:5.5%;overflow:hidden;z-index:3;border:1px solid rgba(255,0,0,.3)}
-#cl-loadbar-fill{width:0%;height:100%;background:linear-gradient(90deg,#4a0000,#8b0000 20%,#ff2222 50%,#ff6644 80%,#ffaa66);box-shadow:0 0 14px #ff0000,0 0 30px rgba(255,0,0,.5),inset 0 0 6px rgba(255,255,255,.2);transition:width .1s linear;position:relative}
-#cl-loadbar-fill::after{content:"";position:absolute;top:0;right:-2px;width:8px;height:100%;background:#fff;box-shadow:0 0 14px #fff,0 0 25px #ff4444;animation:cl-flick .2s ease-in-out infinite}
-@keyframes cl-flick{0%,100%{opacity:1;height:100%}50%{opacity:.6;height:80%}}
-#cl-loadbar-fill::before{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(255,255,255,.15) 0%,transparent 50%,rgba(0,0,0,.2) 100%)}
+/* MUSIC TOGGLE */
+.cl-mute{position:fixed;top:8px;right:8px;width:34px;height:34px;background:rgba(0,0,0,.6);border:2px solid #ff2244;color:#ff2244;font-size:8px;z-index:9997;cursor:pointer;display:none;align-items:center;justify-content:center;border-radius:4px}
+.cl-mute.cl-visible{display:flex}
 
-/* LOADING GLOW PULSE */
-#cl-screen-loading::after{content:"";position:absolute;inset:0;background:radial-gradient(circle at 50% 40%,rgba(255,0,0,.08),transparent 60%);animation:cl-lglow 2s ease-in-out infinite;pointer-events:none}
-@keyframes cl-lglow{0%,100%{opacity:.3}50%{opacity:.8}}
-
-/* EMBERS */
-.cl-ember{position:absolute;background:#ff4400;border-radius:50%;box-shadow:0 0 6px #ff6600,0 0 12px #ff2200;pointer-events:none;z-index:2;animation:cl-float linear infinite}
-@keyframes cl-float{0%{transform:translateY(0) translateX(0) scale(1);opacity:0}10%{opacity:.9}50%{transform:translateY(-50vh) translateX(15px) scale(.8);opacity:.7}90%{opacity:.3}100%{transform:translateY(-105vh) translateX(-10px) scale(.4);opacity:0}}
-
-/* SCANLINE OVERLAY */
-#cl-scanlines{position:fixed;inset:0;pointer-events:none;z-index:4;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.06) 2px,rgba(0,0,0,.06) 4px);animation:cl-scanmove 8s linear infinite}
-@keyframes cl-scanmove{from{background-position-y:0}to{background-position-y:100px}}
-
-/* FLOATING DUST MOTES */
-.cl-dust{position:absolute;width:2px;height:2px;background:rgba(255,200,150,.4);border-radius:50%;pointer-events:none;z-index:2;animation:cl-dustmove linear infinite}
-@keyframes cl-dustmove{0%{transform:translate(0,0);opacity:0}20%{opacity:.6}80%{opacity:.4}100%{transform:translate(30px,-80vh);opacity:0}}
-
-/* TITLE GLOW — behind menu title */
-#cl-titleglow{position:absolute;left:5%;top:0;width:50%;height:25%;background:radial-gradient(ellipse,rgba(255,0,0,.12),transparent 70%);pointer-events:none;z-index:1;animation:cl-tglow 3s ease-in-out infinite}
-@keyframes cl-tglow{0%,100%{opacity:.3;transform:scale(1)}50%{opacity:.8;transform:scale(1.05)}}
-
-/* CHARACTER IDLE — subtle sway behind hit area */
-#cl-charsway{position:absolute;right:15%;bottom:10%;width:30%;height:70%;pointer-events:none;z-index:1;animation:cl-sway 4s ease-in-out infinite}
-@keyframes cl-sway{0%,100%{transform:translateX(0) rotate(0)}25%{transform:translateX(2px) rotate(.3deg)}75%{transform:translateX(-2px) rotate(-.3deg)}}
-
-/* WORLD CARD GLOW — each world softly breathes */
-.cl-worldglow{position:absolute;pointer-events:none;z-index:1;border-radius:8px;animation:cl-wglow 3s ease-in-out infinite}
-@keyframes cl-wglow{0%,100%{box-shadow:inset 0 0 20px transparent,0 0 0 transparent}50%{box-shadow:inset 0 0 30px rgba(255,255,255,.05),0 0 15px var(--wc,rgba(255,0,0,.2))}}
-
-/* ======= UPGRADED JAW ======= */
-#cl-jaw{position:fixed;inset:0;pointer-events:none;z-index:9500;display:none;overflow:hidden}
-#cl-jaw.cl-show{display:block}
-.cl-jaw-top,.cl-jaw-bot{position:absolute;left:-3%;width:106%;background:linear-gradient(to bottom,#050000 0%,#0a0000 40%,#1a0000 100%);transition:transform .55s cubic-bezier(.7,-.15,.4,1.1)}
-.cl-jaw-top{top:0;height:55%;transform:translateY(-102%);box-shadow:0 10px 50px #ff0000,0 0 100px rgba(255,0,0,.5)}
-.cl-jaw-bot{bottom:0;height:55%;transform:translateY(102%);box-shadow:0 -10px 50px #ff0000,0 0 100px rgba(255,0,0,.5)}
-.cl-teeth-top,.cl-teeth-bot{position:absolute;left:0;right:0;height:50px;pointer-events:none}
-.cl-teeth-top{bottom:-50px;background:#0a0000;clip-path:polygon(0 0,3% 0,4% 100%,7% 0,8% 100%,11% 0,14% 100%,17% 0,19% 100%,22% 0,25% 100%,28% 0,30% 100%,33% 0,36% 100%,39% 0,41% 100%,44% 0,47% 100%,50% 0,53% 100%,56% 0,58% 100%,61% 0,64% 100%,67% 0,69% 100%,72% 0,75% 100%,78% 0,80% 100%,83% 0,86% 100%,89% 0,91% 100%,94% 0,97% 100%,100% 0);filter:drop-shadow(0 6px 10px #ff0000)}
-.cl-teeth-bot{top:-50px;background:#0a0000;clip-path:polygon(0 100%,3% 100%,4% 0,7% 100%,8% 0,11% 100%,14% 0,17% 100%,19% 0,22% 100%,25% 0,28% 100%,30% 0,33% 100%,36% 0,39% 100%,41% 0,44% 100%,47% 0,50% 100%,53% 0,56% 100%,58% 0,61% 100%,64% 0,67% 100%,69% 0,72% 100%,75% 0,78% 100%,80% 0,83% 100%,86% 0,89% 100%,91% 0,94% 100%,97% 0,100% 100%);filter:drop-shadow(0 -6px 10px #ff0000)}
-.cl-throat{position:absolute;left:0;right:0;top:45%;height:10%;background:radial-gradient(ellipse at center,#ff2200 0%,#8b0000 30%,#440000 60%,transparent 100%);pointer-events:none;opacity:0;transition:opacity .3s;filter:blur(3px)}
-#cl-jaw.cl-closed .cl-throat{opacity:1}
-#cl-jaw.cl-closing .cl-jaw-top{transform:translateY(-45%)}
-#cl-jaw.cl-closing .cl-jaw-bot{transform:translateY(45%)}
-/* BLOOD DRIPS */
-.cl-drip{position:absolute;width:4px;background:linear-gradient(180deg,#8b0000,#ff2200);border-radius:0 0 3px 3px;pointer-events:none;z-index:9550;opacity:0;animation:cl-drip 1.5s ease-in forwards}
-@keyframes cl-drip{0%{height:0;opacity:0;top:50%}10%{opacity:1}100%{height:60px;top:80%;opacity:0}}
-/* EYE FLASH */
-#cl-eyeflash{position:fixed;inset:0;background:radial-gradient(circle at 50% 50%,rgba(255,0,0,.5),transparent 50%);pointer-events:none;z-index:9550;opacity:0;transition:opacity .15s}
-#cl-eyeflash.cl-flash{opacity:1}
-
-/* POPUP */
-#cl-popup{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:9000;display:none;align-items:center;justify-content:center;padding:20px;opacity:0;transition:opacity .3s}
-#cl-popup.cl-show{display:flex;opacity:1}
-.cl-popup-box{background:linear-gradient(135deg,#1a0505,#2a0808);border:3px solid #ff2222;padding:20px 28px;max-width:80%;text-align:center;box-shadow:0 0 30px #ff0000,0 0 60px rgba(255,0,0,.3),inset 0 0 20px rgba(255,0,0,.15);transform:scale(.7) rotate(-2deg);transition:transform .4s cubic-bezier(.2,1.8,.4,1)}
-#cl-popup.cl-show .cl-popup-box{transform:scale(1) rotate(0)}
-.cl-popup-title{color:#ff4444;font-size:13px;margin-bottom:12px;letter-spacing:2px;text-shadow:0 0 8px #ff0000}
-.cl-popup-msg{color:#ccc;font-size:9px;line-height:1.7;margin-bottom:18px;white-space:pre-line}
-.cl-popup-close{background:linear-gradient(180deg,#ff4444,#cc0000);color:#fff;border:none;padding:10px 22px;font-family:'Press Start 2P',monospace;font-size:10px;cursor:pointer;box-shadow:0 3px 0 #660000;letter-spacing:1px;transition:transform .1s}
-.cl-popup-close:active{transform:translateY(2px);box-shadow:0 1px 0 #660000}
-
-#cl-corner{position:fixed;bottom:6px;left:6px;z-index:8000;display:flex;gap:4px}
-.cl-cbtn{background:rgba(0,0,0,.7);border:1px solid #ff2222;color:#fff;padding:6px 8px;font-family:'Press Start 2P',monospace;font-size:11px;cursor:pointer;border-radius:3px;transition:background .2s}
-.cl-cbtn:active{background:rgba(255,0,0,.3)}
-
-/* ROTATION */
-#cl-rotate{position:fixed;inset:0;background:linear-gradient(180deg,#000,#0a0000);z-index:9999;display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:20px}
-@media(orientation:portrait){#cl-rotate{display:flex}}
-.cl-phone{font-size:80px;animation:cl-bounce 1s infinite}
-@keyframes cl-bounce{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-20px) rotate(90deg)}}
-.cl-rotate-title{color:gold;font-size:18px;margin:24px 0 12px;letter-spacing:2px;text-shadow:0 0 10px rgba(255,215,0,.5)}
-.cl-rotate-sub{color:#aaa;font-size:10px;margin-bottom:32px;line-height:1.6}
-.cl-rotate-btn{background:gold;color:#000;border:none;padding:16px 28px;font-family:'Press Start 2P',monospace;font-size:12px;box-shadow:0 4px 0 #a67c00;border-radius:4px;display:flex;align-items:center;gap:10px}
-.cl-rotate-btn:active{transform:translateY(2px);box-shadow:0 2px 0 #a67c00}
-.cl-spin{display:inline-block;animation:cl-spin 2s linear infinite;font-size:16px}
-@keyframes cl-spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
-
-/* START GATE */
-#cl-startgate{position:fixed;inset:0;background:#000;z-index:10000;display:flex;align-items:center;justify-content:center;flex-direction:column;cursor:pointer}
-#cl-startgate.cl-hide{display:none}
-.cl-gate-title{color:#ff2222;font-size:clamp(20px,5vw,32px);letter-spacing:4px;text-shadow:0 0 20px #ff0000,0 0 40px #880000;animation:cl-gpulse 1.5s ease-in-out infinite}
-.cl-gate-line{width:60%;height:2px;background:linear-gradient(90deg,transparent,#ff0000,transparent);margin:16px 0;animation:cl-linepulse 2s ease-in-out infinite}
-@keyframes cl-linepulse{0%,100%{opacity:.3;width:40%}50%{opacity:1;width:70%}}
-.cl-gate-sub{color:#888;font-size:10px;animation:cl-blink 1.2s infinite}
-@keyframes cl-gpulse{0%,100%{text-shadow:0 0 20px #ff0000,0 0 40px #880000}50%{text-shadow:0 0 40px #ff4444,0 0 80px #ff0000,0 0 120px #880000}}
-@keyframes cl-blink{0%,100%{opacity:1}50%{opacity:.2}}
-
-body{animation:cl-fadein 1.2s ease-in}
-@keyframes cl-fadein{from{opacity:0;filter:brightness(0) blur(4px)}to{opacity:1;filter:brightness(1) blur(0)}}
-
-/* SPARK */
-.cl-spark{position:fixed;pointer-events:none;z-index:9600;border-radius:50%;box-shadow:0 0 8px currentColor,0 0 16px currentColor}
+/* START GATE (needed to unlock audio on mobile) */
+#cl-gate{position:fixed;inset:0;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:10001;cursor:pointer;text-align:center;padding:20px}
+#cl-gate h1{font-size:28px;color:#ff2244;text-shadow:0 0 20px #ff2244;margin-bottom:20px;letter-spacing:4px;animation:cl-pulse 1.4s ease-in-out infinite}
+#cl-gate p{font-size:10px;color:#888;letter-spacing:2px}
+@keyframes cl-pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.6;transform:scale(0.96)}}
 </style>
 </head>
 <body>
 
-<div id="cl-startgate" onclick="cl_startBoot()">
-  <div class="cl-gate-title">CHAOSLINE</div>
-  <div class="cl-gate-line"></div>
-  <div class="cl-gate-sub">▶ TAP TO ENTER</div>
+<div id="cl-gate">
+  <h1>CHAOSLINE</h1>
+  <p>TAP TO ENTER</p>
 </div>
 
-<div id="cl-app">
+<div class="cl-stage" id="cl-stage">
 
-  <div id="cl-screen-loading" class="cl-screen cl-active" style="background-image:url('loading.png')">
-    <div id="cl-loadbar"><div id="cl-loadbar-fill"></div></div>
+  <!-- LOADING -->
+  <div class="cl-screen" id="cl-loading">
+    <img class="cl-bg" src="loading.png" alt="">
+    <div class="cl-loader-bar"><div class="cl-loader-fill" id="cl-loader-fill"></div></div>
   </div>
 
-  <div id="cl-screen-menu" class="cl-screen" style="background-image:url('main_menu.png')">
-    <div id="cl-titleglow"></div>
-    <div id="cl-charsway"></div>
-    <div class="cl-hit" style="left:13%;top:32%;width:28%;height:15%" data-cl-action="play"></div>
-    <div class="cl-hit" style="left:14%;top:51%;width:13%;height:10%" data-cl-action="soon" data-cl-name="SKIN"></div>
-    <div class="cl-hit" style="left:27%;top:51%;width:13%;height:10%" data-cl-action="soon" data-cl-name="SHOP"></div>
-    <div class="cl-hit" style="left:13%;top:66%;width:13%;height:10%" data-cl-action="soon" data-cl-name="BACKPACK"></div>
-    <div class="cl-hit" style="left:26%;top:66%;width:15%;height:10%" data-cl-action="soon" data-cl-name="STATS"></div>
-    <div class="cl-hit" style="left:19%;top:86%;width:15%;height:5%" data-cl-action="howto"></div>
-    <div class="cl-hit" style="left:74%;top:5%;width:15%;height:11%" data-cl-action="coins"></div>
+  <!-- MAIN MENU -->
+  <div class="cl-screen" id="cl-menu">
+    <img class="cl-bg" src="main_menu.png" alt="">
+    <div class="cl-hit" data-action="play"     style="left:13%;top:32%;width:28%;height:15%"></div>
+    <div class="cl-hit cl-locked" data-action="soon" data-name="SKIN"     style="left:14%;top:51%;width:13%;height:10%"></div>
+    <div class="cl-hit cl-locked" data-action="soon" data-name="SHOP"     style="left:27%;top:51%;width:13%;height:10%"></div>
+    <div class="cl-hit cl-locked" data-action="soon" data-name="BACKPACK" style="left:13%;top:66%;width:13%;height:10%"></div>
+    <div class="cl-hit cl-locked" data-action="soon" data-name="STATS"    style="left:26%;top:66%;width:15%;height:10%"></div>
+    <div class="cl-hit cl-locked" data-action="soon" data-name="HOW TO PLAY" style="left:19%;top:86%;width:15%;height:5%"></div>
   </div>
 
-  <div id="cl-screen-worlds" class="cl-screen" style="background-image:url('world_select.png')">
-    <div class="cl-worldglow" style="left:15%;top:13%;width:20%;height:75%;--wc:rgba(0,255,0,.2)"></div>
-    <div class="cl-worldglow" style="left:40%;top:13%;width:20%;height:75%;--wc:rgba(255,60,0,.2)"></div>
-    <div class="cl-worldglow" style="left:66%;top:12%;width:20%;height:75%;--wc:rgba(150,0,255,.2)"></div>
-    <div class="cl-hit" style="left:10%;top:5%;width:6%;height:12%" data-cl-action="back-menu"></div>
-    <div class="cl-hit" style="left:15%;top:13%;width:20%;height:75%" data-cl-action="world" data-cl-world="0"></div>
-    <div class="cl-hit cl-locked" style="left:40%;top:13%;width:20%;height:75%" data-cl-action="world" data-cl-world="1"></div>
-    <div class="cl-hit cl-locked" style="left:66%;top:12%;width:20%;height:75%" data-cl-action="world" data-cl-world="2"></div>
+  <!-- WORLD SELECT -->
+  <div class="cl-screen" id="cl-world">
+    <img class="cl-bg" src="world_select.png" alt="">
+    <div class="cl-hit" data-action="back-menu" style="left:10%;top:5%;width:6%;height:12%"></div>
+    <div class="cl-hit" data-action="world" data-world="1"                style="left:15%;top:13%;width:20%;height:75%"></div>
+    <div class="cl-hit cl-locked" data-action="soon" data-name="INFERNO"  style="left:40%;top:13%;width:20%;height:75%"></div>
+    <div class="cl-hit cl-locked" data-action="soon" data-name="ABYSS"    style="left:66%;top:12%;width:20%;height:75%"></div>
   </div>
 
-  <div id="cl-screen-levels" class="cl-screen" style="background-image:url('level_select.png')">
-    <div class="cl-hit" style="left:15%;top:6%;width:5%;height:12%" data-cl-action="back-worlds"></div>
-    <div class="cl-hit" style="left:24%;top:34%;width:6%;height:12%" data-cl-action="level" data-cl-level="1"></div>
-    <div class="cl-hit cl-locked" style="left:33%;top:34%;width:6%;height:12%" data-cl-action="level" data-cl-level="2"></div>
-    <div class="cl-hit cl-locked" style="left:43%;top:34%;width:6%;height:12%" data-cl-action="level" data-cl-level="3"></div>
-    <div class="cl-hit cl-locked" style="left:52%;top:34%;width:6%;height:12%" data-cl-action="level" data-cl-level="4"></div>
-    <div class="cl-hit cl-locked" style="left:62%;top:35%;width:6%;height:12%" data-cl-action="level" data-cl-level="5"></div>
-    <div class="cl-hit cl-locked" style="left:24%;top:64%;width:6%;height:12%" data-cl-action="level" data-cl-level="10"></div>
-    <div class="cl-hit cl-locked" style="left:33%;top:64%;width:6%;height:12%" data-cl-action="level" data-cl-level="6"></div>
-    <div class="cl-hit cl-locked" style="left:42%;top:64%;width:6%;height:12%" data-cl-action="level" data-cl-level="7"></div>
-    <div class="cl-hit cl-locked" style="left:52%;top:65%;width:6%;height:12%" data-cl-action="level" data-cl-level="8"></div>
-    <div class="cl-hit cl-locked" style="left:61%;top:64%;width:6%;height:12%" data-cl-action="level" data-cl-level="9"></div>
-    <div class="cl-hit cl-locked" style="left:70%;top:52%;width:10%;height:22%" data-cl-action="boss"></div>
+  <!-- LEVEL SELECT -->
+  <div class="cl-screen" id="cl-levels">
+    <img class="cl-bg" src="level_select.png" alt="">
+    <div class="cl-hit" data-action="back-world" style="left:5%;top:5%;width:5%;height:12%"></div>
+    <div class="cl-hit" data-action="level" data-level="1"                 style="left:24%;top:34%;width:6%;height:12%"></div>
+    <div class="cl-hit cl-locked" data-action="soon" data-name="LEVEL 2"   style="left:33%;top:34%;width:6%;height:12%"></div>
+    <div class="cl-hit cl-locked" data-action="soon" data-name="LEVEL 3"   style="left:43%;top:34%;width:6%;height:12%"></div>
+    <div class="cl-hit cl-locked" data-action="soon" data-name="LEVEL 4"   style="left:52%;top:34%;width:6%;height:12%"></div>
+    <div class="cl-hit cl-locked" data-action="soon" data-name="LEVEL 5"   style="left:62%;top:35%;width:6%;height:12%"></div>
+    <div class="cl-hit cl-locked" data-action="soon" data-name="LEVEL 10"  style="left:24%;top:64%;width:6%;height:12%"></div>
+    <div class="cl-hit cl-locked" data-action="soon" data-name="LEVEL 6"   style="left:33%;top:64%;width:6%;height:12%"></div>
+    <div class="cl-hit cl-locked" data-action="soon" data-name="LEVEL 7"   style="left:42%;top:64%;width:6%;height:12%"></div>
+    <div class="cl-hit cl-locked" data-action="soon" data-name="LEVEL 8"   style="left:52%;top:65%;width:6%;height:12%"></div>
+    <div class="cl-hit cl-locked" data-action="soon" data-name="LEVEL 9"   style="left:61%;top:64%;width:6%;height:12%"></div>
+    <div class="cl-hit cl-locked" data-action="soon" data-name="HOLLOW KING" style="left:70%;top:52%;width:10%;height:22%"></div>
   </div>
 
-  <!-- PART 2 CODE WILL BE ATTACHED HERE -->
-
 </div>
 
-<div id="cl-vignette"></div>
-<div id="cl-scanlines"></div>
-<div id="cl-eyeflash"></div>
+<div class="cl-flash" id="cl-flash"></div>
+<div class="cl-toast" id="cl-toast">COMING SOON</div>
+<button class="cl-mute" id="cl-mute">♪ ON</button>
 
-<div id="cl-jaw">
-  <div class="cl-jaw-top"><div class="cl-teeth-top"></div></div>
-  <div class="cl-jaw-bot"><div class="cl-teeth-bot"></div></div>
-  <div class="cl-throat"></div>
-</div>
-
-<div id="cl-popup">
-  <div class="cl-popup-box">
-    <div class="cl-popup-title" id="cl-popup-title">TITLE</div>
-    <div class="cl-popup-msg" id="cl-popup-msg">Message</div>
-    <button class="cl-popup-close" onclick="cl_closePopup()">OK</button>
-  </div>
-</div>
-
-<div id="cl-corner">
-  <button class="cl-cbtn" onclick="cl_toggleMute()" id="cl-mute">🔊</button>
-  <button class="cl-cbtn" onclick="cl_toggleMusic()" id="cl-music">🎵</button>
-</div>
-
-<div id="cl-rotate">
-  <div class="cl-phone">📱</div>
-  <div class="cl-rotate-title">ROTATE YOUR PHONE</div>
-  <div class="cl-rotate-sub">CHAOSLINE plays in landscape</div>
-  <button class="cl-rotate-btn" onclick="cl_forceLandscape()"><span class="cl-spin">↻</span> TAP TO ROTATE</button>
-</div>
+<div class="cl-rotate">ROTATE YOUR DEVICE<br>▬▬▬<br>LANDSCAPE ONLY</div>
 
 <script>
-var CL_coins=parseInt(localStorage.getItem('CL_coins')||'0');
-var CL_unlockedLevels=JSON.parse(localStorage.getItem('CL_unlockedLevels')||'[1]');
-var CL_unlockedWorlds=JSON.parse(localStorage.getItem('CL_unlockedWorlds')||'[0]');
-var CL_soundMuted=localStorage.getItem('CL_soundMuted')==='1';
-var CL_musicMuted=localStorage.getItem('CL_musicMuted')==='1';
-var CL_audioCtx=null;
-var CL_musicPlaying=false;
-var CL_musicGain=null;
-var CL_musicTimers=[];
+(function(){
+  // ============ AUDIO ENGINE ============
+  let CL_AC=null, CL_MUSIC_GAIN=null, CL_MUSIC_ON=true, CL_MUSIC_NODES=[];
 
-function cl_audio(){
-  if(!CL_audioCtx){
-    try{CL_audioCtx=new(window.AudioContext||window.webkitAudioContext)()}catch(e){}
+  function cl_initAudio(){
+    if(CL_AC) return;
+    try{
+      CL_AC = new (window.AudioContext||window.webkitAudioContext)();
+      CL_MUSIC_GAIN = CL_AC.createGain();
+      CL_MUSIC_GAIN.gain.value = 0.12;
+      CL_MUSIC_GAIN.connect(CL_AC.destination);
+    }catch(e){}
   }
-  if(CL_audioCtx&&CL_audioCtx.state==='suspended')CL_audioCtx.resume();
-  return CL_audioCtx;
-}
-function cl_beep(freq,endFreq,type,dur,vol){
-  if(CL_soundMuted)return;var ctx=cl_audio();if(!ctx)return;
-  var o=ctx.createOscillator(),g=ctx.createGain();
-  o.type=type;o.frequency.setValueAtTime(freq,ctx.currentTime);
-  if(endFreq)o.frequency.exponentialRampToValueAtTime(Math.max(1,endFreq),ctx.currentTime+dur);
-  g.gain.setValueAtTime(vol||.15,ctx.currentTime);
-  g.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+dur);
-  o.connect(g);g.connect(ctx.destination);o.start();o.stop(ctx.currentTime+dur);
-}
-function cl_arp(freqs,type,each,vol){
-  freqs.forEach(function(f,i){setTimeout(function(){cl_beep(f,f*1.4,type,each,vol)},i*each*1000)});
-}
-function cl_snd(n){
-  switch(n){
-    case'click':cl_beep(820,600,'square',.09,.14);break;
-    case'chomp':cl_beep(90,25,'sawtooth',.55,.38);setTimeout(function(){cl_beep(55,18,'sawtooth',.35,.28)},100);break;
-    case'pop':cl_beep(560,920,'sine',.18,.18);break;
-    case'lock':cl_beep(190,95,'square',.28,.18);break;
-    case'unlock':cl_arp([880,1108,1318],'sine',.12,.2);break;
-    case'load':cl_beep(440,660,'sine',.15,.08);break;
-    case'boot':cl_arp([440,523,659,784,1046],'sine',.15,.18);break;
-    case'spark':cl_beep(2200,3500,'square',.04,.08);break;
-    case'impact':cl_beep(40,15,'sawtooth',.3,.4);break;
-  }
-}
-function cl_vibe(ms){if(navigator.vibrate)navigator.vibrate(ms)}
 
-/* ======= BACKGROUND MUSIC — DARK AMBIENT ======= */
-function cl_startMusic(){
-  if(CL_musicMuted||CL_musicPlaying)return;
-  var ctx=cl_audio();if(!ctx)return;
-  CL_musicPlaying=true;
+  function cl_sfx(type){
+    if(!CL_AC) return;
+    const t = CL_AC.currentTime;
+    const g = CL_AC.createGain();
+    g.connect(CL_AC.destination);
 
-  var master=ctx.createGain();
-  master.gain.setValueAtTime(0,ctx.currentTime);
-  master.gain.linearRampToValueAtTime(.12,ctx.currentTime+4);
-  master.connect(ctx.destination);
-  CL_musicGain=master;
-
-  // LAYER 1: Deep sub drone A1 55Hz
-  var drone1=ctx.createOscillator();drone1.type='sawtooth';drone1.frequency.value=55;
-  var d1f=ctx.createBiquadFilter();d1f.type='lowpass';d1f.frequency.value=160;d1f.Q.value=8;
-  var d1g=ctx.createGain();d1g.gain.value=.6;
-  drone1.connect(d1f);d1f.connect(d1g);d1g.connect(master);
-  drone1.start();
-
-  // LAYER 2: Fifth E2 82Hz
-  var drone2=ctx.createOscillator();drone2.type='triangle';drone2.frequency.value=82.4;
-  var d2f=ctx.createBiquadFilter();d2f.type='lowpass';d2f.frequency.value=200;
-  var d2g=ctx.createGain();d2g.gain.value=.3;
-  drone2.connect(d2f);d2f.connect(d2g);d2g.connect(master);
-  drone2.start();
-
-  // LAYER 3: High eerie pad C4 sine with vibrato
-  var pad=ctx.createOscillator();pad.type='sine';pad.frequency.value=261.63;
-  var padVib=ctx.createOscillator();padVib.type='sine';padVib.frequency.value=.5;
-  var padVibG=ctx.createGain();padVibG.gain.value=3;
-  padVib.connect(padVibG);padVibG.connect(pad.frequency);padVib.start();
-  var padG=ctx.createGain();padG.gain.value=.04;
-  pad.connect(padG);padG.connect(master);
-  pad.start();
-
-  // LAYER 4: LFO on filter for breathing
-  var lfo=ctx.createOscillator();lfo.type='sine';lfo.frequency.value=.06;
-  var lfoG=ctx.createGain();lfoG.gain.value=100;
-  lfo.connect(lfoG);lfoG.connect(d1f.frequency);lfo.start();
-
-  // LAYER 5: Melodic arpeggio — Am pentatonic with delay
-  var arpNotes=[220,261.63,329.63,392,440,392,329.63,261.63];
-  var arpIdx=0;
-  var arpG=ctx.createGain();arpG.gain.value=.04;
-  var delay=ctx.createDelay();delay.delayTime.value=.4;
-  var delFB=ctx.createGain();delFB.gain.value=.5;
-  var delG=ctx.createGain();delG.gain.value=.6;
-  arpG.connect(delay);delay.connect(delFB);delFB.connect(delay);delay.connect(delG);delG.connect(master);
-  arpG.connect(master);
-
-  var arpTimer=setInterval(function(){
-    if(!CL_musicPlaying)return;
-    var f=arpNotes[arpIdx%arpNotes.length];arpIdx++;
-    var o=ctx.createOscillator();o.type='triangle';o.frequency.value=f;
-    var g=ctx.createGain();
-    g.gain.setValueAtTime(0,ctx.currentTime);
-    g.gain.linearRampToValueAtTime(.5,ctx.currentTime+.03);
-    g.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+.6);
-    o.connect(g);g.connect(arpG);o.start();o.stop(ctx.currentTime+.6);
-  },600);
-
-  // LAYER 6: Distant bells / chimes (random)
-  var bellTimer=setInterval(function(){
-    if(!CL_musicPlaying||Math.random()>.35)return;
-    var bf=[880,1046.5,1318.5,1568,2093][Math.floor(Math.random()*5)];
-    var o=ctx.createOscillator();o.type='sine';o.frequency.value=bf;
-    var g=ctx.createGain();
-    g.gain.setValueAtTime(0,ctx.currentTime);
-    g.gain.linearRampToValueAtTime(.04,ctx.currentTime+.15);
-    g.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+4);
-    o.connect(g);g.connect(master);o.start();o.stop(ctx.currentTime+4);
-  },5000);
-
-  // LAYER 7: Reverse-style swell (every 12s)
-  var swellTimer=setInterval(function(){
-    if(!CL_musicPlaying)return;
-    var o=ctx.createOscillator();o.type='sawtooth';
-    o.frequency.value=[110,146.83,164.81][Math.floor(Math.random()*3)];
-    var f=ctx.createBiquadFilter();f.type='lowpass';
-    f.frequency.setValueAtTime(50,ctx.currentTime);
-    f.frequency.linearRampToValueAtTime(800,ctx.currentTime+3);
-    f.frequency.linearRampToValueAtTime(50,ctx.currentTime+6);
-    var g=ctx.createGain();
-    g.gain.setValueAtTime(0,ctx.currentTime);
-    g.gain.linearRampToValueAtTime(.06,ctx.currentTime+3);
-    g.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+6);
-    o.connect(f);f.connect(g);g.connect(master);o.start();o.stop(ctx.currentTime+6);
-  },12000);
-
-  CL_musicTimers=[arpTimer,bellTimer,swellTimer];
-  CL_musicNodes=[drone1,drone2,pad,padVib,lfo];
-}
-
-function cl_stopMusic(){
-  if(!CL_musicPlaying)return;
-  CL_musicPlaying=false;
-  CL_musicTimers.forEach(function(t){clearInterval(t)});CL_musicTimers=[];
-  if(CL_musicGain){
-    var ctx=cl_audio();
-    CL_musicGain.gain.linearRampToValueAtTime(0,ctx.currentTime+.8);
-  }
-  setTimeout(function(){
-    if(CL_musicNodes){CL_musicNodes.forEach(function(n){try{n.stop()}catch(e){}});CL_musicNodes=null}
-    CL_musicGain=null;
-  },900);
-}
-
-function cl_toggleMusic(){
-  CL_musicMuted=!CL_musicMuted;
-  localStorage.setItem('CL_musicMuted',CL_musicMuted?'1':'0');
-  document.getElementById('cl-music').textContent=CL_musicMuted?'⛔':'🎵';
-  if(CL_musicMuted)cl_stopMusic();else cl_startMusic();
-  cl_vibe(22);
-}
-
-/* SCREEN */
-function cl_show(id){
-  document.querySelectorAll('.cl-screen').forEach(function(s){s.classList.remove('cl-active')});
-  var el=document.getElementById('cl-screen-'+id);if(el)el.classList.add('cl-active');
-}
-
-/* JAW TRANSITION */
-function cl_shake(){
-  var app=document.getElementById('cl-app');
-  app.classList.remove('cl-shake');
-  void app.offsetWidth;
-  app.classList.add('cl-shake');
-  setTimeout(function(){app.classList.remove('cl-shake')},400);
-}
-function cl_eyeFlash(){
-  var f=document.getElementById('cl-eyeflash');
-  f.classList.add('cl-flash');
-  setTimeout(function(){f.classList.remove('cl-flash')},200);
-}
-function cl_bloodDrips(){
-  for(var i=0;i<8;i++){
-    var d=document.createElement('div');d.className='cl-drip';
-    d.style.left=(10+Math.random()*80)+'%';
-    d.style.animationDelay=(Math.random()*.3)+'s';
-    d.style.width=(3+Math.random()*3)+'px';
-    document.getElementById('cl-jaw').appendChild(d);
-    setTimeout(function(el){return function(){el.remove()}}(d),1800);
-  }
-}
-function cl_sparks(){
-  var colors=['#ffdd00','#ff4400','#ffffff','#ff0000','#ffaa00','#ff6600','#ff2200','#ffcc00'];
-  for(var i=0;i<16;i++){
-    var s=document.createElement('div');s.className='cl-spark';
-    var c=colors[i%colors.length];
-    s.style.color=c;s.style.background=c;
-    s.style.left='50%';s.style.top='50%';
-    var sz=3+Math.random()*5;s.style.width=sz+'px';s.style.height=sz+'px';
-    var ang=(i/16)*Math.PI*2;
-    var dist=100+Math.random()*180;
-    var tx=Math.cos(ang)*dist;var ty=Math.sin(ang)*dist;
-    s.animate([
-      {transform:'translate(-50%,-50%) scale(1.5)',opacity:1},
-      {transform:'translate(calc(-50% + '+tx+'px),calc(-50% + '+ty+'px)) scale(0)',opacity:0}
-    ],{duration:800,easing:'cubic-bezier(.2,.8,.3,1)'});
-    document.body.appendChild(s);
-    setTimeout(function(el){return function(){el.remove()}}(s),800);
-  }
-}
-
-function cl_transition(toId){
-  var jaw=document.getElementById('cl-jaw');
-  jaw.classList.add('cl-show','cl-closing');
-  cl_snd('chomp');cl_vibe([100,30,150]);
-
-  setTimeout(function(){
-    jaw.classList.add('cl-closed');
-    cl_shake();cl_eyeFlash();cl_sparks();cl_bloodDrips();
-    cl_snd('impact');cl_vibe(80);
-    cl_show(toId);
-  },550);
-
-  setTimeout(function(){
-    jaw.classList.remove('cl-closing','cl-closed');
-    cl_snd('pop');
-  },900);
-
-  setTimeout(function(){jaw.classList.remove('cl-show')},1500);
-}
-
-/* POPUP */
-function cl_popup(title,msg){
-  document.getElementById('cl-popup-title').textContent=title;
-  document.getElementById('cl-popup-msg').textContent=msg;
-  document.getElementById('cl-popup').classList.add('cl-show');
-  cl_snd('pop');cl_vibe(40);
-}
-function cl_closePopup(){
-  document.getElementById('cl-popup').classList.remove('cl-show');
-  cl_snd('click');cl_vibe(22);
-}
-
-/* CLICK EFFECTS */
-function cl_ripple(x,y){
-  var r=document.createElement('div');r.className='cl-ripple';
-  r.style.left=x+'px';r.style.top=y+'px';
-  r.style.width='160px';r.style.height='160px';
-  r.innerHTML='<div class="cl-ripple-inner"></div>';
-  document.body.appendChild(r);
-  setTimeout(function(){r.remove()},650);
-}
-function cl_btnParticles(x,y){
-  var colors=['#ff4400','#ffdd00','#ffffff','#ff0000','#00ff88','#4488ff'];
-  for(var i=0;i<8;i++){
-    var p=document.createElement('div');p.className='cl-particle';
-    p.style.background=colors[i%colors.length];
-    p.style.boxShadow='0 0 6px '+colors[i%colors.length];
-    p.style.left=x+'px';p.style.top=y+'px';
-    var ang=Math.random()*Math.PI*2;
-    var dist=40+Math.random()*70;
-    var tx=Math.cos(ang)*dist;var ty=Math.sin(ang)*dist;
-    p.animate([
-      {transform:'translate(-50%,-50%) scale(1.5)',opacity:1},
-      {transform:'translate(calc(-50% + '+tx+'px),calc(-50% + '+ty+'px)) scale(0)',opacity:0}
-    ],{duration:550,easing:'ease-out'});
-    document.body.appendChild(p);
-    setTimeout(function(el){return function(){el.remove()}}(p),550);
-  }
-}
-
-document.addEventListener('click',function(e){
-  var t=e.target.closest('.cl-hit');if(!t)return;
-  cl_ripple(e.clientX,e.clientY);
-  cl_btnParticles(e.clientX,e.clientY);
-  t.classList.remove('cl-tapped');void t.offsetWidth;t.classList.add('cl-tapped');
-  var act=t.getAttribute('data-cl-action');
-  if(t.classList.contains('cl-locked')){
-    cl_snd('lock');cl_vibe(60);
-    cl_popup('LOCKED','Complete previous stage to unlock this content.');
-    return;
-  }
-  cl_snd('click');cl_vibe(22);
-  switch(act){
-    case'play':cl_transition('worlds');break;
-    case'soon':cl_popup('COMING SOON',(t.getAttribute('data-cl-name')||'Feature')+' ships in the next update.');break;
-    case'howto':cl_popup('HOW TO PLAY','Tap = jump.\nReach the flag.\nAvoid every trap.\nDie = restart.\nRage responsibly.');break;
-    case'coins':cl_popup('COINS','Balance: '+CL_coins+' coins.\n\nEarn by beating levels.');break;
-    case'back-menu':cl_transition('menu');break;
-    case'back-worlds':cl_transition('worlds');break;
-    case'world':
-      var w=parseInt(t.getAttribute('data-cl-world'));
-      if(CL_unlockedWorlds.indexOf(w)<0){cl_snd('lock');cl_popup('WORLD LOCKED','Beat the previous world first.');return}
-      cl_transition('levels');break;
-    case'level':
-      var lv=parseInt(t.getAttribute('data-cl-level'));
-      cl_popup('LEVEL '+lv,'Gameplay ships in next build.');break;
-    case'boss':cl_popup('HOLLOW KING','Boss fight unlocks after Level 10.');break;
-  }
-});
-
-function cl_forceLandscape(){
-  cl_vibe([50,30,50]);
-  try{
-    var el=document.documentElement;
-    if(el.requestFullscreen)el.requestFullscreen();
-    else if(el.webkitRequestFullscreen)el.webkitRequestFullscreen();
-    setTimeout(function(){if(screen.orientation&&screen.orientation.lock)screen.orientation.lock('landscape').catch(function(){})},300);
-  }catch(e){}
-}
-
-function cl_toggleMute(){
-  CL_soundMuted=!CL_soundMuted;
-  localStorage.setItem('CL_soundMuted',CL_soundMuted?'1':'0');
-  document.getElementById('cl-mute').textContent=CL_soundMuted?'🔇':'🔊';
-  cl_vibe(22);
-}
-document.getElementById('cl-mute').textContent=CL_soundMuted?'🔇':'🔊';
-document.getElementById('cl-music').textContent=CL_musicMuted?'⛔':'🎵';
-
-function cl_spawnEmbers(){
-  var app=document.getElementById('cl-app');
-  for(var i=0;i<22;i++){
-    var e=document.createElement('div');e.className='cl-ember';
-    e.style.left=(Math.random()*100)+'%';e.style.bottom='-10px';
-    e.style.animationDuration=(5+Math.random()*8)+'s';
-    e.style.animationDelay=(Math.random()*12)+'s';
-    var sz=2+Math.random()*4;e.style.width=sz+'px';e.style.height=sz+'px';
-    app.appendChild(e);
-  }
-}
-function cl_spawnDust(){
-  var app=document.getElementById('cl-app');
-  for(var i=0;i<12;i++){
-    var d=document.createElement('div');d.className='cl-dust';
-    d.style.left=(Math.random()*100)+'%';d.style.bottom=(Math.random()*30)+'%';
-    d.style.animationDuration=(10+Math.random()*15)+'s';
-    d.style.animationDelay=(Math.random()*10)+'s';
-    app.appendChild(d);
-  }
-}
-
-function cl_runLoading(){
-  var bar=document.getElementById('cl-loadbar-fill');
-  var p=0;
-  cl_snd('boot');
-  var iv=setInterval(function(){
-    p+=2.5;bar.style.width=p+'%';
-    if(p%20===0)cl_snd('load');
-    if(p>=100){
-      clearInterval(iv);
-      setTimeout(function(){cl_transition('menu');cl_spawnEmbers();cl_spawnDust()},500);
+    if(type==='click'){
+      const o = CL_AC.createOscillator();
+      o.type='square'; o.frequency.setValueAtTime(880,t); o.frequency.exponentialRampToValueAtTime(220,t+0.08);
+      g.gain.setValueAtTime(0.18,t); g.gain.exponentialRampToValueAtTime(0.001,t+0.09);
+      o.connect(g); o.start(t); o.stop(t+0.1);
     }
-  },100);
-}
+    else if(type==='open'){
+      // whoosh in — filtered noise sweep
+      const buf = CL_AC.createBuffer(1, CL_AC.sampleRate*0.5, CL_AC.sampleRate);
+      const d = buf.getChannelData(0);
+      for(let i=0;i<d.length;i++) d[i]=(Math.random()*2-1)*(1-i/d.length);
+      const src = CL_AC.createBufferSource(); src.buffer=buf;
+      const f = CL_AC.createBiquadFilter(); f.type='bandpass'; f.frequency.setValueAtTime(200,t); f.frequency.exponentialRampToValueAtTime(3000,t+0.4); f.Q.value=6;
+      g.gain.setValueAtTime(0.5,t); g.gain.exponentialRampToValueAtTime(0.001,t+0.5);
+      src.connect(f); f.connect(g); src.start(t);
+      // low thump
+      const o = CL_AC.createOscillator(); o.type='sine'; o.frequency.setValueAtTime(120,t); o.frequency.exponentialRampToValueAtTime(40,t+0.3);
+      const g2 = CL_AC.createGain(); g2.connect(CL_AC.destination);
+      g2.gain.setValueAtTime(0.4,t); g2.gain.exponentialRampToValueAtTime(0.001,t+0.35);
+      o.connect(g2); o.start(t); o.stop(t+0.4);
+    }
+    else if(type==='close'){
+      const o = CL_AC.createOscillator();
+      o.type='sawtooth'; o.frequency.setValueAtTime(400,t); o.frequency.exponentialRampToValueAtTime(80,t+0.25);
+      g.gain.setValueAtTime(0.22,t); g.gain.exponentialRampToValueAtTime(0.001,t+0.26);
+      o.connect(g); o.start(t); o.stop(t+0.3);
+    }
+    else if(type==='locked'){
+      const o = CL_AC.createOscillator();
+      o.type='square'; o.frequency.setValueAtTime(160,t);
+      g.gain.setValueAtTime(0.2,t); g.gain.exponentialRampToValueAtTime(0.001,t+0.15);
+      o.connect(g); o.start(t); o.stop(t+0.16);
+    }
+    else if(type==='chime'){
+      [523,659,784].forEach((f,i)=>{
+        const o = CL_AC.createOscillator(); const gg = CL_AC.createGain(); gg.connect(CL_AC.destination);
+        o.type='triangle'; o.frequency.value=f;
+        gg.gain.setValueAtTime(0,t+i*0.06); gg.gain.linearRampToValueAtTime(0.15,t+i*0.06+0.02); gg.gain.exponentialRampToValueAtTime(0.001,t+i*0.06+0.4);
+        o.connect(gg); o.start(t+i*0.06); o.stop(t+i*0.06+0.45);
+      });
+    }
+  }
 
-function cl_startBoot(){
-  document.getElementById('cl-startgate').classList.add('cl-hide');
-  var ctx=cl_audio();
-  if(ctx&&ctx.state==='suspended')ctx.resume();
-  cl_startMusic();
-  setTimeout(cl_runLoading,400);
-}
+  // ============ BACKGROUND MUSIC (dark synth loop) ============
+  function cl_startMusic(){
+    if(!CL_AC || CL_MUSIC_NODES.length) return;
+    // Dark ambient pad + slow arp
+    const now = CL_AC.currentTime;
+
+    // Drone bass
+    const drone = CL_AC.createOscillator();
+    drone.type='sawtooth'; drone.frequency.value=55;
+    const droneF = CL_AC.createBiquadFilter(); droneF.type='lowpass'; droneF.frequency.value=300; droneF.Q.value=8;
+    const droneG = CL_AC.createGain(); droneG.gain.value=0.35;
+    drone.connect(droneF); droneF.connect(droneG); droneG.connect(CL_MUSIC_GAIN);
+    drone.start(now);
+
+    // Sub drone fifth
+    const sub = CL_AC.createOscillator();
+    sub.type='sine'; sub.frequency.value=82.4;
+    const subG = CL_AC.createGain(); subG.gain.value=0.25;
+    sub.connect(subG); subG.connect(CL_MUSIC_GAIN);
+    sub.start(now);
+
+    // LFO on filter for movement
+    const lfo = CL_AC.createOscillator(); lfo.frequency.value=0.1;
+    const lfoG = CL_AC.createGain(); lfoG.gain.value=200;
+    lfo.connect(lfoG); lfoG.connect(droneF.frequency);
+    lfo.start(now);
+
+    // Slow minor arp
+    const scale=[220,261.63,329.63,392,466.16,392,329.63,261.63];
+    let step=0;
+    const arpInt = setInterval(()=>{
+      if(!CL_AC || CL_AC.state==='closed') return;
+      const t = CL_AC.currentTime;
+      const o = CL_AC.createOscillator(); o.type='triangle';
+      o.frequency.value = scale[step%scale.length];
+      const gg = CL_AC.createGain();
+      gg.gain.setValueAtTime(0,t);
+      gg.gain.linearRampToValueAtTime(0.09,t+0.02);
+      gg.gain.exponentialRampToValueAtTime(0.001,t+0.7);
+      const delay = CL_AC.createDelay(); delay.delayTime.value=0.3;
+      const dGain = CL_AC.createGain(); dGain.gain.value=0.35;
+      o.connect(gg); gg.connect(CL_MUSIC_GAIN);
+      gg.connect(delay); delay.connect(dGain); dGain.connect(CL_MUSIC_GAIN); dGain.connect(delay);
+      o.start(t); o.stop(t+0.75);
+      step++;
+    }, 650);
+
+    CL_MUSIC_NODES.push({stop:()=>{try{drone.stop();sub.stop();lfo.stop();clearInterval(arpInt);}catch(e){}}});
+    document.getElementById('cl-mute').classList.add('cl-visible');
+  }
+
+  function cl_toggleMusic(){
+    CL_MUSIC_ON = !CL_MUSIC_ON;
+    if(CL_MUSIC_GAIN){
+      CL_MUSIC_GAIN.gain.linearRampToValueAtTime(CL_MUSIC_ON?0.12:0, CL_AC.currentTime+0.3);
+    }
+    document.getElementById('cl-mute').textContent = CL_MUSIC_ON?'♪ ON':'♪ OFF';
+  }
+
+  // ============ VIBRATION ============
+  function cl_vibe(ms){ if(navigator.vibrate) navigator.vibrate(ms); }
+
+  // ============ TOAST ============
+  let toastTimer=null;
+  function cl_toast(msg){
+    const t = document.getElementById('cl-toast');
+    t.textContent = msg;
+    t.classList.add('cl-toast-show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(()=>t.classList.remove('cl-toast-show'), 1200);
+  }
+
+  // ============ FLASH ============
+  function cl_flash(){
+    const f = document.getElementById('cl-flash');
+    f.classList.add('cl-flash-on');
+    setTimeout(()=>f.classList.remove('cl-flash-on'), 180);
+  }
+
+  // ============ SCREEN TRANSITIONS ============
+  let CL_CURRENT = null;
+  function cl_showScreen(id, dir){
+    const next = document.getElementById(id);
+    if(CL_CURRENT === next) return;
+
+    cl_sfx(dir==='back'?'close':'open');
+    cl_vibe(dir==='back'?[20,30,20]:[40]);
+
+    if(CL_CURRENT){
+      const prev = CL_CURRENT;
+      prev.classList.add('cl-closing');
+      prev.classList.remove('cl-shown');
+      setTimeout(()=>{
+        prev.classList.remove('cl-active','cl-closing');
+      }, 350);
+    }
+
+    setTimeout(()=>{
+      next.classList.add('cl-active');
+      // force reflow so transition triggers
+      void next.offsetWidth;
+      requestAnimationFrame(()=>{
+        next.classList.add('cl-shown');
+      });
+      CL_CURRENT = next;
+    }, CL_CURRENT ? 150 : 0);
+  }
+
+  // ============ CLICK HANDLING ============
+  document.addEventListener('click', function(e){
+    const hit = e.target.closest('.cl-hit');
+    if(!hit) return;
+    e.preventDefault();
+
+    const action = hit.dataset.action;
+
+    if(hit.classList.contains('cl-locked')){
+      cl_sfx('locked');
+      cl_vibe(15);
+      cl_toast((hit.dataset.name||'') + ' — COMING SOON');
+      return;
+    }
+
+    cl_sfx('click');
+    cl_vibe(12);
+
+    if(action==='play')        cl_showScreen('cl-world','fwd');
+    else if(action==='world')  cl_showScreen('cl-levels','fwd');
+    else if(action==='level'){
+      cl_toast('LEVEL 1 — GAMEPLAY LOADING SOON');
+      cl_flash();
+    }
+    else if(action==='back-menu')  cl_showScreen('cl-menu','back');
+    else if(action==='back-world') cl_showScreen('cl-world','back');
+  });
+
+  // ============ LOADING SEQUENCE ============
+  function cl_runLoader(){
+    const fill = document.getElementById('cl-loader-fill');
+    const DUR = 4500; // 4.5 sec
+    const start = performance.now();
+    function tick(now){
+      const p = Math.min(1, (now-start)/DUR);
+      // ease-out cubic
+      const eased = 1 - Math.pow(1-p, 3);
+      fill.style.width = (eased*100)+'%';
+      if(p<1) requestAnimationFrame(tick);
+      else {
+        setTimeout(()=>{
+          cl_sfx('chime');
+          cl_showScreen('cl-menu','fwd');
+        }, 300);
+      }
+    }
+    requestAnimationFrame(tick);
+  }
+
+  // ============ START GATE ============
+  document.getElementById('cl-gate').addEventListener('click', function(){
+    cl_initAudio();
+    if(CL_AC && CL_AC.state==='suspended') CL_AC.resume();
+    cl_startMusic();
+    this.style.transition='opacity .4s';
+    this.style.opacity='0';
+    setTimeout(()=>this.remove(), 420);
+
+    cl_showScreen('cl-loading','fwd');
+    setTimeout(cl_runLoader, 500);
+  }, {once:true});
+
+  // ============ MUTE BUTTON ============
+  document.getElementById('cl-mute').addEventListener('click', function(e){
+    e.stopPropagation();
+    cl_toggleMusic();
+  });
+
+  // ============ PREVENT ZOOM / CONTEXT ============
+  document.addEventListener('gesturestart', e=>e.preventDefault());
+  document.addEventListener('contextmenu', e=>e.preventDefault());
+
+})();
 </script>
 </body>
 </html>
