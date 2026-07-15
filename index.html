@@ -11,35 +11,33 @@
 html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Press Start 2P',monospace;color:#fff}
 img{image-rendering:pixelated;image-rendering:-moz-crisp-edges;image-rendering:crisp-edges}
 
-/* SCREEN CONTAINER */
 .cl-stage{position:fixed;inset:0;background:#000;overflow:hidden}
 .cl-screen{position:absolute;inset:0;display:none;opacity:0;transform:scale(0.92);transition:opacity .45s ease,transform .45s ease;will-change:opacity,transform}
 .cl-screen.cl-active{display:block}
 .cl-screen.cl-shown{opacity:1;transform:scale(1)}
 .cl-screen.cl-closing{opacity:0;transform:scale(1.08);transition:opacity .35s ease,transform .35s ease}
 
-/* BACKGROUND IMG */
 .cl-bg{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:100%;height:100%;object-fit:contain;pointer-events:none;display:block}
 
-/* HITBOX WRAPPER — sits over the bg using % relative to viewport */
 .cl-hit{position:absolute;background:transparent;cursor:pointer;transition:transform .08s ease,filter .15s ease;z-index:5}
 .cl-hit:active{transform:scale(0.93);filter:brightness(1.6) drop-shadow(0 0 12px #ff2244)}
 .cl-hit.cl-locked{cursor:not-allowed}
 .cl-hit.cl-locked:active{transform:scale(0.98);filter:brightness(0.7)}
 
-/* PORTRAIT WARNING */
-.cl-rotate{position:fixed;inset:0;background:#000;display:none;z-index:9999;align-items:center;justify-content:center;text-align:center;padding:20px;font-size:14px;line-height:1.8;color:#ff2244}
-@media (orientation:portrait){.cl-rotate{display:flex}}
+/* PORTRAIT WARNING (fallback if user rotates back) */
+.cl-rotate-warn{position:fixed;inset:0;background:#000;display:none;z-index:9996;align-items:center;justify-content:center;text-align:center;padding:20px;font-size:14px;line-height:1.8;color:#ff2244;flex-direction:column}
+.cl-rotate-warn .cl-mini-icon{width:60px;height:60px;margin-bottom:20px;animation:cl-spin 2s linear infinite}
+@media (orientation:portrait){.cl-rotate-warn.cl-warn-armed{display:flex}}
 
-/* LOADING SCREEN */
+/* LOADING BAR */
 #cl-loading .cl-loader-bar{position:absolute;left:26%;top:80.5%;width:48%;height:5%;border:2px solid #ff2244;background:transparent;overflow:hidden;box-shadow:0 0 12px rgba(255,34,68,.6);z-index:6}
 #cl-loading .cl-loader-fill{width:0%;height:100%;background:linear-gradient(90deg,#8a0011,#ff2244,#ff5566);box-shadow:0 0 20px #ff2244,inset 0 0 10px rgba(255,255,255,.3);transition:width .1s linear}
 
-/* COMING SOON TOAST */
+/* TOAST */
 .cl-toast{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(0.6);background:rgba(20,0,0,.95);border:2px solid #ff2244;color:#fff;padding:18px 28px;font-size:12px;letter-spacing:2px;z-index:10000;opacity:0;pointer-events:none;transition:opacity .25s,transform .25s;box-shadow:0 0 30px rgba(255,34,68,.7);text-align:center;line-height:1.6}
 .cl-toast.cl-toast-show{opacity:1;transform:translate(-50%,-50%) scale(1)}
 
-/* FLASH TRANSITION */
+/* FLASH */
 .cl-flash{position:fixed;inset:0;background:#ff2244;opacity:0;pointer-events:none;z-index:9998;transition:opacity .18s}
 .cl-flash.cl-flash-on{opacity:0.35}
 
@@ -47,29 +45,67 @@ img{image-rendering:pixelated;image-rendering:-moz-crisp-edges;image-rendering:c
 .cl-mute{position:fixed;top:8px;right:8px;width:34px;height:34px;background:rgba(0,0,0,.6);border:2px solid #ff2244;color:#ff2244;font-size:8px;z-index:9997;cursor:pointer;display:none;align-items:center;justify-content:center;border-radius:4px}
 .cl-mute.cl-visible{display:flex}
 
-/* START GATE (needed to unlock audio on mobile) */
-#cl-gate{position:fixed;inset:0;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:10001;cursor:pointer;text-align:center;padding:20px}
-#cl-gate h1{font-size:28px;color:#ff2244;text-shadow:0 0 20px #ff2244;margin-bottom:20px;letter-spacing:4px;animation:cl-pulse 1.4s ease-in-out infinite}
+/* ============ START GATE ============ */
+#cl-gate{position:fixed;inset:0;background:radial-gradient(ellipse at center,#1a0000 0%,#000 70%);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:10001;cursor:pointer;text-align:center;padding:20px}
+#cl-gate h1{font-size:32px;color:#ff2244;text-shadow:0 0 20px #ff2244,0 0 40px #8a0011;margin-bottom:24px;letter-spacing:4px;animation:cl-pulse 1.4s ease-in-out infinite}
 #cl-gate p{font-size:10px;color:#888;letter-spacing:2px}
 @keyframes cl-pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.6;transform:scale(0.96)}}
+
+/* ============ ROTATION SCREEN ============ */
+#cl-rotate-gate{position:fixed;inset:0;background:radial-gradient(ellipse at center,#0f0000 0%,#000 70%);display:none;flex-direction:column;align-items:center;justify-content:center;z-index:10001;text-align:center;padding:20px;gap:18px}
+#cl-rotate-gate.cl-visible{display:flex}
+#cl-rotate-gate .cl-r-title{font-size:16px;color:#ff2244;letter-spacing:3px;text-shadow:0 0 12px #ff2244;line-height:1.6}
+#cl-rotate-gate .cl-r-sub{font-size:9px;color:#ccc;letter-spacing:2px;line-height:1.8;max-width:340px}
+#cl-rotate-gate .cl-r-btn{width:110px;height:110px;background:rgba(255,34,68,0.08);border:3px solid #ff2244;border-radius:20px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:transform .12s,background .2s,box-shadow .2s;box-shadow:0 0 25px rgba(255,34,68,.5);position:relative}
+#cl-rotate-gate .cl-r-btn:active{transform:scale(0.9);background:rgba(255,34,68,0.25);box-shadow:0 0 45px rgba(255,34,68,.9)}
+#cl-rotate-gate .cl-r-btn svg{width:70px;height:70px;animation:cl-spin 3s ease-in-out infinite}
+#cl-rotate-gate .cl-r-hint{font-size:8px;color:#ff2244;letter-spacing:2px;margin-top:4px;animation:cl-blink 1.2s infinite}
+@keyframes cl-spin{0%{transform:rotate(0)}50%{transform:rotate(90deg)}100%{transform:rotate(90deg)}}
+@keyframes cl-blink{0%,100%{opacity:1}50%{opacity:.35}}
+
+#cl-rotate-gate .cl-r-manual{display:none;font-size:9px;color:#ff2244;background:rgba(255,34,68,0.1);border:1px dashed #ff2244;padding:10px 16px;letter-spacing:2px;line-height:1.6;max-width:320px}
+#cl-rotate-gate.cl-manual-mode .cl-r-manual{display:block}
 </style>
 </head>
 <body>
 
+<!-- STEP 1: TAP TO ENTER -->
 <div id="cl-gate">
   <h1>CHAOSLINE</h1>
   <p>TAP TO ENTER</p>
 </div>
 
+<!-- STEP 2: ROTATE TO LANDSCAPE -->
+<div id="cl-rotate-gate">
+  <div class="cl-r-title">PLAY LIKE A PRO</div>
+  <div class="cl-r-sub">CHAOSLINE IS BUILT FOR LANDSCAPE.<br>PRESS THE ICON BELOW TO ROTATE.</div>
+
+  <div class="cl-r-btn" id="cl-r-btn">
+    <svg viewBox="0 0 64 64" fill="none" stroke="#ff2244" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="10" y="18" width="44" height="28" rx="4"/>
+      <path d="M8 10 Q20 4 32 10"/>
+      <path d="M8 10 L4 8 M8 10 L10 6"/>
+      <circle cx="48" cy="32" r="2" fill="#ff2244"/>
+    </svg>
+  </div>
+  <div class="cl-r-hint">▲ PRESS TO ROTATE ▲</div>
+
+  <div class="cl-r-manual">
+    AUTO-ROTATE BLOCKED.<br>
+    1. UNLOCK PHONE ROTATION<br>
+    2. TURN PHONE SIDEWAYS<br>
+    3. GAME WILL AUTO-START
+  </div>
+</div>
+
+<!-- STEP 3: THE GAME -->
 <div class="cl-stage" id="cl-stage">
 
-  <!-- LOADING -->
   <div class="cl-screen" id="cl-loading">
     <img class="cl-bg" src="loading.png" alt="">
     <div class="cl-loader-bar"><div class="cl-loader-fill" id="cl-loader-fill"></div></div>
   </div>
 
-  <!-- MAIN MENU -->
   <div class="cl-screen" id="cl-menu">
     <img class="cl-bg" src="main_menu.png" alt="">
     <div class="cl-hit" data-action="play"     style="left:13%;top:32%;width:28%;height:15%"></div>
@@ -80,7 +116,6 @@ img{image-rendering:pixelated;image-rendering:-moz-crisp-edges;image-rendering:c
     <div class="cl-hit cl-locked" data-action="soon" data-name="HOW TO PLAY" style="left:19%;top:86%;width:15%;height:5%"></div>
   </div>
 
-  <!-- WORLD SELECT -->
   <div class="cl-screen" id="cl-world">
     <img class="cl-bg" src="world_select.png" alt="">
     <div class="cl-hit" data-action="back-menu" style="left:10%;top:5%;width:6%;height:12%"></div>
@@ -89,7 +124,6 @@ img{image-rendering:pixelated;image-rendering:-moz-crisp-edges;image-rendering:c
     <div class="cl-hit cl-locked" data-action="soon" data-name="ABYSS"    style="left:66%;top:12%;width:20%;height:75%"></div>
   </div>
 
-  <!-- LEVEL SELECT -->
   <div class="cl-screen" id="cl-levels">
     <img class="cl-bg" src="level_select.png" alt="">
     <div class="cl-hit" data-action="back-world" style="left:5%;top:5%;width:5%;height:12%"></div>
@@ -112,12 +146,17 @@ img{image-rendering:pixelated;image-rendering:-moz-crisp-edges;image-rendering:c
 <div class="cl-toast" id="cl-toast">COMING SOON</div>
 <button class="cl-mute" id="cl-mute">♪ ON</button>
 
-<div class="cl-rotate">ROTATE YOUR DEVICE<br>▬▬▬<br>LANDSCAPE ONLY</div>
+<!-- Fallback warning if they rotate back to portrait mid-game -->
+<div class="cl-rotate-warn" id="cl-warn">
+  <svg class="cl-mini-icon" viewBox="0 0 64 64" fill="none" stroke="#ff2244" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="10" y="18" width="44" height="28" rx="4"/>
+  </svg>
+  ROTATE YOUR DEVICE<br>▬▬▬<br>LANDSCAPE ONLY
+</div>
 
 <script>
 (function(){
-  // ============ AUDIO ENGINE ============
-  let CL_AC=null, CL_MUSIC_GAIN=null, CL_MUSIC_ON=true, CL_MUSIC_NODES=[];
+  let CL_AC=null, CL_MUSIC_GAIN=null, CL_MUSIC_ON=true, CL_MUSIC_NODES=[], CL_STARTED=false;
 
   function cl_initAudio(){
     if(CL_AC) return;
@@ -142,7 +181,6 @@ img{image-rendering:pixelated;image-rendering:-moz-crisp-edges;image-rendering:c
       o.connect(g); o.start(t); o.stop(t+0.1);
     }
     else if(type==='open'){
-      // whoosh in — filtered noise sweep
       const buf = CL_AC.createBuffer(1, CL_AC.sampleRate*0.5, CL_AC.sampleRate);
       const d = buf.getChannelData(0);
       for(let i=0;i<d.length;i++) d[i]=(Math.random()*2-1)*(1-i/d.length);
@@ -150,7 +188,6 @@ img{image-rendering:pixelated;image-rendering:-moz-crisp-edges;image-rendering:c
       const f = CL_AC.createBiquadFilter(); f.type='bandpass'; f.frequency.setValueAtTime(200,t); f.frequency.exponentialRampToValueAtTime(3000,t+0.4); f.Q.value=6;
       g.gain.setValueAtTime(0.5,t); g.gain.exponentialRampToValueAtTime(0.001,t+0.5);
       src.connect(f); f.connect(g); src.start(t);
-      // low thump
       const o = CL_AC.createOscillator(); o.type='sine'; o.frequency.setValueAtTime(120,t); o.frequency.exponentialRampToValueAtTime(40,t+0.3);
       const g2 = CL_AC.createGain(); g2.connect(CL_AC.destination);
       g2.gain.setValueAtTime(0.4,t); g2.gain.exponentialRampToValueAtTime(0.001,t+0.35);
@@ -176,15 +213,27 @@ img{image-rendering:pixelated;image-rendering:-moz-crisp-edges;image-rendering:c
         o.connect(gg); o.start(t+i*0.06); o.stop(t+i*0.06+0.45);
       });
     }
+    else if(type==='rotate'){
+      // powerful "engaging" sound for the rotation button
+      const o = CL_AC.createOscillator();
+      o.type='sawtooth';
+      o.frequency.setValueAtTime(120,t);
+      o.frequency.exponentialRampToValueAtTime(900,t+0.5);
+      g.gain.setValueAtTime(0.25,t);
+      g.gain.exponentialRampToValueAtTime(0.001,t+0.55);
+      o.connect(g); o.start(t); o.stop(t+0.6);
+      const o2 = CL_AC.createOscillator();
+      o2.type='square'; o2.frequency.value=60;
+      const g2 = CL_AC.createGain(); g2.connect(CL_AC.destination);
+      g2.gain.setValueAtTime(0.3,t); g2.gain.exponentialRampToValueAtTime(0.001,t+0.4);
+      o2.connect(g2); o2.start(t); o2.stop(t+0.4);
+    }
   }
 
-  // ============ BACKGROUND MUSIC (dark synth loop) ============
   function cl_startMusic(){
     if(!CL_AC || CL_MUSIC_NODES.length) return;
-    // Dark ambient pad + slow arp
     const now = CL_AC.currentTime;
 
-    // Drone bass
     const drone = CL_AC.createOscillator();
     drone.type='sawtooth'; drone.frequency.value=55;
     const droneF = CL_AC.createBiquadFilter(); droneF.type='lowpass'; droneF.frequency.value=300; droneF.Q.value=8;
@@ -192,20 +241,17 @@ img{image-rendering:pixelated;image-rendering:-moz-crisp-edges;image-rendering:c
     drone.connect(droneF); droneF.connect(droneG); droneG.connect(CL_MUSIC_GAIN);
     drone.start(now);
 
-    // Sub drone fifth
     const sub = CL_AC.createOscillator();
     sub.type='sine'; sub.frequency.value=82.4;
     const subG = CL_AC.createGain(); subG.gain.value=0.25;
     sub.connect(subG); subG.connect(CL_MUSIC_GAIN);
     sub.start(now);
 
-    // LFO on filter for movement
     const lfo = CL_AC.createOscillator(); lfo.frequency.value=0.1;
     const lfoG = CL_AC.createGain(); lfoG.gain.value=200;
     lfo.connect(lfoG); lfoG.connect(droneF.frequency);
     lfo.start(now);
 
-    // Slow minor arp
     const scale=[220,261.63,329.63,392,466.16,392,329.63,261.63];
     let step=0;
     const arpInt = setInterval(()=>{
@@ -237,10 +283,8 @@ img{image-rendering:pixelated;image-rendering:-moz-crisp-edges;image-rendering:c
     document.getElementById('cl-mute').textContent = CL_MUSIC_ON?'♪ ON':'♪ OFF';
   }
 
-  // ============ VIBRATION ============
   function cl_vibe(ms){ if(navigator.vibrate) navigator.vibrate(ms); }
 
-  // ============ TOAST ============
   let toastTimer=null;
   function cl_toast(msg){
     const t = document.getElementById('cl-toast');
@@ -250,111 +294,146 @@ img{image-rendering:pixelated;image-rendering:-moz-crisp-edges;image-rendering:c
     toastTimer = setTimeout(()=>t.classList.remove('cl-toast-show'), 1200);
   }
 
-  // ============ FLASH ============
   function cl_flash(){
     const f = document.getElementById('cl-flash');
     f.classList.add('cl-flash-on');
     setTimeout(()=>f.classList.remove('cl-flash-on'), 180);
   }
 
-  // ============ SCREEN TRANSITIONS ============
   let CL_CURRENT = null;
   function cl_showScreen(id, dir){
     const next = document.getElementById(id);
     if(CL_CURRENT === next) return;
 
-    cl_sfx(dir==='back'?'close':'open');
-    cl_vibe(dir==='back'?[20,30,20]:[40]);
+    if(id!=='cl-loading') { cl_sfx(dir==='back'?'close':'open'); cl_vibe(dir==='back'?[20,30,20]:[40]); }
 
     if(CL_CURRENT){
       const prev = CL_CURRENT;
       prev.classList.add('cl-closing');
       prev.classList.remove('cl-shown');
-      setTimeout(()=>{
-        prev.classList.remove('cl-active','cl-closing');
-      }, 350);
+      setTimeout(()=>{ prev.classList.remove('cl-active','cl-closing'); }, 350);
     }
 
     setTimeout(()=>{
       next.classList.add('cl-active');
-      // force reflow so transition triggers
       void next.offsetWidth;
-      requestAnimationFrame(()=>{
-        next.classList.add('cl-shown');
-      });
+      requestAnimationFrame(()=>{ next.classList.add('cl-shown'); });
       CL_CURRENT = next;
     }, CL_CURRENT ? 150 : 0);
   }
 
-  // ============ CLICK HANDLING ============
   document.addEventListener('click', function(e){
     const hit = e.target.closest('.cl-hit');
     if(!hit) return;
     e.preventDefault();
 
-    const action = hit.dataset.action;
-
     if(hit.classList.contains('cl-locked')){
-      cl_sfx('locked');
-      cl_vibe(15);
+      cl_sfx('locked'); cl_vibe(15);
       cl_toast((hit.dataset.name||'') + ' — COMING SOON');
       return;
     }
 
-    cl_sfx('click');
-    cl_vibe(12);
+    cl_sfx('click'); cl_vibe(12);
+    const action = hit.dataset.action;
 
-    if(action==='play')        cl_showScreen('cl-world','fwd');
-    else if(action==='world')  cl_showScreen('cl-levels','fwd');
-    else if(action==='level'){
-      cl_toast('LEVEL 1 — GAMEPLAY LOADING SOON');
-      cl_flash();
-    }
-    else if(action==='back-menu')  cl_showScreen('cl-menu','back');
-    else if(action==='back-world') cl_showScreen('cl-world','back');
+    if(action==='play')             cl_showScreen('cl-world','fwd');
+    else if(action==='world')       cl_showScreen('cl-levels','fwd');
+    else if(action==='level'){ cl_toast('LEVEL 1 — GAMEPLAY LOADING SOON'); cl_flash(); }
+    else if(action==='back-menu')   cl_showScreen('cl-menu','back');
+    else if(action==='back-world')  cl_showScreen('cl-world','back');
   });
 
-  // ============ LOADING SEQUENCE ============
   function cl_runLoader(){
     const fill = document.getElementById('cl-loader-fill');
-    const DUR = 4500; // 4.5 sec
+    const DUR = 4500;
     const start = performance.now();
     function tick(now){
       const p = Math.min(1, (now-start)/DUR);
-      // ease-out cubic
       const eased = 1 - Math.pow(1-p, 3);
       fill.style.width = (eased*100)+'%';
       if(p<1) requestAnimationFrame(tick);
       else {
-        setTimeout(()=>{
-          cl_sfx('chime');
-          cl_showScreen('cl-menu','fwd');
-        }, 300);
+        setTimeout(()=>{ cl_sfx('chime'); cl_showScreen('cl-menu','fwd'); }, 300);
       }
     }
     requestAnimationFrame(tick);
   }
 
-  // ============ START GATE ============
+  // ============ ROTATION LOGIC ============
+  async function cl_forceLandscape(){
+    let ok = false;
+    try{
+      // Enter fullscreen first (required for orientation lock on Android)
+      const el = document.documentElement;
+      if(el.requestFullscreen)      await el.requestFullscreen();
+      else if(el.webkitRequestFullscreen) await el.webkitRequestFullscreen();
+    }catch(e){}
+    try{
+      if(screen.orientation && screen.orientation.lock){
+        await screen.orientation.lock('landscape');
+        ok = true;
+      }
+    }catch(e){ ok = false; }
+    return ok;
+  }
+
+  function cl_startGame(){
+    if(CL_STARTED) return;
+    CL_STARTED = true;
+    // arm the portrait warning (only kicks in AFTER game started)
+    document.getElementById('cl-warn').classList.add('cl-warn-armed');
+    document.getElementById('cl-rotate-gate').classList.remove('cl-visible');
+    cl_startMusic();
+    cl_showScreen('cl-loading','fwd');
+    setTimeout(cl_runLoader, 400);
+  }
+
+  // STEP 1: tap gate
   document.getElementById('cl-gate').addEventListener('click', function(){
     cl_initAudio();
     if(CL_AC && CL_AC.state==='suspended') CL_AC.resume();
-    cl_startMusic();
     this.style.transition='opacity .4s';
     this.style.opacity='0';
-    setTimeout(()=>this.remove(), 420);
-
-    cl_showScreen('cl-loading','fwd');
-    setTimeout(cl_runLoader, 500);
+    setTimeout(()=>{
+      this.remove();
+      // If already landscape, skip rotation screen
+      if(window.matchMedia('(orientation: landscape)').matches){
+        cl_startGame();
+      } else {
+        document.getElementById('cl-rotate-gate').classList.add('cl-visible');
+      }
+    }, 420);
   }, {once:true});
 
-  // ============ MUTE BUTTON ============
+  // STEP 2: rotate button
+  document.getElementById('cl-r-btn').addEventListener('click', async function(){
+    cl_sfx('rotate');
+    cl_vibe([50,40,80]);
+    const gate = document.getElementById('cl-rotate-gate');
+    const ok = await cl_forceLandscape();
+    if(!ok){
+      // Fallback: show manual instructions
+      gate.classList.add('cl-manual-mode');
+    }
+  });
+
+  // Detect orientation change → start game
+  function cl_onOrient(){
+    if(CL_STARTED) return;
+    if(window.matchMedia('(orientation: landscape)').matches){
+      // wait a beat so the rotation animation finishes
+      setTimeout(cl_startGame, 300);
+    }
+  }
+  window.addEventListener('orientationchange', cl_onOrient);
+  window.addEventListener('resize', cl_onOrient);
+  if(screen.orientation) screen.orientation.addEventListener('change', cl_onOrient);
+
   document.getElementById('cl-mute').addEventListener('click', function(e){
     e.stopPropagation();
     cl_toggleMusic();
   });
 
-  // ============ PREVENT ZOOM / CONTEXT ============
   document.addEventListener('gesturestart', e=>e.preventDefault());
   document.addEventListener('contextmenu', e=>e.preventDefault());
 
