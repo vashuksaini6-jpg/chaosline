@@ -13,16 +13,34 @@
 html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Press Start 2P',monospace;color:#fff;position:fixed}
 img{image-rendering:pixelated}
 
-/* ============ STAGE ============ */
-.cl-stage{position:fixed;inset:0;background:#000;overflow:hidden}
+/* ============ STAGE & WRAPPER (Fixes PNG Fit) ============ */
+.cl-stage{
+    position:fixed;inset:0;background:#000;overflow:hidden;
+    display:flex;align-items:center;justify-content:center;
+}
+.cl-game-wrapper{
+    position:relative;width:100%;height:100%;max-width:100vw;max-height:100vh;
+    aspect-ratio:16 / 9; /* Forces pixel-perfect landscape alignment */
+    background:#000;overflow:hidden;
+}
 
-/* ============ SCREENS ============ */
-.cl-screen{position:absolute;inset:0;display:none;opacity:0;transform:scale(1.15) rotate(2deg);filter:blur(8px);transition:opacity .55s cubic-bezier(.22,1,.36,1),transform .55s cubic-bezier(.22,1,.36,1),filter .5s ease}
-.cl-screen.cl-active{display:block}
-.cl-screen.cl-shown{opacity:1;transform:scale(1) rotate(0);filter:blur(0)}
-.cl-screen.cl-closing{opacity:0;transform:scale(0.85) rotate(-2deg);filter:blur(10px)}
+/* ============ SCREENS (Improved Transitions) ============ */
+.cl-screen{
+    position:absolute;inset:0;display:block;
+    opacity:0;transform:scale(1.15) rotate(2deg) translateX(80px);
+    filter:blur(8px);pointer-events:none;z-index:1;
+    transition:opacity .6s cubic-bezier(.22,1,.36,1), transform .6s cubic-bezier(.22,1,.36,1), filter .5s ease;
+}
+.cl-screen.cl-active{pointer-events:auto;z-index:10}
+/* Shown State */
+.cl-screen.cl-shown{opacity:1;transform:scale(1) rotate(0) translateX(0);filter:blur(0)}
+/* Closing State */
+.cl-screen.cl-closing{opacity:0;transform:scale(0.85) rotate(-2deg) translateX(-40px);filter:blur(10px)}
+/* Enter Direction States */
+.cl-screen.cl-fwd-enter{transform:scale(0.9) rotate(0) translateX(100px);opacity:0;filter:blur(8px)}
+.cl-screen.cl-back-enter{transform:scale(0.9) rotate(0) translateX(-100px);opacity:0;filter:blur(8px)}
 
-/* ============ BG — FILL SCREEN, NO SQUISH ============ */
+/* ============ BG — OBJECT FIT COVER (Safe inside 16:9 wrapper) ============ */
 .cl-bg{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;object-position:center;pointer-events:none;display:block}
 
 /* ============ HITBOX ============ */
@@ -36,55 +54,72 @@ img{image-rendering:pixelated}
 .cl-hit.cl-glow::after{content:'';position:absolute;inset:-4px;border:2px solid #ff2244;border-radius:4px;opacity:0;animation:cl-breathe 2s ease-in-out infinite;pointer-events:none;box-shadow:0 0 20px #ff2244}
 @keyframes cl-breathe{0%,100%{opacity:0;transform:scale(0.95)}50%{opacity:.8;transform:scale(1.02)}}
 
-/* ============ LOCK OVERLAY ============ */
-.cl-lock-overlay{position:absolute;inset:0;background:rgba(0,0,0,0.55);display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:2;backdrop-filter:blur(1px);-webkit-backdrop-filter:blur(1px)}
-.cl-lock-overlay svg{width:40%;height:40%;max-width:32px;max-height:32px;fill:#ff4466;filter:drop-shadow(0 0 6px #ff2244);opacity:.9;animation:cl-lock-float 2.5s ease-in-out infinite}
-@keyframes cl-lock-float{0%,100%{transform:translateY(0)}50%{transform:translateY(-2px)}}
+/* ============ IMPROVED LOCK OVERLAY ============ */
+.cl-lock-overlay{
+    position:absolute;inset:0;
+    background:rgba(30,0,0,0.65);backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none;z-index:2;
+    border:1px solid rgba(255,34,68,0.3);
+}
+.cl-lock-overlay svg{
+    width:40%;height:40%;max-width:34px;max-height:34px;fill:#ff4466;
+    filter:drop-shadow(0 0 12px #ff2244) drop-shadow(0 0 20px rgba(255,34,68,0.5));
+    animation:cl-lock-float 2.5s ease-in-out infinite;
+}
+.cl-lock-text{
+    margin-top:8px;font-size:7px;color:#ff4466;letter-spacing:2px;
+    text-shadow:0 0 10px #ff2244;background:rgba(0,0,0,0.6);padding:4px 10px;border-radius:4px;border:1px solid rgba(255,34,68,0.3)
+}
+@keyframes cl-lock-float{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-3px) scale(1.05)}}
 
 /* ============ EMBER PARTICLES CANVAS ============ */
 #cl-particles{position:fixed;inset:0;pointer-events:none;z-index:6;opacity:.6;mix-blend-mode:screen}
 
-/* ============ LOADING BAR (CALIBRATED) ============ */
-#cl-loading .cl-loader-bar{position:absolute;left:22.5%;top:85.5%;width:55%;height:5.5%;overflow:hidden;z-index:6}
-#cl-loading .cl-loader-fill{width:0%;height:100%;background:linear-gradient(90deg,#4a0008,#ff2244 40%,#ff6688 70%,#ff2244);box-shadow:0 0 20px #ff2244,inset 0 0 12px rgba(255,255,255,.4);transition:width .1s linear;position:relative}
-#cl-loading .cl-loader-fill::after{content:'';position:absolute;top:0;right:0;width:20px;height:100%;background:linear-gradient(90deg,transparent,#fff);opacity:.4;animation:cl-shine .8s linear infinite}
+/* ============ LOADING BAR (RE-CALIBRATED FOR PNG) ============ */
+#cl-loading .cl-loader-bar{
+    position:absolute;left:19%;top:85.5%;width:63%;height:5%;overflow:hidden;z-index:6;
+    background:rgba(0,0,0,0.4);border:1px solid rgba(255,0,0,0.1);border-radius:2px;
+}
+#cl-loading .cl-loader-fill{
+    width:0%;height:100%;
+    background:linear-gradient(90deg,#4a0008,#ff2244 40%,#ff6688 70%,#ff2244);
+    box-shadow:0 0 20px #ff2244,inset 0 0 12px rgba(255,255,255,.4);
+    transition:width .1s linear;position:relative;
+}
+#cl-loading .cl-loader-fill::after{
+    content:'';position:absolute;top:0;right:0;width:20px;height:100%;
+    background:linear-gradient(90deg,transparent,#fff);opacity:.4;animation:cl-shine .8s linear infinite;
+}
 @keyframes cl-shine{0%{transform:translateX(-100px)}100%{transform:translateX(0)}}
 
 /* ============ TOAST ============ */
 .cl-toast{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(0.5) rotate(-8deg);background:linear-gradient(135deg,#1a0000,#2a0008);border:2px solid #ff2244;color:#fff;padding:16px 26px;font-size:11px;letter-spacing:2px;z-index:10000;opacity:0;pointer-events:none;transition:opacity .3s,transform .3s cubic-bezier(.34,1.56,.64,1);box-shadow:0 0 40px rgba(255,34,68,.8),inset 0 0 15px rgba(255,34,68,.2);text-align:center;line-height:1.7;text-shadow:0 0 8px #ff2244}
 .cl-toast.cl-toast-show{opacity:1;transform:translate(-50%,-50%) scale(1) rotate(0)}
 
-/* ============ FLASH ============ */
+/* ============ FLASH & VIGNETTE ============ */
 .cl-flash{position:fixed;inset:0;background:#ff2244;opacity:0;pointer-events:none;z-index:9998;transition:opacity .18s}
 .cl-flash.cl-flash-on{opacity:0.4}
-
-/* ============ VIGNETTE ============ */
 .cl-vignette{position:fixed;inset:0;pointer-events:none;z-index:7;background:radial-gradient(ellipse at center,transparent 40%,rgba(0,0,0,.7) 100%);opacity:.5}
-
-/* ============ SCANLINES ============ */
 .cl-scanlines{position:fixed;inset:0;pointer-events:none;z-index:8;background:repeating-linear-gradient(0deg,rgba(0,0,0,.15) 0px,rgba(0,0,0,.15) 1px,transparent 1px,transparent 3px);opacity:.5;mix-blend-mode:multiply}
 
 /* ============ MUTE ============ */
 .cl-mute{position:fixed;top:6px;right:6px;width:38px;height:38px;background:rgba(0,0,0,.7);border:2px solid #ff2244;color:#ff2244;font-size:9px;z-index:9997;cursor:pointer;display:none;align-items:center;justify-content:center;border-radius:6px;box-shadow:0 0 12px rgba(255,34,68,.5)}
 .cl-mute.cl-visible{display:flex}
 
-/* ============ GATE 1: TAP TO ENTER (CINEMATIC) ============ */
+/* ============ GATE 1: TAP TO ENTER (HOOKING SCREEN) ============ */
 #cl-gate{position:fixed;inset:0;background:radial-gradient(ellipse at center,#1a0004 0%,#000 80%);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:10002;cursor:pointer;text-align:center;padding:20px;overflow:hidden}
 #cl-gate::before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(0deg,rgba(255,34,68,.03) 0px,rgba(255,34,68,.03) 1px,transparent 1px,transparent 4px);pointer-events:none}
+#cl-gate::after{content:'';position:absolute;inset:0;background:radial-gradient(circle at center,rgba(255,34,68,.2),transparent 70%);animation:cl-gate-pulse 3s ease-in-out infinite;pointer-events:none}
+@keyframes cl-gate-pulse{0%,100%{transform:scale(1);opacity:.5}50%{transform:scale(1.3);opacity:1}}
 .cl-gate-phoenix{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:80%;max-width:400px;height:auto;opacity:.15;animation:cl-phoenix-pulse 3s ease-in-out infinite;filter:drop-shadow(0 0 30px #ff2244)}
 @keyframes cl-phoenix-pulse{0%,100%{opacity:.1;transform:translate(-50%,-50%) scale(1)}50%{opacity:.3;transform:translate(-50%,-50%) scale(1.05)}}
 .cl-gate-title{position:relative;font-size:42px;color:#ff2244;text-shadow:0 0 25px #ff2244,0 0 50px #ff2244,3px 0 0 #00ffff,-3px 0 0 #ff00ff;letter-spacing:8px;margin-bottom:24px;animation:cl-glitch 3.5s infinite;z-index:2}
-@keyframes cl-glitch{
-  0%,88%,100%{transform:translate(0);text-shadow:0 0 25px #ff2244,0 0 50px #ff2244,3px 0 0 rgba(0,255,255,0),-3px 0 0 rgba(255,0,255,0)}
-  90%{transform:translate(-3px,1px);text-shadow:0 0 25px #ff2244,0 0 50px #ff2244,4px 0 0 #00ffff,-4px 0 0 #ff00ff}
-  92%{transform:translate(3px,-1px);text-shadow:0 0 25px #ff2244,0 0 50px #ff2244,-4px 0 0 #00ffff,4px 0 0 #ff00ff}
-  94%{transform:translate(-2px,0);text-shadow:0 0 25px #ff2244,0 0 50px #ff2244,3px 0 0 #00ffff,-3px 0 0 #ff00ff}
-}
+@keyframes cl-glitch{0%,88%,100%{transform:translate(0);text-shadow:0 0 25px #ff2244,0 0 50px #ff2244,3px 0 0 rgba(0,255,255,0),-3px 0 0 rgba(255,0,255,0)}90%{transform:translate(-3px,1px);text-shadow:0 0 25px #ff2244,0 0 50px #ff2244,4px 0 0 #00ffff,-4px 0 0 #ff00ff}92%{transform:translate(3px,-1px);text-shadow:0 0 25px #ff2244,0 0 50px #ff2244,-4px 0 0 #00ffff,4px 0 0 #ff00ff}94%{transform:translate(-2px,0);text-shadow:0 0 25px #ff2244,0 0 50px #ff2244,3px 0 0 #00ffff,-3px 0 0 #ff00ff}}
 .cl-gate-sub{position:relative;font-size:12px;color:#ff2244;letter-spacing:6px;animation:cl-blink 1s steps(2) infinite;z-index:2;text-shadow:0 0 12px #ff2244}
 @keyframes cl-blink{0%,49%{opacity:1}50%,100%{opacity:.3}}
 .cl-gate-tag{position:absolute;bottom:20px;font-size:8px;color:#661122;letter-spacing:3px;z-index:2}
 
-/* ============ GATE 2: ROTATE (CINEMATIC) ============ */
+/* ============ GATE 2: ROTATE (HOOKING SCREEN) ============ */
 #cl-rotate-gate{position:fixed;inset:0;background:radial-gradient(ellipse at center,#1a0004 0%,#000 80%);display:none;flex-direction:column;align-items:center;justify-content:center;z-index:10001;text-align:center;padding:20px;overflow:hidden}
 #cl-rotate-gate.cl-show{display:flex}
 #cl-rotate-gate::before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(0deg,rgba(255,34,68,.03) 0px,rgba(255,34,68,.03) 1px,transparent 1px,transparent 4px);pointer-events:none}
@@ -98,12 +133,7 @@ img{image-rendering:pixelated}
 #cl-rotate-btn{width:100px;height:100px;background:rgba(255,34,68,.1);border:3px solid #ff2244;border-radius:16px;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 0 30px rgba(255,34,68,.7),inset 0 0 20px rgba(255,34,68,.3);animation:cl-phone-tilt 2.2s ease-in-out infinite;transition:transform .15s;position:relative;z-index:3}
 #cl-rotate-btn:active{transform:scale(0.88) rotate(-20deg)}
 #cl-rotate-btn svg{width:56px;height:56px;fill:#ff2244;filter:drop-shadow(0 0 10px #ff2244)}
-@keyframes cl-phone-tilt{
-  0%,100%{transform:rotate(0)}
-  40%{transform:rotate(-8deg)}
-  60%{transform:rotate(82deg)}
-  85%{transform:rotate(90deg)}
-}
+@keyframes cl-phone-tilt{0%,100%{transform:rotate(0)}40%{transform:rotate(-8deg)}60%{transform:rotate(82deg)}85%{transform:rotate(90deg)}}
 .cl-rot-hint{font-size:9px;color:#ff2244;letter-spacing:3px;margin-top:20px;animation:cl-blink 1s steps(2) infinite;z-index:2}
 .cl-rot-manual{font-size:7px;color:#552233;letter-spacing:1px;margin-top:14px;line-height:1.8;max-width:280px;z-index:2}
 
@@ -128,7 +158,7 @@ img{image-rendering:pixelated}
   <div class="cl-rot-sub">CHAOSLINE IS BUILT FOR LANDSCAPE<br>PRESS THE ICON BELOW TO ROTATE</div>
   <div class="cl-rot-phone-wrap">
     <div id="cl-rotate-btn">
-      <svg viewBox="0 0 24 24"><path d="M16.48 2.52c3.27 1.55 5.61 4.72 5.97 8.48h1.5C23.44 4.84 18.29 0 12 0l-.66.03 3.81 3.81 1.33-1.32zm-6.25-.77c-.59-.59-1.54-.59-2.12 0L1.75 8.11c-.59.59-.59 1.54 0 2.12l12.02 12.02c.59.59 1.54.59 2.12 0l6.36-6.36c.59-.59.59-1.54 0-2.12L10.23 1.75zm4.6 19.44L2.81 9.17l6.36-6.36 12.02 12.02-6.36 6.36zm-7.31.29C4.25 19.94 1.91 16.76 1.55 13H.05C.56 19.16 5.71 24 12 24l.66-.03-3.81-3.81-1.33 1.32z"/></svg>
+      <svg viewBox="0 0 24 24"><path d="M16.48 2.52c3.27 1.55 5.61 4.72 5.97 8.48h1.5C23.44 4.84 18.29 0 12 0l-.66.03 3.81 3.81 1.33-1.32zm-6.25-.77c-.59-.59-1.54-.59-2.12 0L1.75 8.11c-.59.59-.59 1.54 0 2.12l12.02 12.02c.59.59 1.54.59 2.12 0l6.36-6.36c.59-.59 1.54 0 2.12 0l10.23 1.75zm4.6 19.44L2.81 9.17l6.36-6.36 12.02 12.02-6.36 6.36zm-7.31.29C4.25 19.94 1.91 16.76 1.55 13H.05C.56 19.16 5.71 24 12 24l.66-.03-3.81-3.81-1.33 1.32z"/></svg>
     </div>
   </div>
   <div class="cl-rot-hint">▲ TAP ICON ▲</div>
@@ -136,50 +166,52 @@ img{image-rendering:pixelated}
 </div>
 
 <div class="cl-stage" id="cl-stage">
+  <div class="cl-game-wrapper"> <!-- NEW WRAPPER FOR ASPECT RATIO -->
 
-  <!-- LOADING -->
-  <div class="cl-screen" id="cl-loading">
-    <img class="cl-bg" src="loading.png" alt="">
-    <div class="cl-loader-bar"><div class="cl-loader-fill" id="cl-loader-fill"></div></div>
+    <!-- LOADING -->
+    <div class="cl-screen" id="cl-loading">
+      <img class="cl-bg" src="loading.png" alt="">
+      <div class="cl-loader-bar"><div class="cl-loader-fill" id="cl-loader-fill"></div></div>
+    </div>
+
+    <!-- MAIN MENU -->
+    <div class="cl-screen" id="cl-menu">
+      <img class="cl-bg" src="main_menu.png" alt="">
+      <div class="cl-hit cl-glow" data-action="play" style="left:13%;top:32%;width:28%;height:15%"></div>
+      <div class="cl-hit cl-locked" data-action="soon" data-name="SKIN"        style="left:14%;top:51%;width:13%;height:10%"></div>
+      <div class="cl-hit cl-locked" data-action="soon" data-name="SHOP"        style="left:27%;top:51%;width:13%;height:10%"></div>
+      <div class="cl-hit cl-locked" data-action="soon" data-name="BACKPACK"    style="left:13%;top:66%;width:13%;height:10%"></div>
+      <div class="cl-hit cl-locked" data-action="soon" data-name="STATS"       style="left:26%;top:66%;width:15%;height:10%"></div>
+      <div class="cl-hit cl-locked" data-action="soon" data-name="HOW TO PLAY" style="left:19%;top:86%;width:15%;height:5%"></div>
+    </div>
+
+    <!-- WORLD SELECT -->
+    <div class="cl-screen" id="cl-world">
+      <img class="cl-bg" src="world_select.png" alt="">
+      <div class="cl-hit" data-action="back-menu" style="left:10%;top:5%;width:6%;height:12%"></div>
+      <div class="cl-hit cl-glow" data-action="world" data-world="1"        style="left:15%;top:13%;width:20%;height:75%"></div>
+      <div class="cl-hit cl-locked" data-action="soon" data-name="INFERNO"  style="left:40%;top:13%;width:20%;height:75%"></div>
+      <div class="cl-hit cl-locked" data-action="soon" data-name="ABYSS"    style="left:66%;top:12%;width:20%;height:75%"></div>
+    </div>
+
+    <!-- LEVEL SELECT -->
+    <div class="cl-screen" id="cl-levels">
+      <img class="cl-bg" src="level_select.png" alt="">
+      <div class="cl-hit" data-action="back-world" style="left:5%;top:5%;width:5%;height:12%"></div>
+      <div class="cl-hit cl-glow" data-action="level" data-level="1"           style="left:24%;top:34%;width:6%;height:12%"></div>
+      <div class="cl-hit cl-locked" data-action="soon" data-name="LEVEL 2"     style="left:33%;top:34%;width:6%;height:12%"></div>
+      <div class="cl-hit cl-locked" data-action="soon" data-name="LEVEL 3"     style="left:43%;top:34%;width:6%;height:12%"></div>
+      <div class="cl-hit cl-locked" data-action="soon" data-name="LEVEL 4"     style="left:52%;top:34%;width:6%;height:12%"></div>
+      <div class="cl-hit cl-locked" data-action="soon" data-name="LEVEL 5"     style="left:62%;top:35%;width:6%;height:12%"></div>
+      <div class="cl-hit cl-locked" data-action="soon" data-name="LEVEL 10"    style="left:24%;top:64%;width:6%;height:12%"></div>
+      <div class="cl-hit cl-locked" data-action="soon" data-name="LEVEL 6"     style="left:33%;top:64%;width:6%;height:12%"></div>
+      <div class="cl-hit cl-locked" data-action="soon" data-name="LEVEL 7"     style="left:42%;top:64%;width:6%;height:12%"></div>
+      <div class="cl-hit cl-locked" data-action="soon" data-name="LEVEL 8"     style="left:52%;top:65%;width:6%;height:12%"></div>
+      <div class="cl-hit cl-locked" data-action="soon" data-name="LEVEL 9"     style="left:61%;top:64%;width:6%;height:12%"></div>
+      <div class="cl-hit cl-locked" data-action="soon" data-name="HOLLOW KING" style="left:70%;top:52%;width:10%;height:22%"></div>
+    </div>
+
   </div>
-
-  <!-- MAIN MENU -->
-  <div class="cl-screen" id="cl-menu">
-    <img class="cl-bg" src="main_menu.png" alt="">
-    <div class="cl-hit cl-glow" data-action="play" style="left:13%;top:32%;width:28%;height:15%"></div>
-    <div class="cl-hit cl-locked" data-action="soon" data-name="SKIN"        style="left:14%;top:51%;width:13%;height:10%"></div>
-    <div class="cl-hit cl-locked" data-action="soon" data-name="SHOP"        style="left:27%;top:51%;width:13%;height:10%"></div>
-    <div class="cl-hit cl-locked" data-action="soon" data-name="BACKPACK"    style="left:13%;top:66%;width:13%;height:10%"></div>
-    <div class="cl-hit cl-locked" data-action="soon" data-name="STATS"       style="left:26%;top:66%;width:15%;height:10%"></div>
-    <div class="cl-hit cl-locked" data-action="soon" data-name="HOW TO PLAY" style="left:19%;top:86%;width:15%;height:5%"></div>
-  </div>
-
-  <!-- WORLD SELECT -->
-  <div class="cl-screen" id="cl-world">
-    <img class="cl-bg" src="world_select.png" alt="">
-    <div class="cl-hit" data-action="back-menu" style="left:10%;top:5%;width:6%;height:12%"></div>
-    <div class="cl-hit cl-glow" data-action="world" data-world="1"        style="left:15%;top:13%;width:20%;height:75%"></div>
-    <div class="cl-hit cl-locked" data-action="soon" data-name="INFERNO"  style="left:40%;top:13%;width:20%;height:75%"></div>
-    <div class="cl-hit cl-locked" data-action="soon" data-name="ABYSS"    style="left:66%;top:12%;width:20%;height:75%"></div>
-  </div>
-
-  <!-- LEVEL SELECT -->
-  <div class="cl-screen" id="cl-levels">
-    <img class="cl-bg" src="level_select.png" alt="">
-    <div class="cl-hit" data-action="back-world" style="left:5%;top:5%;width:5%;height:12%"></div>
-    <div class="cl-hit cl-glow" data-action="level" data-level="1"           style="left:24%;top:34%;width:6%;height:12%"></div>
-    <div class="cl-hit cl-locked" data-action="soon" data-name="LEVEL 2"     style="left:33%;top:34%;width:6%;height:12%"></div>
-    <div class="cl-hit cl-locked" data-action="soon" data-name="LEVEL 3"     style="left:43%;top:34%;width:6%;height:12%"></div>
-    <div class="cl-hit cl-locked" data-action="soon" data-name="LEVEL 4"     style="left:52%;top:34%;width:6%;height:12%"></div>
-    <div class="cl-hit cl-locked" data-action="soon" data-name="LEVEL 5"     style="left:62%;top:35%;width:6%;height:12%"></div>
-    <div class="cl-hit cl-locked" data-action="soon" data-name="LEVEL 10"    style="left:24%;top:64%;width:6%;height:12%"></div>
-    <div class="cl-hit cl-locked" data-action="soon" data-name="LEVEL 6"     style="left:33%;top:64%;width:6%;height:12%"></div>
-    <div class="cl-hit cl-locked" data-action="soon" data-name="LEVEL 7"     style="left:42%;top:64%;width:6%;height:12%"></div>
-    <div class="cl-hit cl-locked" data-action="soon" data-name="LEVEL 8"     style="left:52%;top:65%;width:6%;height:12%"></div>
-    <div class="cl-hit cl-locked" data-action="soon" data-name="LEVEL 9"     style="left:61%;top:64%;width:6%;height:12%"></div>
-    <div class="cl-hit cl-locked" data-action="soon" data-name="HOLLOW KING" style="left:70%;top:52%;width:10%;height:22%"></div>
-  </div>
-
 </div>
 
 <canvas id="cl-particles"></canvas>
@@ -191,11 +223,14 @@ img{image-rendering:pixelated}
 
 <script>
 (function(){
-  // ============ INJECT LOCK OVERLAYS ============
+  // ============ INJECT LOCK OVERLAYS (Improved) ============
   document.querySelectorAll('.cl-hit.cl-locked').forEach(el=>{
     const lock = document.createElement('div');
     lock.className='cl-lock-overlay';
-    lock.innerHTML = '<svg viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1s3.1 1.39 3.1 3.1v2z"/></svg>';
+    lock.innerHTML = `
+      <svg viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1s3.1 1.39 3.1 3.1v2z"/></svg>
+      <span class="cl-lock-text">LOCKED</span>
+    `;
     el.appendChild(lock);
   });
 
@@ -207,7 +242,7 @@ img{image-rendering:pixelated}
     try{
       CL_AC = new (window.AudioContext||window.webkitAudioContext)();
       CL_MUSIC_GAIN = CL_AC.createGain();
-      CL_MUSIC_GAIN.gain.value = 0.22;
+      CL_MUSIC_GAIN.gain.value = 0.18;
       CL_MUSIC_GAIN.connect(CL_AC.destination);
     }catch(e){}
   }
@@ -228,7 +263,6 @@ img{image-rendering:pixelated}
       o.connect(g); o.start(t); o.stop(t+0.09);
     }
     else if(type==='open'){
-      // Whoosh + boom
       const buf = CL_AC.createBuffer(1, CL_AC.sampleRate*0.6, CL_AC.sampleRate);
       const d = buf.getChannelData(0);
       for(let i=0;i<d.length;i++) d[i]=(Math.random()*2-1)*(1-i/d.length);
@@ -248,7 +282,6 @@ img{image-rendering:pixelated}
       o.connect(g); o.start(t); o.stop(t+0.35);
     }
     else if(type==='locked'){
-      // Buzz + thud
       for(let i=0;i<3;i++){
         const o = CL_AC.createOscillator(); const gg = CL_AC.createGain(); gg.connect(CL_AC.destination);
         o.type='square'; o.frequency.value = 140-i*10;
@@ -271,7 +304,6 @@ img{image-rendering:pixelated}
       o.connect(g); o.start(t); o.stop(t+0.6);
     }
     else if(type==='warp'){
-      // Reverse whoosh + zap
       const o = CL_AC.createOscillator();
       o.type='sine'; o.frequency.setValueAtTime(80,t); o.frequency.exponentialRampToValueAtTime(2000,t+0.3);
       g.gain.setValueAtTime(0.15,t); g.gain.linearRampToValueAtTime(0.3,t+0.15); g.gain.exponentialRampToValueAtTime(0.001,t+0.35);
@@ -282,7 +314,7 @@ img{image-rendering:pixelated}
       o2.connect(g2); o2.start(t+0.28); o2.stop(t+0.42);
     }
     else if(type==='glitch'){
-      for(let i=0;i<4;i++){
+      for(let i=0;i=4;i++){
         const o = CL_AC.createOscillator(); const gg = CL_AC.createGain(); gg.connect(CL_AC.destination);
         o.type='square'; o.frequency.value = 200+Math.random()*1500;
         gg.gain.setValueAtTime(0.08,t+i*0.03); gg.gain.exponentialRampToValueAtTime(0.001,t+i*0.03+0.04);
@@ -297,62 +329,42 @@ img{image-rendering:pixelated}
     }
   }
 
-  // ============ MUSIC ============
+  // ============ HOOKING BACKGROUND MUSIC (CHIPTUNE LOOP) ============
   function cl_startMusic(){
     if(!CL_AC || CL_MUSIC_STARTED) return;
     CL_MUSIC_STARTED = true;
-    const now = CL_AC.currentTime;
+    
+    // Melody Notes (G3, F3, D3, E3) -> 196, 174.6, 146.8, 164.8
+    const melody = [196, 174.6, 146.8, 164.8];
+    let step = 0;
+    let beatCount = 0;
 
-    // Deep drone
-    const drone = CL_AC.createOscillator();
-    drone.type='sawtooth'; drone.frequency.value=55;
-    const droneF = CL_AC.createBiquadFilter(); droneF.type='lowpass'; droneF.frequency.value=300; droneF.Q.value=10;
-    const droneG = CL_AC.createGain(); droneG.gain.value=0.4;
-    drone.connect(droneF); droneF.connect(droneG); droneG.connect(CL_MUSIC_GAIN);
-    drone.start(now);
-
-    // Sub bass fifth
-    const sub = CL_AC.createOscillator();
-    sub.type='sine'; sub.frequency.value=82.4;
-    const subG = CL_AC.createGain(); subG.gain.value=0.3;
-    sub.connect(subG); subG.connect(CL_MUSIC_GAIN);
-    sub.start(now);
-
-    // LFO
-    const lfo = CL_AC.createOscillator(); lfo.frequency.value=0.08;
-    const lfoG = CL_AC.createGain(); lfoG.gain.value=250;
-    lfo.connect(lfoG); lfoG.connect(droneF.frequency);
-    lfo.start(now);
-
-    // Arpeggio
-    const scale=[220,261.63,329.63,392,466.16,523.25,466.16,392,329.63,261.63];
-    let step=0;
-    setInterval(()=>{
-      if(!CL_AC || CL_AC.state==='closed') return;
+    const drumInterval = setInterval(() => {
+      if(!CL_AC || CL_AC.state === 'closed') return clearInterval(drumInterval);
       const t = CL_AC.currentTime;
-      const o = CL_AC.createOscillator(); o.type='triangle';
-      o.frequency.value = scale[step%scale.length];
+      
+      // Kick drum
+      if (beatCount % 8 === 0 || beatCount % 8 === 4) {
+        const o = CL_AC.createOscillator(); const gg = CL_AC.createGain(); gg.connect(CL_MUSIC_GAIN);
+        o.type='sine'; o.frequency.setValueAtTime(80,t); o.frequency.exponentialRampToValueAtTime(30,t+0.15);
+        gg.gain.setValueAtTime(0.5,t); gg.gain.exponentialRampToValueAtTime(0.001,t+0.2);
+        o.connect(gg); o.start(t); o.stop(t+0.22);
+      }
+      
+      // Bassline Synth
+      const o = CL_AC.createOscillator(); 
+      o.type = 'square';
+      const note = melody[step % melody.length];
+      o.frequency.value = note;
       const gg = CL_AC.createGain();
-      gg.gain.setValueAtTime(0,t);
-      gg.gain.linearRampToValueAtTime(0.12,t+0.02);
-      gg.gain.exponentialRampToValueAtTime(0.001,t+0.8);
-      const delay = CL_AC.createDelay(); delay.delayTime.value=0.375;
-      const dGain = CL_AC.createGain(); dGain.gain.value=0.4;
+      gg.gain.setValueAtTime(0.35, t);
+      gg.gain.exponentialRampToValueAtTime(0.001, t+0.35);
       o.connect(gg); gg.connect(CL_MUSIC_GAIN);
-      gg.connect(delay); delay.connect(dGain); dGain.connect(CL_MUSIC_GAIN); dGain.connect(delay);
-      o.start(t); o.stop(t+0.85);
+      o.start(t); o.stop(t+0.35);
+      
       step++;
-    }, 500);
-
-    // Kick drum every 2 sec
-    setInterval(()=>{
-      if(!CL_AC || CL_AC.state==='closed') return;
-      const t = CL_AC.currentTime;
-      const o = CL_AC.createOscillator(); const gg = CL_AC.createGain(); gg.connect(CL_MUSIC_GAIN);
-      o.type='sine'; o.frequency.setValueAtTime(80,t); o.frequency.exponentialRampToValueAtTime(30,t+0.15);
-      gg.gain.setValueAtTime(0.5,t); gg.gain.exponentialRampToValueAtTime(0.001,t+0.2);
-      o.connect(gg); o.start(t); o.stop(t+0.22);
-    }, 2000);
+      beatCount++;
+    }, 300); // 300ms per beat (200BPM style chiptune)
 
     document.getElementById('cl-mute').classList.add('cl-visible');
   }
@@ -360,7 +372,7 @@ img{image-rendering:pixelated}
   function cl_toggleMusic(){
     CL_MUSIC_ON = !CL_MUSIC_ON;
     if(CL_MUSIC_GAIN){
-      CL_MUSIC_GAIN.gain.linearRampToValueAtTime(CL_MUSIC_ON?0.22:0, CL_AC.currentTime+0.3);
+      CL_MUSIC_GAIN.gain.linearRampToValueAtTime(CL_MUSIC_ON?0.18:0, CL_AC.currentTime+0.3);
     }
     document.getElementById('cl-mute').textContent = CL_MUSIC_ON?'♪ ON':'♪ OFF';
   }
@@ -399,20 +411,15 @@ img{image-rendering:pixelated}
       p.life -= 0.005;
       if(p.life<=0 || p.y < -10){ CL_PARTS.splice(i,1); continue; }
       ctx.fillStyle = `hsla(${p.hue},100%,55%,${p.life*0.9})`;
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, p.size, 0, Math.PI*2);
-      ctx.fill();
-      // glow
+      ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI*2); ctx.fill();
       ctx.fillStyle = `hsla(${p.hue},100%,70%,${p.life*0.3})`;
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, p.size*2.5, 0, Math.PI*2);
-      ctx.fill();
+      ctx.beginPath(); ctx.arc(p.x, p.y, p.size*2.5, 0, Math.PI*2); ctx.fill();
     }
     requestAnimationFrame(cl_particleTick);
   }
   cl_particleTick();
 
-  // ============ TOAST ============
+  // ============ TOAST & FLASH ============
   let toastTimer=null;
   function cl_toast(msg){
     const t = document.getElementById('cl-toast');
@@ -421,35 +428,46 @@ img{image-rendering:pixelated}
     clearTimeout(toastTimer);
     toastTimer = setTimeout(()=>t.classList.remove('cl-toast-show'), 1300);
   }
-
   function cl_flash(){
     const f = document.getElementById('cl-flash');
     f.classList.add('cl-flash-on');
     setTimeout(()=>f.classList.remove('cl-flash-on'), 180);
   }
 
-  // ============ TRANSITIONS ============
+  // ============ SCREEN TRANSITIONS (WITH SLIDE & SCALE) ============
   let CL_CURRENT = null;
-  function cl_showScreen(id, dir){
+  function cl_showScreen(id, dir = 'fwd'){
     const next = document.getElementById(id);
     if(CL_CURRENT === next) return;
 
-    cl_sfx(dir==='back'?'close':'warp');
-    cl_vibe(dir==='back'?[15,25,15]:[30,20,50]);
+    cl_sfx(dir === 'back' ? 'close' : 'warp');
+    cl_vibe(dir === 'back' ? [15,25,15] : [30,20,50]);
 
     if(CL_CURRENT){
       const prev = CL_CURRENT;
-      prev.classList.add('cl-closing');
       prev.classList.remove('cl-shown');
-      setTimeout(()=>{ prev.classList.remove('cl-active','cl-closing'); }, 500);
+      prev.classList.add('cl-closing');
+      setTimeout(() => {
+        prev.classList.remove('cl-active', 'cl-closing');
+        prev.style.transform = '';
+      }, 600);
     }
 
-    setTimeout(()=>{
-      next.classList.add('cl-active');
-      void next.offsetWidth;
-      requestAnimationFrame(()=>{ next.classList.add('cl-shown'); });
-      CL_CURRENT = next;
-    }, CL_CURRENT ? 200 : 0);
+    // Prepare entry animation
+    next.style.display = 'block';
+    next.classList.add('cl-active');
+    if(dir === 'fwd') next.classList.add('cl-fwd-enter');
+    else if(dir === 'back') next.classList.add('cl-back-enter');
+    else next.classList.add('cl-fwd-enter');
+
+    // Trigger reflow
+    void next.offsetWidth;
+
+    // Start transition to shown
+    next.classList.remove('cl-fwd-enter', 'cl-back-enter');
+    next.classList.add('cl-shown');
+
+    CL_CURRENT = next;
   }
 
   // ============ CLICK HANDLING ============
@@ -486,7 +504,6 @@ img{image-rendering:pixelated}
     const fill = document.getElementById('cl-loader-fill');
     const DUR = 4500;
     const start = performance.now();
-    // periodic tick sounds
     let lastTick = 0;
     function tick(now){
       const p = Math.min(1, (now-start)/DUR);
@@ -513,13 +530,8 @@ img{image-rendering:pixelated}
 
   async function cl_forceLandscape(){
     cl_sfx('rotate'); cl_vibe([30,50,30,50,80]);
-    try{
-      if(document.documentElement.requestFullscreen) await document.documentElement.requestFullscreen();
-      else if(document.documentElement.webkitRequestFullscreen) await document.documentElement.webkitRequestFullscreen();
-    }catch(e){}
-    try{
-      if(screen.orientation && screen.orientation.lock) await screen.orientation.lock('landscape');
-    }catch(e){}
+    try{ if(document.documentElement.requestFullscreen) await document.documentElement.requestFullscreen(); }catch(e){}
+    try{ if(screen.orientation && screen.orientation.lock) await screen.orientation.lock('landscape'); }catch(e){}
     setTimeout(()=>{ if(cl_isLandscape()) cl_proceedToLoader(); }, 500);
   }
 
@@ -545,7 +557,7 @@ img{image-rendering:pixelated}
   // ============ GATE 1 → GATE 2 ============
   document.getElementById('cl-gate').addEventListener('click', function(){
     cl_initAudio(); cl_resumeAudio(); cl_startMusic();
-    cl_sfx('glitch'); cl_vibe([40,30,80]);
+    cl_sfx('open'); cl_vibe([40,30,80]);
     this.style.transition='opacity .5s,transform .5s';
     this.style.opacity='0'; this.style.transform='scale(1.15)';
     setTimeout(()=>{
@@ -559,7 +571,6 @@ img{image-rendering:pixelated}
     e.stopPropagation(); cl_toggleMusic();
   });
 
-  // Resume audio on any tap (mobile safety)
   document.addEventListener('touchstart', cl_resumeAudio, {passive:true});
   document.addEventListener('click', cl_resumeAudio, {passive:true});
 
