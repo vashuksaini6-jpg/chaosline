@@ -1,466 +1,314 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<meta name="theme-color" content="#000000">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<title>CHAOSLINE</title>
-<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>CHAOSLINE Hitbox Editor</title>
 <style>
-*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none;touch-action:manipulation}
-html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Press Start 2P',monospace;color:#fff;position:fixed}
-img{image-rendering:pixelated}
-
-/* ============ STAGE & WRAPPER ============ */
-.cl-stage{
-    position:fixed;inset:0;background:#000;overflow:hidden;
-    display:flex;align-items:center;justify-content:center;
-}
-.cl-game-wrapper{
-    position:relative;width:100%;height:100%;max-width:100vw;max-height:100vh;
-    aspect-ratio:16 / 9; background:#000;overflow:hidden;
-    /* Will be scaled dynamically via JS to eliminate black bars */
-    transition: transform 0.2s ease;
-}
-
-/* ============ SCREENS (New sleek transitions) ============ */
-.cl-screen{
-    position:absolute;inset:0;display:block;
-    opacity:0;transform:scale(1.4);filter:blur(12px) brightness(0.5);
-    pointer-events:none;z-index:1;
-    transition:opacity 0.4s cubic-bezier(.34,1.56,.64,1), transform 0.4s cubic-bezier(.34,1.56,.64,1), filter 0.4s ease;
-}
-.cl-screen.cl-active{pointer-events:auto;z-index:10}
-.cl-screen.cl-shown{opacity:1;transform:scale(1);filter:blur(0) brightness(1)}
-.cl-screen.cl-closing{
-    opacity:0;transform:scale(0.7) rotate(2deg);filter:blur(8px) brightness(0.3);pointer-events:none;
-}
-
-/* ============ BG — OBJECT FIT COVER ============ */
-.cl-bg{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;object-position:center;pointer-events:none;display:block}
-
-/* ============ HITBOX (For mobile responsiveness) ============ */
-.cl-hit{position:absolute;background:transparent;cursor:pointer;transition:transform .1s ease,filter .2s ease;z-index:5;touch-action:manipulation}
-.cl-hit:active{transform:scale(0.92);filter:brightness(2) drop-shadow(0 0 25px #ff2244)}
-.cl-hit.cl-locked{cursor:not-allowed}
-.cl-hit.cl-locked:active{transform:scale(0.98) translateX(-4px);animation:cl-shake .3s;filter:brightness(0.6) hue-rotate(-30deg)}
-@keyframes cl-shake{0%,100%{transform:translateX(0) scale(0.98)}25%{transform:translateX(-6px) scale(0.98)}75%{transform:translateX(6px) scale(0.98)}}
-
-/* Glowing button */
-.cl-hit.cl-glow::after{content:'';position:absolute;inset:-4px;border:2px solid #ff2244;border-radius:4px;opacity:0;animation:cl-breathe 2s ease-in-out infinite;pointer-events:none;box-shadow:0 0 25px #ff2244}
-@keyframes cl-breathe{0%,100%{opacity:0;transform:scale(0.95)}50%{opacity:.9;transform:scale(1.05)}}
-
-/* ============ IMPROVED LOCK OVERLAY (Multi-color) ============ */
-.cl-lock-overlay{
-    position:absolute;inset:0;
-    background:rgba(15,0,0,0.7);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);
-    display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none;z-index:2;
-    border:1px solid rgba(255,34,68,0.2);box-shadow:inset 0 0 30px rgba(255,0,0,0.2);
-}
-.cl-lock-overlay svg{
-    width:45%;height:45%;max-width:40px;max-height:40px;fill:#ff4466;
-    filter:drop-shadow(0 0 15px #ff2244);animation:cl-lock-float 2s ease-in-out infinite;
-}
-.cl-lock-text{
-    margin-top:10px;font-size:7px;color:#ff4466;letter-spacing:2px;text-shadow:0 0 15px #ff2244;
-    background:rgba(0,0,0,0.8);padding:6px 14px;border-radius:4px;border:1px solid rgba(255,34,68,0.5)
-}
-@keyframes cl-lock-float{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-4px) scale(1.1)}}
-
-/* ============ PARTICLES ============ */
-#cl-particles{position:fixed;inset:0;pointer-events:none;z-index:6;opacity:.8;mix-blend-mode:screen}
-
-/* ============ LOADING BAR (RE-CALIBRATED) ============ */
-#cl-loading .cl-loader-container{
-    position:absolute;top:82%;left:50%;transform:translateX(-50%);
-    width:65%;height:6%;overflow:hidden;z-index:6;box-shadow:0 0 40px rgba(255,0,0,0.4);
-    border:2px solid rgba(255,0,0,0.3);border-radius:2px;background:rgba(0,0,0,0.5);
-}
-#cl-loading .cl-loader-fill{
-    width:0%;height:100%;
-    background:linear-gradient(90deg,#4a0008,#ff2244 40%,#ff6688 70%,#ff2244);
-    box-shadow:0 0 30px #ff2244,inset 0 0 20px rgba(255,255,255,.6);
-    transition:width .1s linear;position:relative;
-}
-#cl-loading .cl-loader-fill::after{
-    content:'';position:absolute;top:0;right:0;width:40px;height:100%;
-    background:linear-gradient(90deg,transparent,#fff);opacity:.5;animation:cl-shine .8s linear infinite;
-}
-@keyframes cl-shine{0%{transform:translateX(-100px)}100%{transform:translateX(0)}}
-
-/* ============ TOAST ============ */
-.cl-toast{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(0.5) rotate(-8deg);background:linear-gradient(135deg,#1a0000,#2a0008);border:2px solid #ff2244;color:#fff;padding:20px 28px;font-size:11px;letter-spacing:2px;z-index:10000;opacity:0;pointer-events:none;transition:opacity .3s,transform .3s cubic-bezier(.34,1.56,.64,1);box-shadow:0 0 50px rgba(255,34,68,.8),inset 0 0 20px rgba(255,34,68,.2);text-align:center;line-height:1.7;text-shadow:0 0 8px #ff2244}
-.cl-toast.cl-toast-show{opacity:1;transform:translate(-50%,-50%) scale(1) rotate(0)}
-
-/* ============ OVERLAYS ============ */
-.cl-flash{position:fixed;inset:0;background:#ff2244;opacity:0;pointer-events:none;z-index:9998;transition:opacity .15s}
-.cl-flash.cl-flash-on{opacity:0.6}
-.cl-vignette{position:fixed;inset:0;pointer-events:none;z-index:7;background:radial-gradient(ellipse at center,transparent 30%,rgba(0,0,0,0.9) 100%);opacity:.6}
-.cl-scanlines{position:fixed;inset:0;pointer-events:none;z-index:8;background:repeating-linear-gradient(0deg,rgba(0,0,0,.3) 0px,rgba(0,0,0,.3) 2px,transparent 2px,transparent 4px);opacity:.5;mix-blend-mode:multiply}
-.cl-mute{position:fixed;top:16px;right:16px;width:42px;height:42px;background:rgba(0,0,0,.8);border:2px solid #ff2244;color:#ff2244;font-size:10px;z-index:9997;cursor:pointer;display:none;align-items:center;justify-content:center;border-radius:8px;box-shadow:0 0 20px rgba(255,34,68,.5)}
-
-/* ============ GATE 1: EPIC ARCADE ENTRY ============ */
-#cl-gate{position:fixed;inset:0;background:radial-gradient(ellipse at center,#1a0004 0%,#000 80%);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:10002;cursor:pointer;text-align:center;padding:20px;overflow:hidden}
-#cl-gate::before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(0deg,rgba(255,34,68,.05) 0px,rgba(255,34,68,.05) 2px,transparent 2px,transparent 5px);pointer-events:none}
-#cl-gate::after{content:'';position:absolute;inset:0;background:radial-gradient(circle at center,rgba(255,34,68,.6), transparent 60%);animation:cl-gate-pulse 1.8s ease-in-out infinite;pointer-events:none}
-@keyframes cl-gate-pulse{0%,100%{transform:scale(1);opacity:0.3}50%{transform:scale(1.3);opacity:1}}
-.cl-gate-phoenix{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:70%;max-width:500px;height:auto;opacity:.2;animation:cl-phoenix-pulse 4s ease-in-out infinite;filter:drop-shadow(0 0 60px #ff2244)}
-@keyframes cl-phoenix-pulse{0%,100%{opacity:.1;transform:translate(-50%,-50%) scale(1)}50%{opacity:.4;transform:translate(-50%,-50%) scale(1.05)}}
-.cl-gate-title{
-    position:relative;font-size:clamp(26px, 8vw, 60px);color:#ff2244;z-index:2;
-    text-shadow:0 0 25px #ff2244, 0 0 50px #ff2244, 0 0 100px #ff2244, 3px 0 0 #00ffff, -3px 0 0 #ff00ff;
-    letter-spacing:6px;margin-bottom:20px;animation:cl-glitch 3s infinite;
-}
-@keyframes cl-glitch{0%,88%,100%{transform:translate(0);text-shadow:0 0 25px #ff2244,0 0 50px #ff2244,3px 0 0 rgba(0,255,255,0),-3px 0 0 rgba(255,0,255,0)}90%{transform:translate(-3px,1px);text-shadow:0 0 25px #ff2244,0 0 50px #ff2244,4px 0 0 #00ffff,-4px 0 0 #ff00ff}92%{transform:translate(3px,-1px);text-shadow:0 0 25px #ff2244,0 0 50px #ff2244,-4px 0 0 #00ffff,4px 0 0 #ff00ff}94%{transform:translate(-2px,0);text-shadow:0 0 25px #ff2244,0 0 50px #ff2244,3px 0 0 #00ffff,-3px 0 0 #ff00ff}}
-.cl-gate-sub{position:relative;font-size:clamp(10px, 2vw, 16px);color:#ff2244;letter-spacing:6px;animation:cl-blink 1s steps(2) infinite;z-index:2;text-shadow:0 0 20px #ff2244;background:rgba(0,0,0,0.6);padding:8px 16px;border:1px solid rgba(255,34,68,.5)}
-@keyframes cl-blink{0%,49%{opacity:1}50%,100%{opacity:.3}}
-.cl-gate-tag{position:absolute;bottom:20px;font-size:8px;color:#661122;letter-spacing:3px;z-index:2}
-
-/* ============ GATE 2: ROTATE (Better visual hook) ============ */
-#cl-rotate-gate{position:fixed;inset:0;background:radial-gradient(ellipse at center,#1a0004 0%,#000 80%);display:none;flex-direction:column;align-items:center;justify-content:center;z-index:10001;text-align:center;padding:20px;overflow:hidden}
-#cl-rotate-gate.cl-show{display:flex}
-#cl-rotate-gate::before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(0deg,rgba(255,34,68,.05) 0px,rgba(255,34,68,.05) 1px,transparent 1px,transparent 4px);pointer-events:none}
-.cl-rot-title{font-size:clamp(18px, 5vw, 30px);color:#ff2244;text-shadow:0 0 20px #ff2244, 3px 0 0 #00ffff, -3px 0 0 #ff00ff;letter-spacing:4px;margin-bottom:6px;animation:cl-glitch 3s infinite;z-index:2}
-.cl-rot-sub{font-size:clamp(10px, 2vw, 16px);color:#ff6688;letter-spacing:2px;margin-bottom:20px;line-height:1.9;max-width:340px;z-index:2}
-.cl-rot-phone-wrap{position:relative;width:140px;height:140px;display:flex;align-items:center;justify-content:center;z-index:2;margin-bottom:16px}
-.cl-rot-phone-wrap::before{content:'';position:absolute;inset:-10px;border:2px dashed #ff2244;border-radius:50%;animation:cl-spin 3s linear infinite;opacity:.8;box-shadow:0 0 30px rgba(255,34,68,0.4)}
-.cl-rot-phone-wrap::after{content:'';position:absolute;inset:0;border-radius:50%;background:radial-gradient(circle,rgba(255,34,68,.3),transparent 70%);animation:cl-rot-pulse 1.5s ease-in-out infinite}
-@keyframes cl-spin{0%{transform:rotate(0)}100%{transform:rotate(360deg)}}
-@keyframes cl-rot-pulse{0%,100%{transform:scale(1);opacity:.5}50%{transform:scale(1.3);opacity:1}}
-#cl-rotate-btn{width:100px;height:100px;background:rgba(255,34,68,.1);border:3px solid #ff2244;border-radius:16px;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 0 40px rgba(255,34,68,.7),inset 0 0 20px rgba(255,34,68,.3);animation:cl-phone-tilt 2s ease-in-out infinite;transition:transform .15s;position:relative;z-index:3}
-#cl-rotate-btn:active{transform:scale(0.88) rotate(-20deg)}
-#cl-rotate-btn svg{width:56px;height:56px;fill:#ff2244;filter:drop-shadow(0 0 20px #ff2244)}
-@keyframes cl-phone-tilt{0%,100%{transform:rotate(0)}40%{transform:rotate(-8deg)}60%{transform:rotate(82deg)}85%{transform:rotate(90deg)}}
-.cl-rot-hint{font-size:9px;color:#ff2244;letter-spacing:3px;margin-top:20px;animation:cl-blink 1s steps(2) infinite;z-index:2}
+  * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; -webkit-user-select: none; }
+  body { background: #02030a; color: #fff; font-family: monospace; overflow: hidden; }
+  
+  #topbar {
+    position: fixed; top: 0; left: 0; right: 0; height: 40px;
+    background: #050d20; display: flex; align-items: center;
+    padding: 0 10px; gap: 8px; z-index: 100; border-bottom: 1px solid #1e3a8a;
+  }
+  #topbar button {
+    background: #0a1a3d; color: #fff; border: 1px solid #1e3a8a;
+    padding: 6px 12px; font-family: monospace; font-size: 12px;
+    cursor: pointer; border-radius: 3px;
+  }
+  #topbar button.active { background: #1e3a8a; border-color: #4a7fff; }
+  #topbar .info { margin-left: auto; font-size: 11px; color: #8ab4ff; }
+  
+  #stage {
+    position: fixed; top: 40px; left: 0; right: 0; bottom: 0;
+    display: flex; align-items: center; justify-content: center;
+    overflow: hidden;
+  }
+  
+  #canvas {
+    position: relative;
+    background: #000;
+  }
+  
+  #canvas img {
+    display: block; width: 100%; height: 100%;
+    pointer-events: none;
+  }
+  
+  .hitbox {
+    position: absolute;
+    border: 2px solid;
+    background: rgba(255,255,255,0.08);
+    touch-action: none;
+    cursor: move;
+  }
+  .hitbox.selected {
+    background: rgba(255,255,255,0.2);
+    box-shadow: 0 0 12px currentColor;
+  }
+  .hitbox .label {
+    position: absolute; top: -18px; left: 0;
+    background: rgba(0,0,0,0.85); padding: 2px 6px;
+    font-size: 10px; white-space: nowrap;
+    border-radius: 2px; pointer-events: none;
+  }
+  .hitbox .coords {
+    position: absolute; bottom: -16px; left: 0;
+    background: rgba(0,0,0,0.85); padding: 1px 4px;
+    font-size: 9px; white-space: nowrap;
+    border-radius: 2px; pointer-events: none;
+    color: #8ab4ff;
+  }
+  .handle {
+    position: absolute; width: 14px; height: 14px;
+    background: #fff; border: 1px solid #000;
+    right: -7px; bottom: -7px;
+    cursor: nwse-resize; touch-action: none;
+  }
 </style>
 </head>
 <body>
 
-<!-- GATE 1 -->
-<div id="cl-gate">
-  <svg class="cl-gate-phoenix" viewBox="0 0 200 200">
-    <path d="M100 30 L60 60 L40 100 L30 140 L50 130 L70 150 L90 130 L100 170 L110 130 L130 150 L150 130 L170 140 L160 100 L140 60 Z M100 60 L85 90 L100 110 L115 90 Z" fill="none" stroke="#ff2244" stroke-width="1.5"/>
-    <circle cx="100" cy="80" r="3" fill="#ff2244"/>
-  </svg>
-  <div class="cl-gate-title">CHAOSLINE</div>
-  <div class="cl-gate-sub">▶ TAP TO ENTER ◀</div>
-  <div class="cl-gate-tag">— A RAGE PLATFORMER —</div>
+<div id="topbar">
+  <button data-screen="loading">Loading</button>
+  <button data-screen="main_menu">Main</button>
+  <button data-screen="world_select">Worlds</button>
+  <button data-screen="level_select">Levels</button>
+  <span class="info">1920×1080 native | Drag = move | Corner = resize</span>
 </div>
 
-<!-- GATE 2: ROTATE -->
-<div id="cl-rotate-gate">
-  <div class="cl-rot-title">PLAY LIKE A PRO</div>
-  <div class="cl-rot-sub">CHAOSLINE IS BUILT FOR LANDSCAPE<br>PRESS THE ICON BELOW TO ROTATE</div>
-  <div class="cl-rot-phone-wrap">
-    <div id="cl-rotate-btn">
-      <svg viewBox="0 0 24 24"><path d="M16.48 2.52c3.27 1.55 5.61 4.72 5.97 8.48h1.5C23.44 4.84 18.29 0 12 0l-.66.03 3.81 3.81 1.33-1.32zm-6.25-.77c-.59-.59-1.54-.59-2.12 0L1.75 8.11c-.59.59-.59 1.54 0 2.12l12.02 12.02c.59.59 1.54.59 2.12 0l6.36-6.36c.59-.59 1.54 0 2.12 0l10.23 1.75zm4.6 19.44L2.81 9.17l6.36-6.36 12.02 12.02-6.36 6.36zm-7.31.29C4.25 19.94 1.91 16.76 1.55 13H.05C.56 19.16 5.71 24 12 24l.66-.03-3.81-3.81-1.33 1.32z"/></svg>
-    </div>
-  </div>
-  <div class="cl-rot-hint">▲ TAP ICON ▲</div>
-  <div class="cl-rot-manual">If nothing happens: rotate phone manually<br>& disable rotation lock in quick settings</div>
-</div>
-
-<div class="cl-stage" id="cl-stage">
-  <div class="cl-game-wrapper" id="cl-wrapper">
-
-    <!-- LOADING -->
-    <div class="cl-screen" id="cl-loading">
-      <img class="cl-bg" src="loading.png" alt="">
-      <div class="cl-loader-container"><div class="cl-loader-fill" id="cl-loader-fill"></div></div>
-    </div>
-
-    <!-- MAIN MENU -->
-    <div class="cl-screen" id="cl-menu">
-      <img class="cl-bg" src="main_menu.png" alt="">
-      <div class="cl-hit cl-glow" data-action="play" style="left:13%;top:32%;width:28%;height:15%"></div>
-      <div class="cl-hit cl-locked" data-action="soon" data-name="SKIN"        style="left:14%;top:51%;width:13%;height:10%"></div>
-      <div class="cl-hit cl-locked" data-action="soon" data-name="SHOP"        style="left:27%;top:51%;width:13%;height:10%"></div>
-      <div class="cl-hit cl-locked" data-action="soon" data-name="BACKPACK"    style="left:13%;top:66%;width:13%;height:10%"></div>
-      <div class="cl-hit cl-locked" data-action="soon" data-name="STATS"       style="left:26%;top:66%;width:15%;height:10%"></div>
-      <div class="cl-hit cl-locked" data-action="soon" data-name="HOW TO PLAY" style="left:19%;top:86%;width:15%;height:5%"></div>
-    </div>
-
-    <!-- WORLD SELECT -->
-    <div class="cl-screen" id="cl-world">
-      <img class="cl-bg" src="world_select.png" alt="">
-      <div class="cl-hit" data-action="back-menu" style="left:10%;top:5%;width:6%;height:12%"></div>
-      <div class="cl-hit cl-glow" data-action="world" data-world="1"        style="left:15%;top:13%;width:20%;height:75%"></div>
-      <div class="cl-hit cl-locked" data-action="soon" data-name="INFERNO"  style="left:40%;top:13%;width:20%;height:75%"></div>
-      <div class="cl-hit cl-locked" data-action="soon" data-name="ABYSS"    style="left:66%;top:12%;width:20%;height:75%"></div>
-    </div>
-
-    <!-- LEVEL SELECT -->
-    <div class="cl-screen" id="cl-levels">
-      <img class="cl-bg" src="level_select.png" alt="">
-      <div class="cl-hit" data-action="back-world" style="left:5%;top:5%;width:5%;height:12%"></div>
-      <div class="cl-hit cl-glow" data-action="level" data-level="1"           style="left:24%;top:34%;width:6%;height:12%"></div>
-      <div class="cl-hit cl-locked" data-action="soon" data-name="LEVEL 2"     style="left:33%;top:34%;width:6%;height:12%"></div>
-      <div class="cl-hit cl-locked" data-action="soon" data-name="LEVEL 3"     style="left:43%;top:34%;width:6%;height:12%"></div>
-      <div class="cl-hit cl-locked" data-action="soon" data-name="LEVEL 4"     style="left:52%;top:34%;width:6%;height:12%"></div>
-      <div class="cl-hit cl-locked" data-action="soon" data-name="LEVEL 5"     style="left:62%;top:35%;width:6%;height:12%"></div>
-      <div class="cl-hit cl-locked" data-action="soon" data-name="LEVEL 10"    style="left:24%;top:64%;width:6%;height:12%"></div>
-      <div class="cl-hit cl-locked" data-action="soon" data-name="LEVEL 6"     style="left:33%;top:64%;width:6%;height:12%"></div>
-      <div class="cl-hit cl-locked" data-action="soon" data-name="LEVEL 7"     style="left:42%;top:64%;width:6%;height:12%"></div>
-      <div class="cl-hit cl-locked" data-action="soon" data-name="LEVEL 8"     style="left:52%;top:65%;width:6%;height:12%"></div>
-      <div class="cl-hit cl-locked" data-action="soon" data-name="LEVEL 9"     style="left:61%;top:64%;width:6%;height:12%"></div>
-      <div class="cl-hit cl-locked" data-action="soon" data-name="HOLLOW KING" style="left:70%;top:52%;width:10%;height:22%"></div>
-    </div>
-
+<div id="stage">
+  <div id="canvas">
+    <img id="bgimg" src="">
   </div>
 </div>
-
-<canvas id="cl-particles"></canvas>
-<div class="cl-vignette"></div>
-<div class="cl-scanlines"></div>
-<div class="cl-flash" id="cl-flash"></div>
-<div class="cl-toast" id="cl-toast">COMING SOON</div>
-<button class="cl-mute" id="cl-mute">♪ ON</button>
 
 <script>
-(function(){
-  // ============ FIX BLACK BARS ON MOBILE (Dynamic Scaling) ============
-  const wrapper = document.getElementById('cl-wrapper');
-  function cl_fitToScreen() {
-      const stage = document.getElementById('cl-stage');
-      const stageW = stage.clientWidth;
-      const stageH = stage.clientHeight;
-      const wrapperRatio = 16 / 9;
-      const screenRatio = stageW / stageH;
-
-      let scale = 1;
-      if (screenRatio > wrapperRatio) {
-          // Screen is wider than 16:9 (landscape pillarboxing) -> Zoom in horizontally
-          scale = screenRatio / wrapperRatio;
-      } else {
-          // Screen is taller (portrait) -> Zoom in vertically
-          scale = wrapperRatio / screenRatio;
-      }
-      // Apply crop to fill screen. Slight extra scale to avoid 1px borders.
-      wrapper.style.transform = `scale(${scale * 1.01})`;
-      wrapper.style.transformOrigin = 'center center';
+// ============ CONFIG ============
+const SCREENS = {
+  loading: {
+    file: 'loading.png',
+    hitboxes: [
+      { id: 'loading_back', color: '#4a9fff', x: 40, y: 40, w: 100, h: 100 },
+      { id: 'loading_bar',  color: '#4a9fff', x: 660, y: 950, w: 600, h: 40 }
+    ]
+  },
+  main_menu: {
+    file: 'main_menu.png',
+    hitboxes: [
+      { id: 'main_back',      color: '#4a9fff', x: 40,   y: 40,  w: 100, h: 100 },
+      { id: 'main_coin',      color: '#4a9fff', x: 1600, y: 40,  w: 280, h: 90  },
+      { id: 'main_play',      color: '#4aff8a', x: 100,  y: 380, w: 560, h: 160 },
+      { id: 'main_skin',      color: '#ffd84a', x: 100,  y: 570, w: 260, h: 120 },
+      { id: 'main_shop',      color: '#ffd84a', x: 400,  y: 570, w: 260, h: 120 },
+      { id: 'main_inventory', color: '#ffd84a', x: 100,  y: 720, w: 260, h: 120 },
+      { id: 'main_stats',     color: '#ffd84a', x: 400,  y: 720, w: 260, h: 120 },
+      { id: 'main_howto',     color: '#ff6a6a', x: 180,  y: 880, w: 400, h: 60  }
+    ]
+  },
+  world_select: {
+    file: 'world_select.png',
+    hitboxes: [
+      { id: 'world_back',      color: '#4a9fff', x: 40,   y: 40,  w: 100, h: 100 },
+      { id: 'world_overworld', color: '#4aff8a', x: 150,  y: 200, w: 460, h: 780 },
+      { id: 'world_inferno',   color: '#ffd84a', x: 720,  y: 200, w: 460, h: 780 },
+      { id: 'world_abyss',     color: '#ffd84a', x: 1290, y: 200, w: 460, h: 780 }
+    ]
+  },
+  level_select: {
+    file: 'level_select.png',
+    hitboxes: [
+      { id: 'level_back', color: '#4a9fff', x: 40,   y: 40,  w: 100, h: 100 },
+      { id: 'level_1',    color: '#4aff8a', x: 260,  y: 490, w: 130, h: 130 },
+      { id: 'level_2',    color: '#4aff8a', x: 500,  y: 490, w: 130, h: 130 },
+      { id: 'level_3',    color: '#4aff8a', x: 740,  y: 490, w: 130, h: 130 },
+      { id: 'level_4',    color: '#4aff8a', x: 980,  y: 490, w: 130, h: 130 },
+      { id: 'level_5',    color: '#4aff8a', x: 1220, y: 490, w: 130, h: 130 },
+      { id: 'level_6',    color: '#4aff8a', x: 260,  y: 810, w: 130, h: 130 },
+      { id: 'level_7',    color: '#4aff8a', x: 500,  y: 810, w: 130, h: 130 },
+      { id: 'level_8',    color: '#4aff8a', x: 740,  y: 810, w: 130, h: 130 },
+      { id: 'level_9',    color: '#4aff8a', x: 980,  y: 810, w: 130, h: 130 },
+      { id: 'level_10',   color: '#4aff8a', x: 1220, y: 810, w: 130, h: 130 },
+      { id: 'level_boss', color: '#ff4a4a', x: 1700, y: 780, w: 180, h: 230 }
+    ]
   }
-  window.addEventListener('resize', cl_fitToScreen);
+};
+
+// ============ STATE ============
+const NATIVE_W = 1920;
+const NATIVE_H = 1080;
+let currentScreen = 'loading';
+let scale = 1;
+let selected = null;
+
+const canvas = document.getElementById('canvas');
+const bgimg = document.getElementById('bgimg');
+const stage = document.getElementById('stage');
+
+// ============ RENDER ============
+function fitCanvas() {
+  const availW = stage.clientWidth;
+  const availH = stage.clientHeight;
+  const scaleW = availW / NATIVE_W;
+  const scaleH = availH / NATIVE_H;
+  scale = Math.min(scaleW, scaleH);
+  canvas.style.width  = (NATIVE_W * scale) + 'px';
+  canvas.style.height = (NATIVE_H * scale) + 'px';
+  updateAllHitboxVisuals();
+}
+
+function loadScreen(name) {
+  currentScreen = name;
+  bgimg.src = SCREENS[name].file;
+  // clear old hitboxes
+  document.querySelectorAll('.hitbox').forEach(el => el.remove());
+  // build new
+  SCREENS[name].hitboxes.forEach(hb => createHitbox(hb));
+  // update button state
+  document.querySelectorAll('#topbar button').forEach(b => {
+    b.classList.toggle('active', b.dataset.screen === name);
+  });
+  fitCanvas();
+}
+
+function createHitbox(hb) {
+  const el = document.createElement('div');
+  el.className = 'hitbox';
+  el.dataset.id = hb.id;
+  el.style.color = hb.color;
+  el.style.borderColor = hb.color;
   
-  // ============ LOCK OVERLAYS ============
-  document.querySelectorAll('.cl-hit.cl-locked').forEach(el=>{
-    const lock = document.createElement('div');
-    lock.className='cl-lock-overlay';
-    lock.innerHTML = `
-      <svg viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1s3.1 1.39 3.1 3.1v2z"/></svg>
-      <span class="cl-lock-text">LOCKED</span>
-    `;
-    el.appendChild(lock);
+  const label = document.createElement('div');
+  label.className = 'label';
+  label.textContent = hb.id;
+  el.appendChild(label);
+  
+  const coords = document.createElement('div');
+  coords.className = 'coords';
+  el.appendChild(coords);
+  
+  const handle = document.createElement('div');
+  handle.className = 'handle';
+  el.appendChild(handle);
+  
+  canvas.appendChild(el);
+  applyHitboxVisual(el, hb);
+  
+  // interaction
+  attachDrag(el, hb);
+  attachResize(handle, el, hb);
+}
+
+function applyHitboxVisual(el, hb) {
+  el.style.left   = (hb.x * scale) + 'px';
+  el.style.top    = (hb.y * scale) + 'px';
+  el.style.width  = (hb.w * scale) + 'px';
+  el.style.height = (hb.h * scale) + 'px';
+  el.querySelector('.coords').textContent = 
+    `x:${Math.round(hb.x)} y:${Math.round(hb.y)} w:${Math.round(hb.w)} h:${Math.round(hb.h)}`;
+}
+
+function updateAllHitboxVisuals() {
+  SCREENS[currentScreen].hitboxes.forEach(hb => {
+    const el = canvas.querySelector(`[data-id="${hb.id}"]`);
+    if (el) applyHitboxVisual(el, hb);
   });
+}
 
-  // ============ AUDIO ENGINE ============
-  let CL_AC=null, CL_MUSIC_GAIN=null, CL_MUSIC_ON=true, CL_MUSIC_STARTED=false;
-  function cl_initAudio(){
-    if(CL_AC) return;
-    try{
-      CL_AC = new (window.AudioContext||window.webkitAudioContext)();
-      CL_MUSIC_GAIN = CL_AC.createGain();
-      CL_MUSIC_GAIN.gain.value = 0.2;
-      CL_MUSIC_GAIN.connect(CL_AC.destination);
-    }catch(e){ console.error("Audio Init failed:", e); }
-  }
-  function cl_resumeAudio(){
-    if(CL_AC && CL_AC.state==='suspended') CL_AC.resume();
-  }
+// ============ DRAG ============
+function getPoint(e) {
+  if (e.touches && e.touches[0]) return { x: e.touches[0].clientX, y: e.touches[0].clientY };
+  return { x: e.clientX, y: e.clientY };
+}
 
-  function cl_sfx(type){
-    if(!CL_AC) return;
-    cl_resumeAudio();
-    const t = CL_AC.currentTime;
-    const g = CL_AC.createGain(); g.connect(CL_AC.destination);
-    if(type==='click'){
-      const o = CL_AC.createOscillator(); o.type='square'; o.frequency.setValueAtTime(1200,t); o.frequency.exponentialRampToValueAtTime(300,t+0.06);
-      g.gain.setValueAtTime(0.2,t); g.gain.exponentialRampToValueAtTime(0.001,t+0.08);
-      o.connect(g); o.start(t); o.stop(t+0.09);
-    } else if(type==='open'){
-      const o = CL_AC.createOscillator(); o.type='sine'; o.frequency.setValueAtTime(300,t); o.frequency.exponentialRampToValueAtTime(40,t+0.4);
-      g.gain.setValueAtTime(0.4,t); g.gain.exponentialRampToValueAtTime(0.001,t+0.45);
-      o.connect(g); o.start(t); o.stop(t+0.5);
-    } else if(type==='locked'){
-      for(let i=0;i<3;i++){ const o = CL_AC.createOscillator(); const gg = CL_AC.createGain(); gg.connect(CL_AC.destination);
-        o.type='square'; o.frequency.value = 140-i*10;
-        gg.gain.setValueAtTime(0.15,t+i*0.05); gg.gain.exponentialRampToValueAtTime(0.001,t+i*0.05+0.08);
-        o.connect(gg); o.start(t+i*0.05); o.stop(t+i*0.05+0.09);
-      }
-    } else if(type==='chime'){
-      [523,659,784,1046].forEach((f,i)=>{ const o = CL_AC.createOscillator(); const gg = CL_AC.createGain(); gg.connect(CL_AC.destination);
-        o.type='triangle'; o.frequency.value=f;
-        gg.gain.setValueAtTime(0,t+i*0.07); gg.gain.linearRampToValueAtTime(0.2,t+i*0.07+0.02); gg.gain.exponentialRampToValueAtTime(0.001,t+i*0.07+0.5);
-        o.connect(gg); o.start(t+i*0.07); o.stop(t+i*0.07+0.55);
-      });
-    } else if(type==='warp'){
-      const o = CL_AC.createOscillator(); o.type='sine'; o.frequency.setValueAtTime(80,t); o.frequency.exponentialRampToValueAtTime(2000,t+0.3);
-      g.gain.setValueAtTime(0.15,t); g.gain.linearRampToValueAtTime(0.3,t+0.15); g.gain.exponentialRampToValueAtTime(0.001,t+0.35);
-      o.connect(g); o.start(t); o.stop(t+0.4);
-    } else if(type==='glitch'){
-      for(let i=0;i<4;i++){ const o = CL_AC.createOscillator(); const gg = CL_AC.createGain(); gg.connect(CL_AC.destination);
-        o.type='square'; o.frequency.value = 200+Math.random()*1500;
-        gg.gain.setValueAtTime(0.08,t+i*0.03); gg.gain.exponentialRampToValueAtTime(0.001,t+i*0.03+0.04);
-        o.connect(gg); o.start(t+i*0.03); o.stop(t+i*0.03+0.05);
-      }
-    }
-  }
-
-  // ============ NEW HOOKING SYNTHWAVE MUSIC ============
-  function cl_startMusic(){
-    if(!CL_AC || CL_MUSIC_STARTED) return;
-    CL_MUSIC_STARTED = true;
-    const now = CL_AC.currentTime;
-    
-    // Deep Pad (Sawtooth with lowpass filter)
-    const pad = CL_AC.createOscillator(); pad.type='sawtooth'; pad.frequency.value=65.4; // C2
-    const padF = CL_AC.createBiquadFilter(); padF.type='lowpass'; padF.frequency.value=200; padF.Q.value=2;
-    const padG = CL_AC.createGain(); padG.gain.value=0.1;
-    pad.connect(padF); padF.connect(padG); padG.connect(CL_MUSIC_GAIN);
-    pad.start(now);
-
-    // Kick drum every 2 beats
-    let beat=0;
-    const kickInterval = setInterval(()=>{
-      if(!CL_AC || CL_AC.state==='closed') return clearInterval(kickInterval);
-      const t = CL_AC.currentTime;
-      if(beat % 8 === 0 || beat % 8 === 4){
-        const o = CL_AC.createOscillator(); const gg = CL_AC.createGain(); gg.connect(CL_MUSIC_GAIN);
-        o.type='sine'; o.frequency.setValueAtTime(80,t); o.frequency.exponentialRampToValueAtTime(30,t+0.15);
-        gg.gain.setValueAtTime(0.4,t); gg.gain.exponentialRampToValueAtTime(0.001,t+0.2);
-        o.connect(gg); o.start(t); o.stop(t+0.22);
-      }
-      beat++;
-    }, 350); // 350ms per beat
-
-    document.getElementById('cl-mute').classList.add('cl-visible');
-  }
-
-  function cl_toggleMusic(){
-    CL_MUSIC_ON = !CL_MUSIC_ON;
-    if(CL_MUSIC_GAIN) CL_MUSIC_GAIN.gain.linearRampToValueAtTime(CL_MUSIC_ON?0.2:0, CL_AC.currentTime+0.3);
-    document.getElementById('cl-mute').textContent = CL_MUSIC_ON?'♪ ON':'♪ OFF';
-  }
-
-  function cl_vibe(ms){ if(navigator.vibrate) navigator.vibrate(ms); }
-
-  // ============ PARTICLES (Red/Orange/Pink colors) ============
-  const canvas = document.getElementById('cl-particles');
-  const ctx = canvas.getContext('2d');
-  let CL_PARTS = [];
-  function cl_resizeCanvas(){ canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
-  cl_resizeCanvas(); window.addEventListener('resize', cl_resizeCanvas);
-  function cl_spawnPart(){
-    CL_PARTS.push({
-      x: Math.random()*canvas.width, y: canvas.height+10,
-      vx: (Math.random()-0.5)*0.4, vy: -0.6 - Math.random()*0.9, life: 1,
-      size: 2 + Math.random()*3, hue: 340 + Math.random()*40
-    });
-  }
-  function cl_particleTick(){
-    ctx.clearRect(0,0,canvas.width,canvas.height);
-    if(Math.random() < 0.6) cl_spawnPart();
-    for(let i=CL_PARTS.length-1;i>=0;i--){
-      const p = CL_PARTS[i]; p.x += p.vx; p.y += p.vy; p.life -= 0.004;
-      if(p.life<=0 || p.y < -10){ CL_PARTS.splice(i,1); continue; }
-      ctx.shadowBlur = 15; ctx.shadowColor = `hsla(${p.hue},100%,60%,${p.life})`;
-      ctx.fillStyle = `hsla(${p.hue},100%,55%,${p.life})`;
-      ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI*2); ctx.fill();
-    }
-    requestAnimationFrame(cl_particleTick);
-  }
-  cl_particleTick();
-
-  // ============ TOAST ============
-  let toastTimer=null;
-  function cl_toast(msg){ const t = document.getElementById('cl-toast'); t.textContent = msg; t.classList.add('cl-toast-show'); clearTimeout(toastTimer); toastTimer = setTimeout(()=>t.classList.remove('cl-toast-show'), 1300); }
-  function cl_flash(){ const f = document.getElementById('cl-flash'); f.classList.add('cl-flash-on'); setTimeout(()=>f.classList.remove('cl-flash-on'), 180); }
-
-  // ============ SCREEN TRANSITIONS ============
-  let CL_CURRENT = null;
-  function cl_showScreen(id, dir = 'fwd'){
-    const next = document.getElementById(id);
-    if(CL_CURRENT === next) return;
-    cl_sfx(dir === 'back' ? 'warp' : 'warp');
-    cl_vibe(dir === 'back' ? [15,25,15] : [30,20,50]);
-
-    if(CL_CURRENT){
-      const prev = CL_CURRENT;
-      prev.classList.remove('cl-shown');
-      prev.classList.add('cl-closing');
-      setTimeout(() => { prev.classList.remove('cl-active', 'cl-closing'); }, 400);
-    }
-
-    next.style.display = 'block';
-    next.classList.add('cl-active');
-    void next.offsetWidth;
-    next.classList.add('cl-shown');
-    CL_CURRENT = next;
-  }
-
-  // ============ CLICK HANDLING ============
-  document.addEventListener('pointerdown', function(e){
-    const hit = e.target.closest('.cl-hit');
-    if(!hit) return;
+function attachDrag(el, hb) {
+  let startX, startY, origX, origY;
+  
+  function down(e) {
+    if (e.target.classList.contains('handle')) return;
     e.preventDefault();
-    cl_resumeAudio();
-    if(hit.classList.contains('cl-locked')){
-      cl_sfx('locked'); cl_vibe([20,40,20]);
-      cl_toast((hit.dataset.name||'') + ' — LOCKED');
-      return;
-    }
-    cl_sfx('click'); cl_vibe(15);
-    const action = hit.dataset.action;
-    if(action==='play') cl_showScreen('cl-world','fwd');
-    else if(action==='world') cl_showScreen('cl-levels','fwd');
-    else if(action==='level'){ cl_sfx('glitch'); cl_flash(); cl_vibe([50,30,80]); cl_toast('LEVEL 1 — GAMEPLAY LOADING SOON'); }
-    else if(action==='back-menu') cl_showScreen('cl-menu','back');
-    else if(action==='back-world') cl_showScreen('cl-world','back');
-  });
-
-  // ============ LOADING FIX ============
-  let CL_LOADER_STARTED = false;
-  function cl_runLoader(){
-    if(CL_LOADER_STARTED) return;
-    CL_LOADER_STARTED = true;
-    const fill = document.getElementById('cl-loader-fill');
-    const DUR = 4500;
-    const start = performance.now();
-    function tick(now){
-      const p = Math.min(1, (now-start)/DUR);
-      const eased = 1 - Math.pow(1-p, 3);
-      fill.style.width = (eased*100)+'%';
-      if(p<1) requestAnimationFrame(tick);
-      else { setTimeout(()=>{ cl_sfx('chime'); cl_vibe([60,40,60,40,120]); cl_showScreen('cl-menu','fwd'); }, 400); }
-    }
-    requestAnimationFrame(tick);
+    selectHitbox(el);
+    const p = getPoint(e);
+    startX = p.x; startY = p.y;
+    origX = hb.x; origY = hb.y;
+    document.addEventListener('mousemove', move);
+    document.addEventListener('touchmove', move, { passive: false });
+    document.addEventListener('mouseup', up);
+    document.addEventListener('touchend', up);
   }
+  function move(e) {
+    e.preventDefault();
+    const p = getPoint(e);
+    const dx = (p.x - startX) / scale;
+    const dy = (p.y - startY) / scale;
+    hb.x = Math.max(0, Math.min(NATIVE_W - hb.w, origX + dx));
+    hb.y = Math.max(0, Math.min(NATIVE_H - hb.h, origY + dy));
+    applyHitboxVisual(el, hb);
+  }
+  function up() {
+    document.removeEventListener('mousemove', move);
+    document.removeEventListener('touchmove', move);
+    document.removeEventListener('mouseup', up);
+    document.removeEventListener('touchend', up);
+  }
+  
+  el.addEventListener('mousedown', down);
+  el.addEventListener('touchstart', down, { passive: false });
+}
 
-  // ============ ROTATE & ENTRANCE GATES ============
-  function cl_isLandscape(){ return window.innerWidth > window.innerHeight; }
-  function cl_showRotateGate(){ document.getElementById('cl-rotate-gate').classList.add('cl-show'); }
-  function cl_hideRotateGate(){ const g = document.getElementById('cl-rotate-gate'); g.style.transition='opacity .4s,transform .4s'; g.style.opacity='0'; g.style.transform='scale(1.2)'; setTimeout(()=>{ g.classList.remove('cl-show'); g.style.opacity=''; g.style.transform=''; }, 500); }
-  async function cl_forceLandscape(){ cl_sfx('glitch'); cl_vibe([30,50,30,50,80]); try{ if(document.documentElement.requestFullscreen) await document.documentElement.requestFullscreen(); }catch(e){} try{ if(screen.orientation && screen.orientation.lock) await screen.orientation.lock('landscape'); }catch(e){} setTimeout(()=>{ if(cl_isLandscape()) cl_proceedToLoader(); }, 500); }
-  function cl_proceedToLoader(){ cl_hideRotateGate(); setTimeout(()=>{ cl_showScreen('cl-loading','fwd'); setTimeout(cl_runLoader, 600); }, 400); }
-  function cl_onOrientationChange(){ const gate = document.getElementById('cl-rotate-gate'); if(gate.classList.contains('cl-show') && cl_isLandscape()) cl_proceedToLoader(); }
-  window.addEventListener('resize', cl_onOrientationChange); window.addEventListener('orientationchange', cl_onOrientationChange);
-  document.getElementById('cl-rotate-btn').addEventListener('pointerdown', function(e){ e.stopPropagation(); cl_forceLandscape(); });
+function attachResize(handle, el, hb) {
+  let startX, startY, origW, origH;
+  
+  function down(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    selectHitbox(el);
+    const p = getPoint(e);
+    startX = p.x; startY = p.y;
+    origW = hb.w; origH = hb.h;
+    document.addEventListener('mousemove', move);
+    document.addEventListener('touchmove', move, { passive: false });
+    document.addEventListener('mouseup', up);
+    document.addEventListener('touchend', up);
+  }
+  function move(e) {
+    e.preventDefault();
+    const p = getPoint(e);
+    const dx = (p.x - startX) / scale;
+    const dy = (p.y - startY) / scale;
+    hb.w = Math.max(20, Math.min(NATIVE_W - hb.x, origW + dx));
+    hb.h = Math.max(20, Math.min(NATIVE_H - hb.y, origH + dy));
+    applyHitboxVisual(el, hb);
+  }
+  function up() {
+    document.removeEventListener('mousemove', move);
+    document.removeEventListener('touchmove', move);
+    document.removeEventListener('mouseup', up);
+    document.removeEventListener('touchend', up);
+  }
+  
+  handle.addEventListener('mousedown', down);
+  handle.addEventListener('touchstart', down, { passive: false });
+}
 
-  // ============ GATE 1 → GATE 2 ============
-  document.getElementById('cl-gate').addEventListener('pointerdown', function(){
-    cl_initAudio(); cl_resumeAudio(); cl_startMusic(); cl_sfx('open'); cl_vibe([40,30,80]);
-    this.style.transition='opacity .5s,transform .5s'; this.style.opacity='0'; this.style.transform='scale(1.15)';
-    setTimeout(()=>{ this.remove(); if(cl_isLandscape()) cl_proceedToLoader(); else cl_showRotateGate(); }, 520);
-  }, {once:true});
+function selectHitbox(el) {
+  document.querySelectorAll('.hitbox').forEach(h => h.classList.remove('selected'));
+  el.classList.add('selected');
+  selected = el;
+}
 
-  document.getElementById('cl-mute').addEventListener('pointerdown', function(e){ e.stopPropagation(); cl_toggleMusic(); });
-  document.addEventListener('touchstart', cl_resumeAudio, {passive:true});
-  document.addEventListener('gesturestart', e=>e.preventDefault());
-  document.addEventListener('contextmenu', e=>e.preventDefault());
+// ============ INIT ============
+document.querySelectorAll('#topbar button').forEach(b => {
+  b.addEventListener('click', () => loadScreen(b.dataset.screen));
+});
 
-  setTimeout(cl_fitToScreen, 100); // Run fit once on load
-})();
+window.addEventListener('resize', fitCanvas);
+bgimg.addEventListener('load', fitCanvas);
+
+loadScreen('loading');
 </script>
+
 </body>
 </html>
