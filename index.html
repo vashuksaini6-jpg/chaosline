@@ -8,9 +8,6 @@
   * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; -webkit-user-select: none; }
   html, body { width: 100%; height: 100%; overflow: hidden; background: #02030a; color: #fff; font-family: monospace; }
   
-  /* ============ ROTATION WRAPPER ============
-     If device is in portrait, rotate the entire app 90deg
-     so landscape PNGs display correctly. */
   #rotator {
     position: fixed;
     top: 0; left: 0;
@@ -19,20 +16,32 @@
   }
   
   #topbar {
-    position: absolute; top: 0; left: 0; right: 0; height: 40px;
+    position: absolute; top: 0; left: 0; right: 0; height: 44px;
     background: #050d20; display: flex; align-items: center;
-    padding: 0 10px; gap: 8px; z-index: 100; border-bottom: 1px solid #1e3a8a;
+    padding: 0 8px; gap: 6px; z-index: 100; border-bottom: 1px solid #1e3a8a;
   }
   #topbar button {
     background: #0a1a3d; color: #fff; border: 1px solid #1e3a8a;
-    padding: 6px 12px; font-family: monospace; font-size: 12px;
+    padding: 6px 10px; font-family: monospace; font-size: 12px;
     cursor: pointer; border-radius: 3px;
   }
   #topbar button.active { background: #1e3a8a; border-color: #4a7fff; }
-  #topbar .info { margin-left: auto; font-size: 11px; color: #8ab4ff; }
+  
+  #infopanel {
+    margin-left: auto;
+    font-size: 12px;
+    color: #8ab4ff;
+    background: #0a1a3d;
+    padding: 6px 10px;
+    border-radius: 3px;
+    border: 1px solid #1e3a8a;
+    min-width: 340px;
+    text-align: center;
+  }
+  #infopanel b { color: #fff; }
   
   #stage {
-    position: absolute; top: 40px; left: 0;
+    position: absolute; top: 44px; left: 0;
     display: flex; align-items: center; justify-content: center;
     overflow: hidden;
   }
@@ -50,32 +59,43 @@
   .hitbox {
     position: absolute;
     border: 2px solid;
-    background: rgba(255,255,255,0.08);
+    background: rgba(255,255,255,0.05);
     touch-action: none;
     cursor: move;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .hitbox .mini-id {
+    font-size: 10px;
+    color: rgba(255,255,255,0.6);
+    background: rgba(0,0,0,0.5);
+    padding: 1px 4px;
+    border-radius: 2px;
+    pointer-events: none;
+    white-space: nowrap;
   }
   .hitbox.selected {
-    background: rgba(255,255,255,0.2);
-    box-shadow: 0 0 12px currentColor;
+    background: rgba(255,255,255,0.18);
+    box-shadow: 0 0 16px currentColor;
+    border-width: 3px;
+    z-index: 10;
   }
-  .hitbox .label {
-    position: absolute; top: -18px; left: 0;
-    background: rgba(0,0,0,0.85); padding: 2px 6px;
-    font-size: 10px; white-space: nowrap;
-    border-radius: 2px; pointer-events: none;
-  }
-  .hitbox .coords {
-    position: absolute; bottom: -16px; left: 0;
-    background: rgba(0,0,0,0.85); padding: 1px 4px;
-    font-size: 9px; white-space: nowrap;
-    border-radius: 2px; pointer-events: none;
-    color: #8ab4ff;
+  .hitbox.selected .mini-id {
+    color: #fff;
+    background: rgba(0,0,0,0.85);
+    font-weight: bold;
   }
   .handle {
-    position: absolute; width: 18px; height: 18px;
-    background: #fff; border: 1px solid #000;
-    right: -9px; bottom: -9px;
+    position: absolute; width: 22px; height: 22px;
+    background: #fff; border: 2px solid #000;
+    right: -11px; bottom: -11px;
     cursor: nwse-resize; touch-action: none;
+    border-radius: 3px;
+    display: none;
+  }
+  .hitbox.selected .handle {
+    display: block;
   }
 </style>
 </head>
@@ -83,11 +103,11 @@
 
 <div id="rotator">
   <div id="topbar">
-    <button data-screen="loading">Loading</button>
+    <button data-screen="loading">Load</button>
     <button data-screen="main_menu">Main</button>
     <button data-screen="world_select">Worlds</button>
     <button data-screen="level_select">Levels</button>
-    <span class="info">1920×1080 | Drag=move | Corner=resize</span>
+    <div id="infopanel">Tap a hitbox to select</div>
   </div>
 
   <div id="stage">
@@ -153,21 +173,22 @@ const NATIVE_W = 1920;
 const NATIVE_H = 1080;
 let currentScreen = 'loading';
 let scale = 1;
-let selected = null;
+let selectedHb = null;
+let selectedEl = null;
 
 const rotator = document.getElementById('rotator');
 const canvas = document.getElementById('canvas');
 const bgimg = document.getElementById('bgimg');
 const stage = document.getElementById('stage');
+const infopanel = document.getElementById('infopanel');
 
-// ============ FORCE LANDSCAPE VIA ROTATION ============
+// ============ ROTATION ============
 function applyRotation() {
   const vw = window.innerWidth;
   const vh = window.innerHeight;
   const isPortrait = vh > vw;
   
   if (isPortrait) {
-    // Rotate the entire UI 90 degrees so landscape PNGs fit properly
     rotator.style.width = vh + 'px';
     rotator.style.height = vw + 'px';
     rotator.style.transform = 'rotate(90deg) translateY(-100%)';
@@ -183,7 +204,7 @@ function applyRotation() {
 function fitCanvas() {
   const view = applyRotation();
   const availW = view.w;
-  const availH = view.h - 40; // minus topbar
+  const availH = view.h - 44;
   
   stage.style.width = availW + 'px';
   stage.style.height = availH + 'px';
@@ -204,6 +225,9 @@ function loadScreen(name) {
   document.querySelectorAll('#topbar button').forEach(b => {
     b.classList.toggle('active', b.dataset.screen === name);
   });
+  selectedHb = null;
+  selectedEl = null;
+  updateInfoPanel();
   fitCanvas();
 }
 
@@ -214,14 +238,10 @@ function createHitbox(hb) {
   el.style.color = hb.color;
   el.style.borderColor = hb.color;
   
-  const label = document.createElement('div');
-  label.className = 'label';
-  label.textContent = hb.id;
-  el.appendChild(label);
-  
-  const coords = document.createElement('div');
-  coords.className = 'coords';
-  el.appendChild(coords);
+  const mini = document.createElement('div');
+  mini.className = 'mini-id';
+  mini.textContent = hb.id;
+  el.appendChild(mini);
   
   const handle = document.createElement('div');
   handle.className = 'handle';
@@ -239,8 +259,6 @@ function applyHitboxVisual(el, hb) {
   el.style.top    = (hb.y * scale) + 'px';
   el.style.width  = (hb.w * scale) + 'px';
   el.style.height = (hb.h * scale) + 'px';
-  el.querySelector('.coords').textContent = 
-    `x:${Math.round(hb.x)} y:${Math.round(hb.y)} w:${Math.round(hb.w)} h:${Math.round(hb.h)}`;
 }
 
 function updateAllHitboxVisuals() {
@@ -250,8 +268,15 @@ function updateAllHitboxVisuals() {
   });
 }
 
-// ============ ROTATION-AWARE POINTER ============
-// Since we rotate the UI 90deg in portrait, we must invert touch coords.
+function updateInfoPanel() {
+  if (!selectedHb) {
+    infopanel.innerHTML = 'Tap a hitbox to select';
+    return;
+  }
+  infopanel.innerHTML = `<b>${selectedHb.id}</b> &nbsp; x:${Math.round(selectedHb.x)} y:${Math.round(selectedHb.y)} w:${Math.round(selectedHb.w)} h:${Math.round(selectedHb.h)}`;
+}
+
+// ============ POINTER (rotation-aware) ============
 function getPoint(e) {
   let raw;
   if (e.touches && e.touches[0]) raw = { x: e.touches[0].clientX, y: e.touches[0].clientY };
@@ -262,8 +287,6 @@ function getPoint(e) {
   const isPortrait = vh > vw;
   
   if (isPortrait) {
-    // rotate coords: what user sees as X (horizontal on rotated view) = raw Y
-    // what user sees as Y = vw - raw X
     return { x: raw.y, y: vw - raw.x };
   }
   return raw;
@@ -275,7 +298,7 @@ function attachDrag(el, hb) {
   function down(e) {
     if (e.target.classList.contains('handle')) return;
     e.preventDefault();
-    selectHitbox(el);
+    selectHitbox(el, hb);
     const p = getPoint(e);
     startX = p.x; startY = p.y;
     origX = hb.x; origY = hb.y;
@@ -292,6 +315,7 @@ function attachDrag(el, hb) {
     hb.x = Math.max(0, Math.min(NATIVE_W - hb.w, origX + dx));
     hb.y = Math.max(0, Math.min(NATIVE_H - hb.h, origY + dy));
     applyHitboxVisual(el, hb);
+    updateInfoPanel();
   }
   function up() {
     document.removeEventListener('mousemove', move);
@@ -310,7 +334,7 @@ function attachResize(handle, el, hb) {
   function down(e) {
     e.preventDefault();
     e.stopPropagation();
-    selectHitbox(el);
+    selectHitbox(el, hb);
     const p = getPoint(e);
     startX = p.x; startY = p.y;
     origW = hb.w; origH = hb.h;
@@ -327,6 +351,7 @@ function attachResize(handle, el, hb) {
     hb.w = Math.max(20, Math.min(NATIVE_W - hb.x, origW + dx));
     hb.h = Math.max(20, Math.min(NATIVE_H - hb.y, origH + dy));
     applyHitboxVisual(el, hb);
+    updateInfoPanel();
   }
   function up() {
     document.removeEventListener('mousemove', move);
@@ -339,10 +364,12 @@ function attachResize(handle, el, hb) {
   handle.addEventListener('touchstart', down, { passive: false });
 }
 
-function selectHitbox(el) {
+function selectHitbox(el, hb) {
   document.querySelectorAll('.hitbox').forEach(h => h.classList.remove('selected'));
   el.classList.add('selected');
-  selected = el;
+  selectedEl = el;
+  selectedHb = hb;
+  updateInfoPanel();
 }
 
 // ============ INIT ============
