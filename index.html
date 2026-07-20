@@ -4,58 +4,122 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>CHAOSLINE Hitbox Editor</title>
+
 <style>
-  * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; -webkit-user-select: none; }
-  html, body { width: 100%; height: 100%; overflow: hidden; background: #02030a; color: #fff; font-family: monospace; }
-  
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  html, body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: #02030a;
+    color: #fff;
+    font-family: monospace;
+  }
+
   #rotator {
     position: fixed;
-    top: 0; left: 0;
+    top: 0;
+    left: 0;
     transform-origin: top left;
     background: #02030a;
   }
-  
+
   #topbar {
-    position: absolute; top: 0; left: 0; right: 0; height: 44px;
-    background: #050d20; display: flex; align-items: center;
-    padding: 0 8px; gap: 6px; z-index: 100; border-bottom: 1px solid #1e3a8a;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 110px;
+    background: #050d20;
+    z-index: 100;
+    border-bottom: 1px solid #1e3a8a;
+    display: flex;
+    flex-direction: column;
   }
-  #topbar button {
-    background: #0a1a3d; color: #fff; border: 1px solid #1e3a8a;
-    padding: 6px 10px; font-family: monospace; font-size: 12px;
-    cursor: pointer; border-radius: 3px;
+
+  #buttonrow {
+    height: 42px;
+    display: flex;
+    align-items: center;
+    padding: 0 8px;
+    gap: 6px;
+    border-bottom: 1px solid #1e3a8a;
+    background: #050d20;
   }
-  #topbar button.active { background: #1e3a8a; border-color: #4a7fff; }
-  
-  #infopanel {
-    margin-left: auto;
+
+  #buttonrow button {
+    background: #0a1a3d;
+    color: #fff;
+    border: 1px solid #1e3a8a;
+    padding: 6px 10px;
+    font-family: monospace;
     font-size: 12px;
+    cursor: pointer;
+    border-radius: 3px;
+  }
+
+  #buttonrow button.active {
+    background: #1e3a8a;
+    border-color: #4a7fff;
+  }
+
+  #coordsPanel {
+    height: 68px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 4px 6px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    align-content: flex-start;
+    background: #02030a;
+  }
+
+  .coordChip {
+    font-size: 10px;
     color: #8ab4ff;
     background: #0a1a3d;
-    padding: 6px 10px;
-    border-radius: 3px;
     border: 1px solid #1e3a8a;
-    min-width: 340px;
-    text-align: center;
+    padding: 2px 5px;
+    border-radius: 3px;
+    white-space: nowrap;
   }
-  #infopanel b { color: #fff; }
-  
+
+  .coordChip.selected {
+    color: #fff;
+    background: #1e3a8a;
+    border-color: #ffffff;
+  }
+
   #stage {
-    position: absolute; top: 44px; left: 0;
-    display: flex; align-items: center; justify-content: center;
+    position: absolute;
+    top: 110px;
+    left: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     overflow: hidden;
   }
-  
+
   #canvas {
     position: relative;
     background: #000;
   }
-  
+
   #canvas img {
-    display: block; width: 100%; height: 100%;
+    display: block;
+    width: 100%;
+    height: 100%;
     pointer-events: none;
   }
-  
+
   .hitbox {
     position: absolute;
     border: 2px solid;
@@ -66,6 +130,7 @@
     align-items: center;
     justify-content: center;
   }
+
   .hitbox .mini-id {
     font-size: 10px;
     color: rgba(255,255,255,0.6);
@@ -75,39 +140,53 @@
     pointer-events: none;
     white-space: nowrap;
   }
+
   .hitbox.selected {
     background: rgba(255,255,255,0.18);
     box-shadow: 0 0 16px currentColor;
     border-width: 3px;
     z-index: 10;
   }
+
   .hitbox.selected .mini-id {
     color: #fff;
     background: rgba(0,0,0,0.85);
     font-weight: bold;
   }
+
   .handle {
-    position: absolute; width: 22px; height: 22px;
-    background: #fff; border: 2px solid #000;
-    right: -11px; bottom: -11px;
-    cursor: nwse-resize; touch-action: none;
+    position: absolute;
+    width: 22px;
+    height: 22px;
+    background: #fff;
+    border: 2px solid #000;
+    right: -11px;
+    bottom: -11px;
+    cursor: nwse-resize;
+    touch-action: none;
     border-radius: 3px;
     display: none;
   }
+
   .hitbox.selected .handle {
     display: block;
   }
 </style>
 </head>
+
 <body>
 
 <div id="rotator">
+
   <div id="topbar">
-    <button data-screen="loading">Load</button>
-    <button data-screen="main_menu">Main</button>
-    <button data-screen="world_select">Worlds</button>
-    <button data-screen="level_select">Levels</button>
-    <div id="infopanel">Tap a hitbox to select</div>
+    <div id="buttonrow">
+      <button data-screen="loading">Load</button>
+      <button data-screen="main_menu">Main</button>
+      <button data-screen="world_select">Worlds</button>
+      <button data-screen="level_select">Levels</button>
+    </div>
+
+    <div id="coordsPanel"></div>
   </div>
 
   <div id="stage">
@@ -115,10 +194,18 @@
       <img id="bgimg" src="">
     </div>
   </div>
+
 </div>
 
 <script>
-// ============ CONFIG ============
+// =====================================================
+// CHAOSLINE HITBOX EDITOR
+// Native image coordinate system: 1920 x 1080
+// =====================================================
+
+const NATIVE_W = 1920;
+const NATIVE_H = 1080;
+
 const SCREENS = {
   loading: {
     file: 'loading.png',
@@ -127,6 +214,7 @@ const SCREENS = {
       { id: 'loading_bar',  color: '#4a9fff', x: 660, y: 950, w: 600, h: 40 }
     ]
   },
+
   main_menu: {
     file: 'main_menu.png',
     hitboxes: [
@@ -140,6 +228,7 @@ const SCREENS = {
       { id: 'main_howto',     color: '#ff6a6a', x: 180,  y: 880, w: 400, h: 60  }
     ]
   },
+
   world_select: {
     file: 'world_select.png',
     hitboxes: [
@@ -149,28 +238,33 @@ const SCREENS = {
       { id: 'world_abyss',     color: '#ffd84a', x: 1290, y: 200, w: 460, h: 780 }
     ]
   },
+
   level_select: {
     file: 'level_select.png',
     hitboxes: [
       { id: 'level_back', color: '#4a9fff', x: 40,   y: 40,  w: 100, h: 100 },
+
       { id: 'level_1',    color: '#4aff8a', x: 260,  y: 490, w: 130, h: 130 },
       { id: 'level_2',    color: '#4aff8a', x: 500,  y: 490, w: 130, h: 130 },
       { id: 'level_3',    color: '#4aff8a', x: 740,  y: 490, w: 130, h: 130 },
       { id: 'level_4',    color: '#4aff8a', x: 980,  y: 490, w: 130, h: 130 },
       { id: 'level_5',    color: '#4aff8a', x: 1220, y: 490, w: 130, h: 130 },
+
       { id: 'level_6',    color: '#4aff8a', x: 260,  y: 810, w: 130, h: 130 },
       { id: 'level_7',    color: '#4aff8a', x: 500,  y: 810, w: 130, h: 130 },
       { id: 'level_8',    color: '#4aff8a', x: 740,  y: 810, w: 130, h: 130 },
       { id: 'level_9',    color: '#4aff8a', x: 980,  y: 810, w: 130, h: 130 },
       { id: 'level_10',   color: '#4aff8a', x: 1220, y: 810, w: 130, h: 130 },
+
       { id: 'level_boss', color: '#ff4a4a', x: 1700, y: 780, w: 180, h: 230 }
     ]
   }
 };
 
-// ============ STATE ============
-const NATIVE_W = 1920;
-const NATIVE_H = 1080;
+// =====================================================
+// STATE
+// =====================================================
+
 let currentScreen = 'loading';
 let scale = 1;
 let selectedHb = null;
@@ -180,15 +274,19 @@ const rotator = document.getElementById('rotator');
 const canvas = document.getElementById('canvas');
 const bgimg = document.getElementById('bgimg');
 const stage = document.getElementById('stage');
-const infopanel = document.getElementById('infopanel');
+const coordsPanel = document.getElementById('coordsPanel');
 
-// ============ ROTATION ============
+// =====================================================
+// ROTATION / FITTING
+// =====================================================
+
 function applyRotation() {
   const vw = window.innerWidth;
   const vh = window.innerHeight;
   const isPortrait = vh > vw;
-  
+
   if (isPortrait) {
+    // Rotate whole editor so 1920x1080 landscape image maps correctly on portrait phones.
     rotator.style.width = vh + 'px';
     rotator.style.height = vw + 'px';
     rotator.style.transform = 'rotate(90deg) translateY(-100%)';
@@ -203,33 +301,50 @@ function applyRotation() {
 
 function fitCanvas() {
   const view = applyRotation();
+
   const availW = view.w;
-  const availH = view.h - 44;
-  
+  const availH = view.h - 110;
+
   stage.style.width = availW + 'px';
   stage.style.height = availH + 'px';
-  
+
   const scaleW = availW / NATIVE_W;
   const scaleH = availH / NATIVE_H;
+
   scale = Math.min(scaleW, scaleH);
-  canvas.style.width  = (NATIVE_W * scale) + 'px';
+
+  canvas.style.width = (NATIVE_W * scale) + 'px';
   canvas.style.height = (NATIVE_H * scale) + 'px';
+
   updateAllHitboxVisuals();
 }
+
+// =====================================================
+// SCREEN LOADING
+// =====================================================
 
 function loadScreen(name) {
   currentScreen = name;
   bgimg.src = SCREENS[name].file;
+
   document.querySelectorAll('.hitbox').forEach(el => el.remove());
+
   SCREENS[name].hitboxes.forEach(hb => createHitbox(hb));
-  document.querySelectorAll('#topbar button').forEach(b => {
+
+  document.querySelectorAll('#buttonrow button').forEach(b => {
     b.classList.toggle('active', b.dataset.screen === name);
   });
+
   selectedHb = null;
   selectedEl = null;
-  updateInfoPanel();
+
+  updateCoordsPanel();
   fitCanvas();
 }
+
+// =====================================================
+// HITBOX CREATION / DISPLAY
+// =====================================================
 
 function createHitbox(hb) {
   const el = document.createElement('div');
@@ -237,27 +352,28 @@ function createHitbox(hb) {
   el.dataset.id = hb.id;
   el.style.color = hb.color;
   el.style.borderColor = hb.color;
-  
+
   const mini = document.createElement('div');
   mini.className = 'mini-id';
   mini.textContent = hb.id;
   el.appendChild(mini);
-  
+
   const handle = document.createElement('div');
   handle.className = 'handle';
   el.appendChild(handle);
-  
+
   canvas.appendChild(el);
+
   applyHitboxVisual(el, hb);
-  
+
   attachDrag(el, hb);
   attachResize(handle, el, hb);
 }
 
 function applyHitboxVisual(el, hb) {
-  el.style.left   = (hb.x * scale) + 'px';
-  el.style.top    = (hb.y * scale) + 'px';
-  el.style.width  = (hb.w * scale) + 'px';
+  el.style.left = (hb.x * scale) + 'px';
+  el.style.top = (hb.y * scale) + 'px';
+  el.style.width = (hb.w * scale) + 'px';
   el.style.height = (hb.h * scale) + 'px';
 }
 
@@ -268,117 +384,192 @@ function updateAllHitboxVisuals() {
   });
 }
 
-function updateInfoPanel() {
-  if (!selectedHb) {
-    infopanel.innerHTML = 'Tap a hitbox to select';
-    return;
-  }
-  infopanel.innerHTML = `<b>${selectedHb.id}</b> &nbsp; x:${Math.round(selectedHb.x)} y:${Math.round(selectedHb.y)} w:${Math.round(selectedHb.w)} h:${Math.round(selectedHb.h)}`;
+function updateCoordsPanel() {
+  coordsPanel.innerHTML = '';
+
+  SCREENS[currentScreen].hitboxes.forEach(hb => {
+    const chip = document.createElement('div');
+    chip.className = 'coordChip';
+
+    if (selectedHb && selectedHb.id === hb.id) {
+      chip.classList.add('selected');
+    }
+
+    chip.textContent =
+      `${hb.id} x:${Math.round(hb.x)} y:${Math.round(hb.y)} w:${Math.round(hb.w)} h:${Math.round(hb.h)}`;
+
+    coordsPanel.appendChild(chip);
+  });
 }
 
-// ============ POINTER (rotation-aware) ============
+// =====================================================
+// POINTER HANDLING — ROTATION AWARE
+// =====================================================
+
 function getPoint(e) {
   let raw;
-  if (e.touches && e.touches[0]) raw = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-  else raw = { x: e.clientX, y: e.clientY };
-  
+
+  if (e.touches && e.touches[0]) {
+    raw = {
+      x: e.touches[0].clientX,
+      y: e.touches[0].clientY
+    };
+  } else {
+    raw = {
+      x: e.clientX,
+      y: e.clientY
+    };
+  }
+
   const vw = window.innerWidth;
   const vh = window.innerHeight;
   const isPortrait = vh > vw;
-  
+
   if (isPortrait) {
-    return { x: raw.y, y: vw - raw.x };
+    // Convert physical portrait coordinates into rotated landscape coordinates.
+    return {
+      x: raw.y,
+      y: vw - raw.x
+    };
   }
+
   return raw;
 }
 
+// =====================================================
+// DRAG MOVE
+// =====================================================
+
 function attachDrag(el, hb) {
   let startX, startY, origX, origY;
-  
+
   function down(e) {
     if (e.target.classList.contains('handle')) return;
+
     e.preventDefault();
+
     selectHitbox(el, hb);
+
     const p = getPoint(e);
-    startX = p.x; startY = p.y;
-    origX = hb.x; origY = hb.y;
+
+    startX = p.x;
+    startY = p.y;
+    origX = hb.x;
+    origY = hb.y;
+
     document.addEventListener('mousemove', move);
     document.addEventListener('touchmove', move, { passive: false });
     document.addEventListener('mouseup', up);
     document.addEventListener('touchend', up);
   }
+
   function move(e) {
     e.preventDefault();
+
     const p = getPoint(e);
+
     const dx = (p.x - startX) / scale;
     const dy = (p.y - startY) / scale;
+
     hb.x = Math.max(0, Math.min(NATIVE_W - hb.w, origX + dx));
     hb.y = Math.max(0, Math.min(NATIVE_H - hb.h, origY + dy));
+
     applyHitboxVisual(el, hb);
-    updateInfoPanel();
+    updateCoordsPanel();
   }
+
   function up() {
     document.removeEventListener('mousemove', move);
     document.removeEventListener('touchmove', move);
     document.removeEventListener('mouseup', up);
     document.removeEventListener('touchend', up);
   }
-  
+
   el.addEventListener('mousedown', down);
   el.addEventListener('touchstart', down, { passive: false });
 }
 
+// =====================================================
+// RESIZE
+// =====================================================
+
 function attachResize(handle, el, hb) {
   let startX, startY, origW, origH;
-  
+
   function down(e) {
     e.preventDefault();
     e.stopPropagation();
+
     selectHitbox(el, hb);
+
     const p = getPoint(e);
-    startX = p.x; startY = p.y;
-    origW = hb.w; origH = hb.h;
+
+    startX = p.x;
+    startY = p.y;
+    origW = hb.w;
+    origH = hb.h;
+
     document.addEventListener('mousemove', move);
     document.addEventListener('touchmove', move, { passive: false });
     document.addEventListener('mouseup', up);
     document.addEventListener('touchend', up);
   }
+
   function move(e) {
     e.preventDefault();
+
     const p = getPoint(e);
+
     const dx = (p.x - startX) / scale;
     const dy = (p.y - startY) / scale;
+
     hb.w = Math.max(20, Math.min(NATIVE_W - hb.x, origW + dx));
     hb.h = Math.max(20, Math.min(NATIVE_H - hb.y, origH + dy));
+
     applyHitboxVisual(el, hb);
-    updateInfoPanel();
+    updateCoordsPanel();
   }
+
   function up() {
     document.removeEventListener('mousemove', move);
     document.removeEventListener('touchmove', move);
     document.removeEventListener('mouseup', up);
     document.removeEventListener('touchend', up);
   }
-  
+
   handle.addEventListener('mousedown', down);
   handle.addEventListener('touchstart', down, { passive: false });
 }
 
+// =====================================================
+// SELECTION
+// =====================================================
+
 function selectHitbox(el, hb) {
   document.querySelectorAll('.hitbox').forEach(h => h.classList.remove('selected'));
+
   el.classList.add('selected');
+
   selectedEl = el;
   selectedHb = hb;
-  updateInfoPanel();
+
+  updateCoordsPanel();
 }
 
-// ============ INIT ============
-document.querySelectorAll('#topbar button').forEach(b => {
+// =====================================================
+// INIT
+// =====================================================
+
+document.querySelectorAll('#buttonrow button').forEach(b => {
   b.addEventListener('click', () => loadScreen(b.dataset.screen));
 });
 
 window.addEventListener('resize', fitCanvas);
-window.addEventListener('orientationchange', () => setTimeout(fitCanvas, 100));
+
+window.addEventListener('orientationchange', () => {
+  setTimeout(fitCanvas, 120);
+});
+
 bgimg.addEventListener('load', fitCanvas);
 
 loadScreen('loading');
