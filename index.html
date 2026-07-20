@@ -6,10 +6,20 @@
 <title>CHAOSLINE Hitbox Editor</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; -webkit-user-select: none; }
-  body { background: #02030a; color: #fff; font-family: monospace; overflow: hidden; }
+  html, body { width: 100%; height: 100%; overflow: hidden; background: #02030a; color: #fff; font-family: monospace; }
+  
+  /* ============ ROTATION WRAPPER ============
+     If device is in portrait, rotate the entire app 90deg
+     so landscape PNGs display correctly. */
+  #rotator {
+    position: fixed;
+    top: 0; left: 0;
+    transform-origin: top left;
+    background: #02030a;
+  }
   
   #topbar {
-    position: fixed; top: 0; left: 0; right: 0; height: 40px;
+    position: absolute; top: 0; left: 0; right: 0; height: 40px;
     background: #050d20; display: flex; align-items: center;
     padding: 0 10px; gap: 8px; z-index: 100; border-bottom: 1px solid #1e3a8a;
   }
@@ -22,7 +32,7 @@
   #topbar .info { margin-left: auto; font-size: 11px; color: #8ab4ff; }
   
   #stage {
-    position: fixed; top: 40px; left: 0; right: 0; bottom: 0;
+    position: absolute; top: 40px; left: 0;
     display: flex; align-items: center; justify-content: center;
     overflow: hidden;
   }
@@ -62,26 +72,28 @@
     color: #8ab4ff;
   }
   .handle {
-    position: absolute; width: 14px; height: 14px;
+    position: absolute; width: 18px; height: 18px;
     background: #fff; border: 1px solid #000;
-    right: -7px; bottom: -7px;
+    right: -9px; bottom: -9px;
     cursor: nwse-resize; touch-action: none;
   }
 </style>
 </head>
 <body>
 
-<div id="topbar">
-  <button data-screen="loading">Loading</button>
-  <button data-screen="main_menu">Main</button>
-  <button data-screen="world_select">Worlds</button>
-  <button data-screen="level_select">Levels</button>
-  <span class="info">1920×1080 native | Drag = move | Corner = resize</span>
-</div>
+<div id="rotator">
+  <div id="topbar">
+    <button data-screen="loading">Loading</button>
+    <button data-screen="main_menu">Main</button>
+    <button data-screen="world_select">Worlds</button>
+    <button data-screen="level_select">Levels</button>
+    <span class="info">1920×1080 | Drag=move | Corner=resize</span>
+  </div>
 
-<div id="stage">
-  <div id="canvas">
-    <img id="bgimg" src="">
+  <div id="stage">
+    <div id="canvas">
+      <img id="bgimg" src="">
+    </div>
   </div>
 </div>
 
@@ -143,14 +155,39 @@ let currentScreen = 'loading';
 let scale = 1;
 let selected = null;
 
+const rotator = document.getElementById('rotator');
 const canvas = document.getElementById('canvas');
 const bgimg = document.getElementById('bgimg');
 const stage = document.getElementById('stage');
 
-// ============ RENDER ============
+// ============ FORCE LANDSCAPE VIA ROTATION ============
+function applyRotation() {
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+  const isPortrait = vh > vw;
+  
+  if (isPortrait) {
+    // Rotate the entire UI 90 degrees so landscape PNGs fit properly
+    rotator.style.width = vh + 'px';
+    rotator.style.height = vw + 'px';
+    rotator.style.transform = 'rotate(90deg) translateY(-100%)';
+    return { w: vh, h: vw };
+  } else {
+    rotator.style.width = vw + 'px';
+    rotator.style.height = vh + 'px';
+    rotator.style.transform = 'none';
+    return { w: vw, h: vh };
+  }
+}
+
 function fitCanvas() {
-  const availW = stage.clientWidth;
-  const availH = stage.clientHeight;
+  const view = applyRotation();
+  const availW = view.w;
+  const availH = view.h - 40; // minus topbar
+  
+  stage.style.width = availW + 'px';
+  stage.style.height = availH + 'px';
+  
   const scaleW = availW / NATIVE_W;
   const scaleH = availH / NATIVE_H;
   scale = Math.min(scaleW, scaleH);
@@ -162,11 +199,8 @@ function fitCanvas() {
 function loadScreen(name) {
   currentScreen = name;
   bgimg.src = SCREENS[name].file;
-  // clear old hitboxes
   document.querySelectorAll('.hitbox').forEach(el => el.remove());
-  // build new
   SCREENS[name].hitboxes.forEach(hb => createHitbox(hb));
-  // update button state
   document.querySelectorAll('#topbar button').forEach(b => {
     b.classList.toggle('active', b.dataset.screen === name);
   });
@@ -196,7 +230,6 @@ function createHitbox(hb) {
   canvas.appendChild(el);
   applyHitboxVisual(el, hb);
   
-  // interaction
   attachDrag(el, hb);
   attachResize(handle, el, hb);
 }
@@ -217,10 +250,23 @@ function updateAllHitboxVisuals() {
   });
 }
 
-// ============ DRAG ============
+// ============ ROTATION-AWARE POINTER ============
+// Since we rotate the UI 90deg in portrait, we must invert touch coords.
 function getPoint(e) {
-  if (e.touches && e.touches[0]) return { x: e.touches[0].clientX, y: e.touches[0].clientY };
-  return { x: e.clientX, y: e.clientY };
+  let raw;
+  if (e.touches && e.touches[0]) raw = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+  else raw = { x: e.clientX, y: e.clientY };
+  
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+  const isPortrait = vh > vw;
+  
+  if (isPortrait) {
+    // rotate coords: what user sees as X (horizontal on rotated view) = raw Y
+    // what user sees as Y = vw - raw X
+    return { x: raw.y, y: vw - raw.x };
+  }
+  return raw;
 }
 
 function attachDrag(el, hb) {
@@ -305,6 +351,7 @@ document.querySelectorAll('#topbar button').forEach(b => {
 });
 
 window.addEventListener('resize', fitCanvas);
+window.addEventListener('orientationchange', () => setTimeout(fitCanvas, 100));
 bgimg.addEventListener('load', fitCanvas);
 
 loadScreen('loading');
