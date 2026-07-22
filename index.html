@@ -1,631 +1,2088 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>CHAOSLINE Hitbox Editor</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no,viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <title>CHAOSLINE</title>
+    <style>
+        :root {
+            --bg: #000000;
+            --royal: #1e3a8a;
+            --crimson: #8b0000;
+            --obsidian: #0a0a0a;
+            --white-matte: #d4d4d4;
+        }
 
-<style>
-  * {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-    user-select: none;
-    -webkit-user-select: none;
-  }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            -webkit-user-select: none;
+            user-select: none;
+            -webkit-touch-callout: none;
+        }
 
-  html, body {
-    width: 100%;
-    height: 100%;
-    overflow: hidden;
-    background: #02030a;
-    color: #fff;
-    font-family: monospace;
-  }
+        html,
+        body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: #000;
+            font-family: 'Courier New', 'Lucida Console', monospace;
+            touch-action: manipulation;
+            position: fixed;
+            top: 0;
+            left: 0;
+        }
 
-  #rotator {
-    position: fixed;
-    top: 0;
-    left: 0;
-    transform-origin: top left;
-    background: #02030a;
-  }
+        #game-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: #000;
+        }
 
-  #topbar {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    background: #050d20;
-    z-index: 100;
-    border-bottom: 1px solid #1e3a8a;
-    display: flex;
-    flex-direction: column;
-  }
+        .screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+            will-change: opacity, transform;
+            transform: translateZ(0);
+        }
 
-  #buttonrow {
-    height: 42px;
-    display: flex;
-    align-items: center;
-    padding: 0 8px;
-    gap: 6px;
-    border-bottom: 1px solid #1e3a8a;
-    background: #050d20;
-    flex-shrink: 0;
-  }
+        .screen.active {
+            opacity: 1;
+            pointer-events: auto;
+            z-index: 10;
+        }
+        .screen.transitioning-out {
+            opacity: 0;
+            pointer-events: none;
+            z-index: 9;
+        }
+        .screen.transitioning-in {
+            opacity: 0;
+            pointer-events: none;
+            z-index: 8;
+        }
 
-  #buttonrow button {
-    background: #0a1a3d;
-    color: #fff;
-    border: 1px solid #1e3a8a;
-    padding: 6px 10px;
-    font-family: monospace;
-    font-size: 12px;
-    cursor: pointer;
-    border-radius: 3px;
-  }
+        .screen .bg-image {
+            position: absolute;
+            object-fit: contain;
+            image-rendering: auto;
+            max-width: 100%;
+            max-height: 100%;
+            width: auto;
+            height: auto;
+            pointer-events: none;
+            will-change: transform;
+            transform: translateZ(0);
+        }
 
-  #buttonrow button.active {
-    background: #1e3a8a;
-    border-color: #4a7fff;
-  }
+        #overlay-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 20;
+            transform: translateZ(0);
+        }
 
-  #expandBtn {
-    margin-left: auto;
-    background: #8b0000 !important;
-    border-color: #b30000 !important;
-    font-weight: bold;
-  }
+        #effects-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 21;
+            transform: translateZ(0);
+        }
 
-  #coordsPanel {
-    padding: 5px 6px;
-    background: #02030a;
-    display: flex;
-    gap: 4px;
-    overflow-x: auto;
-    overflow-y: hidden;
-    white-space: nowrap;
-    height: 34px;
-    align-items: center;
-    -webkit-overflow-scrolling: touch;
-  }
+        #transition-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            opacity: 0;
+            pointer-events: none;
+            z-index: 30;
+            transition: opacity 0.1s ease;
+            transform: translateZ(0);
+        }
 
-  #coordsPanel.expanded {
-    flex-wrap: wrap;
-    overflow-x: hidden;
-    overflow-y: auto;
-    white-space: normal;
-    height: auto;
-    max-height: 60vh;
-    align-content: flex-start;
-    align-items: flex-start;
-  }
+        #grain-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 19;
+            opacity: 0.05;
+            transform: translateZ(0);
+        }
 
-  .coordChip {
-    font-size: 10px;
-    color: #8ab4ff;
-    background: #0a1a3d;
-    border: 1px solid #1e3a8a;
-    padding: 3px 5px;
-    border-radius: 3px;
-    line-height: 1.2;
-    flex-shrink: 0;
-  }
+        .vignette {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 18;
+            background: radial-gradient(ellipse at center, transparent 55%, rgba(0, 0, 0, 0.55) 100%);
+            transform: translateZ(0);
+        }
 
-  .coordChip.selected {
-    color: #fff;
-    background: #1e3a8a;
-    border-color: #ffffff;
-    font-weight: bold;
-  }
+        @keyframes shake {
+            0%,
+            100% {
+                transform: translateX(0);
+            }
+            15% {
+                transform: translateX(-8px);
+            }
+            30% {
+                transform: translateX(8px);
+            }
+            45% {
+                transform: translateX(-6px);
+            }
+            60% {
+                transform: translateX(6px);
+            }
+            75% {
+                transform: translateX(-3px);
+            }
+            90% {
+                transform: translateX(3px);
+            }
+        }
+        .shaking {
+            animation: shake 0.5s ease-out;
+        }
 
-  #stage {
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    overflow: hidden;
-    background: #000;
-  }
+        @keyframes pulse-glow {
+            0%,
+            100% {
+                box-shadow: 0 0 20px rgba(30, 58, 138, 0.5);
+            }
+            50% {
+                box-shadow: 0 0 50px rgba(30, 58, 138, 0.9), 0 0 80px rgba(30, 58, 138, 0.4);
+            }
+        }
 
-  #canvas {
-    position: relative;
-    background: #000;
-  }
+        @keyframes breathe {
+            0%,
+            100% {
+                filter: brightness(1) drop-shadow(0 0 6px rgba(30, 58, 138, 0.4));
+            }
+            50% {
+                filter: brightness(1.3) drop-shadow(0 0 18px rgba(30, 58, 138, 0.8));
+            }
+        }
 
-  #canvas img {
-    display: block;
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
-  }
+        #preparing-text {
+            position: absolute;
+            bottom: 8%;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #d4d4d4;
+            font-size: 14px;
+            letter-spacing: 3px;
+            z-index: 25;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.5s;
+            font-family: 'Courier New', monospace;
+        }
+        #preparing-text.visible {
+            opacity: 0.8;
+            animation: breathe 1.5s ease-in-out infinite;
+        }
 
-  .hitbox {
-    position: absolute;
-    border: 2px solid;
-    background: rgba(255,255,255,0.05);
-    touch-action: none;
-    cursor: move;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .hitbox .mini-id {
-    font-size: 10px;
-    color: rgba(255,255,255,0.6);
-    background: rgba(0,0,0,0.5);
-    padding: 1px 4px;
-    border-radius: 2px;
-    pointer-events: none;
-    white-space: nowrap;
-  }
-
-  .hitbox.selected {
-    background: rgba(255,255,255,0.18);
-    box-shadow: 0 0 16px currentColor;
-    border-width: 3px;
-    z-index: 10;
-  }
-
-  .hitbox.selected .mini-id {
-    color: #fff;
-    background: rgba(0,0,0,0.85);
-    font-weight: bold;
-  }
-
-  .handle {
-    position: absolute;
-    width: 22px;
-    height: 22px;
-    background: #fff;
-    border: 2px solid #000;
-    right: -11px;
-    bottom: -11px;
-    cursor: nwse-resize;
-    touch-action: none;
-    border-radius: 3px;
-    display: none;
-  }
-
-  .hitbox.selected .handle {
-    display: block;
-  }
-</style>
+        @media (orientation: portrait) {
+            #screen-portrait-rotate .bg-image {
+                max-height: 100vh;
+                max-width: 100vw;
+            }
+        }
+        @media (orientation: landscape) {
+            #screen-portrait-rotate .bg-image {
+                max-height: 100vh;
+                max-width: 100vw;
+            }
+        }
+    </style>
 </head>
-
 <body>
+    <div id="game-container">
+        <!-- PORTRAIT ROTATE SCREEN -->
+        <div id="screen-portrait-rotate" class="screen active" data-screen="portrait_rotate">
+            <img src="portrait_rotate.png" class="bg-image" alt="Portrait Rotate" loading="eager" decoding="async">
+        </div>
 
-<div id="rotator">
+        <!-- LOADING SCREEN -->
+        <div id="screen-loading" class="screen" data-screen="loading">
+            <img src="loading.png" class="bg-image" alt="Loading" loading="eager" decoding="async">
+        </div>
 
-  <div id="topbar">
-    <div id="buttonrow">
-      <button data-screen="loading">Load</button>
-      <button data-screen="main_menu">Main</button>
-      <button data-screen="world_select">Worlds</button>
-      <button data-screen="level_select">Levels</button>
-      <button id="expandBtn">SHOW ALL</button>
-    </div>
+        <!-- MAIN MENU -->
+        <div id="screen-main-menu" class="screen" data-screen="main_menu">
+            <img src="main_menu.png" class="bg-image" alt="Main Menu" loading="eager" decoding="async">
+        </div>
 
-    <div id="coordsPanel"></div>
-  </div>
+        <!-- WORLD SELECT -->
+        <div id="screen-world-select" class="screen" data-screen="world_select">
+            <img src="world_select.png" class="bg-image" alt="World Select" loading="eager" decoding="async">
+        </div>
 
-  <div id="stage">
-    <div id="canvas">
-      <img id="bgimg" src="">
-    </div>
-  </div>
+        <!-- LEVEL SELECT -->
+        <div id="screen-level-select" class="screen" data-screen="level_select">
+            <img src="level_select.png" class="bg-image" alt="Level Select" loading="eager" decoding="async">
+        </div>
 
+        <!-- PLACEHOLDER SCREEN -->
+        <div id="screen-placeholder" class="screen" data-screen="placeholder">
+            <div style="
+            width:100%;height:100%;
+            display:flex;flex-direction:column;
+            align-items:center;justify-content:center;
+            background:radial-gradient(ellipse at center,#0d1117 30%,#000 100%);
+        ">
+        <div id="placeholder-text" style="
+        color:#d4d4d4;font-size:28px;letter-spacing:4px;
+        text-align:center;margin-bottom:40px;
+        text-shadow:0 0 30px rgba(30,58,138,0.7);
+        font-family:'Courier New',monospace;
+    ">COMING IN DAY 5</div>
+    <div id="placeholder-back" style="
+    color:#d4d4d4;font-size:16px;letter-spacing:2px;
+    cursor:pointer;padding:14px 40px;
+    border:2px solid rgba(30,58,138,0.6);
+    border-radius:4px;
+    background:rgba(10,10,10,0.7);
+    transition:all 0.2s;
+    font-family:'Courier New',monospace;
+    text-shadow:0 0 10px rgba(30,58,138,0.5);
+">← BACK</div>
+</div>
+</div>
+
+<!-- CANVASES -->
+<canvas id="overlay-canvas"></canvas>
+<canvas id="effects-canvas"></canvas>
+<canvas id="grain-canvas"></canvas>
+<div id="transition-overlay"></div>
+<div class="vignette" id="vignette"></div>
+<div id="preparing-text">PREPARING...</div>
 </div>
 
 <script>
-// =====================================================
-// CHAOSLINE HITBOX EDITOR
-// Native image coordinate system: 1920 x 1080
-// =====================================================
+    // ============================================================
+    // ===== CONFIG & CONSTANTS =====
+    // ============================================================
+    const CONFIG = {
+        PORTRAIT_NATIVE_W: 1080,
+        PORTRAIT_NATIVE_H: 1920,
+        LANDSCAPE_NATIVE_W: 1920,
+        LANDSCAPE_NATIVE_H: 1080,
+        LOADING_DURATION_MS: 2500,
+        TRANSITION_CLOSE_MS: 300,
+        TRANSITION_BLACK_MS: 100,
+        TRANSITION_OPEN_MS: 400,
+        TOTAL_TRANSITION_MS: 800,
+        IDLE_GLOW_DELAY_MS: 5000,
+        TOAST_HOLD_MS: 2000,
+        TOAST_FADE_MS: 300,
+        PARTICLE_COUNT: 10,
+        GRAIN_UPDATE_MS: 100,
+        RIPPLE_DURATION_MS: 500,
+        DEBUG_TAP_COUNT: 5,
+        DEBUG_TAP_WINDOW_MS: 2000,
+    };
 
-const NATIVE_W = 1920;
-const NATIVE_H = 1080;
+    const SCREEN_NAMES = [
+        'portrait_rotate',
+        'loading',
+        'main_menu',
+        'world_select',
+        'level_select',
+        'placeholder',
+    ];
 
-const SCREENS = {
-  loading: {
-    file: 'loading.png',
-    hitboxes: [
-      { id: 'loading_back', color: '#4a9fff', x: 40, y: 40, w: 100, h: 100 },
-      { id: 'loading_bar',  color: '#4a9fff', x: 660, y: 950, w: 600, h: 40 }
-    ]
-  },
+    // ============================================================
+    // ===== HITBOX DATA (native image pixels) =====
+    // ============================================================
+    const HITBOX_DATA = {
+        portrait_rotate: {
+            nativeW: 1080,
+            nativeH: 1920,
+            hitboxes: {
+                tap_to_rotate: { x: 155, y: 1450, w: 770, h: 220, action: 'tap_rotate',
+                    label: 'TAP TO ROTATE' },
+            },
+        },
+        loading: {
+            nativeW: 1920,
+            nativeH: 1080,
+            hitboxes: {
+                loading_back: { x: 15, y: 8, w: 123, h: 117, action: 'back', label: 'Back',
+                    decorative: true },
+                loading_bar: { x: 462, y: 977, w: 989, h: 56, action: null, label: 'Loading Bar',
+                decorative: true },
+            },
+        },
+        main_menu: {
+            nativeW: 1920,
+            nativeH: 1080,
+            hitboxes: {
+                main_back: { x: 16, y: 13, w: 122, h: 124, action: 'back', label: 'Back' },
+                main_coin: { x: 1537, y: 26, w: 359, h: 95, action: 'coin_display', label: 'Coins',
+                    display: true },
+                main_play: { x: 221, y: 345, w: 596, h: 190, action: 'play', label: 'PLAY' },
+                main_skin: { x: 216, y: 568, w: 295, h: 133, action: 'placeholder_skin',
+                label: 'SKIN' },
+                main_shop: { x: 537, y: 567, w: 294, h: 136, action: 'placeholder_shop',
+                label: 'SHOP' },
+                main_inventory: { x: 217, y: 722, w: 289, h: 146, action: 'placeholder_inventory',
+                    label: 'INVENTORY' },
+                main_stats: { x: 536, y: 728, w: 295, h: 140, action: 'placeholder_stats',
+                    label: 'STATS' },
+                main_howto: { x: 298, y: 898, w: 445, h: 90, action: 'placeholder_howto',
+                    label: 'HOW TO PLAY' },
+                main_debug_title: { x: 500, y: 5, w: 920, h: 100, action: 'debug_tap', label: 'Title',
+                    hidden: true },
+            },
+        },
+        world_select: {
+            nativeW: 1920,
+            nativeH: 1080,
+            hitboxes: {
+                world_back: { x: 18, y: 7, w: 136, h: 138, action: 'back', label: 'Back' },
+                world_overworld: { x: 225, y: 189, w: 463, h: 775, action: 'select_overworld',
+                    label: 'OVERWORLD' },
+                world_inferno: { x: 722, y: 191, w: 451, h: 776, action: 'select_inferno', label: 'INFERNO',
+                    locked: true },
+                world_abyss: { x: 1239, y: 188, w: 460, h: 780, action: 'select_abyss', label: 'ABYSS',
+                    locked: true },
+            },
+        },
+        level_select: {
+            nativeW: 1920,
+            nativeH: 1080,
+            hitboxes: {
+                level_back: { x: 24, y: 14, w: 105, h: 99, action: 'back', label: 'Back' },
+                level_1: { x: 274, y: 479, w: 128, h: 144, action: 'select_level', level: 1 },
+                level_2: { x: 522, y: 481, w: 123, h: 138, action: 'select_level', level: 2 },
+                level_3: { x: 769, y: 483, w: 123, h: 125, action: 'select_level', level: 3 },
+                level_4: { x: 1009, y: 477, w: 131, h: 128, action: 'select_level', level: 4 },
+                level_5: { x: 1233, y: 482, w: 131, h: 131, action: 'select_level', level: 5 },
+                level_6: { x: 256, y: 782, w: 119, h: 136, action: 'select_level', level: 6 },
+                level_7: { x: 502, y: 781, w: 118, h: 121, action: 'select_level', level: 7 },
+                level_8: { x: 736, y: 792, w: 137, h: 131, action: 'select_level', level: 8 },
+                level_9: { x: 967, y: 782, w: 131, h: 134, action: 'select_level', level: 9 },
+                level_10: { x: 1209, y: 782, w: 142, h: 140, action: 'select_level', level: 10 },
+                level_boss: { x: 1549, y: 757, w: 209, h: 207, action: 'select_boss', level: 'boss' },
+            },
+        },
+    };
 
-  main_menu: {
-    file: 'main_menu.png',
-    hitboxes: [
-      { id: 'main_back',      color: '#4a9fff', x: 40,   y: 40,  w: 100, h: 100 },
-      { id: 'main_coin',      color: '#4a9fff', x: 1600, y: 40,  w: 280, h: 90  },
-      { id: 'main_play',      color: '#4aff8a', x: 100,  y: 380, w: 560, h: 160 },
-      { id: 'main_skin',      color: '#ffd84a', x: 100,  y: 570, w: 260, h: 120 },
-      { id: 'main_shop',      color: '#ffd84a', x: 400,  y: 570, w: 260, h: 120 },
-      { id: 'main_inventory', color: '#ffd84a', x: 100,  y: 720, w: 260, h: 120 },
-      { id: 'main_stats',     color: '#ffd84a', x: 400,  y: 720, w: 260, h: 120 },
-      { id: 'main_howto',     color: '#ff6a6a', x: 180,  y: 880, w: 400, h: 60  }
-    ]
-  },
+    // ============================================================
+    // ===== STATE & LOCALSTORAGE =====
+    // ============================================================
+    const STATE = {
+        currentScreen: 'portrait_rotate',
+        previousScreen: null,
+        coins: 0,
+        unlockedLevels: [1],
+        stars: {},
+        bossDefeated: false,
+        audioMuted: false,
+        imagesLoaded: {},
+        isTransitioning: false,
+        loadingProgress: 0,
+        loadingStartTime: 0,
+        loadingComplete: false,
+        idleTimer: null,
+        lastInteraction: 0,
+        debugTapCount: 0,
+        debugTapTimer: null,
+        showHitboxes: false,
+        activeRipples: [],
+        particles: [],
+        toastData: null,
+        toastTimer: null,
+        screenTransform: { scale: 1, offsetX: 0, offsetY: 0, nativeW: 1080, nativeH: 1920 },
+        placeholderReturnScreen: null,
+        placeholderReturnAction: null,
+        bgMusicSource: null,
+        bgMusicGain: null,
+        bgMusicType: 'portrait',
+        bgMusicPlaying: false,
+    };
 
-  world_select: {
-    file: 'world_select.png',
-    hitboxes: [
-      { id: 'world_back',      color: '#4a9fff', x: 40,   y: 40,  w: 100, h: 100 },
-      { id: 'world_overworld', color: '#4aff8a', x: 150,  y: 200, w: 460, h: 780 },
-      { id: 'world_inferno',   color: '#ffd84a', x: 720,  y: 200, w: 460, h: 780 },
-      { id: 'world_abyss',     color: '#ffd84a', x: 1290, y: 200, w: 460, h: 780 }
-    ]
-  },
-
-  level_select: {
-    file: 'level_select.png',
-    hitboxes: [
-      { id: 'level_back', color: '#4a9fff', x: 40,   y: 40,  w: 100, h: 100 },
-
-      { id: 'level_1',    color: '#4aff8a', x: 260,  y: 490, w: 130, h: 130 },
-      { id: 'level_2',    color: '#4aff8a', x: 500,  y: 490, w: 130, h: 130 },
-      { id: 'level_3',    color: '#4aff8a', x: 740,  y: 490, w: 130, h: 130 },
-      { id: 'level_4',    color: '#4aff8a', x: 980,  y: 490, w: 130, h: 130 },
-      { id: 'level_5',    color: '#4aff8a', x: 1220, y: 490, w: 130, h: 130 },
-
-      { id: 'level_6',    color: '#4aff8a', x: 260,  y: 810, w: 130, h: 130 },
-      { id: 'level_7',    color: '#4aff8a', x: 500,  y: 810, w: 130, h: 130 },
-      { id: 'level_8',    color: '#4aff8a', x: 740,  y: 810, w: 130, h: 130 },
-      { id: 'level_9',    color: '#4aff8a', x: 980,  y: 810, w: 130, h: 130 },
-      { id: 'level_10',   color: '#4aff8a', x: 1220, y: 810, w: 130, h: 130 },
-
-      { id: 'level_boss', color: '#ff4a4a', x: 1700, y: 780, w: 180, h: 230 }
-    ]
-  }
-};
-
-// =====================================================
-// STATE
-// =====================================================
-
-let currentScreen = 'loading';
-let scale = 1;
-let selectedHb = null;
-let selectedEl = null;
-let panelExpanded = false;
-
-const rotator = document.getElementById('rotator');
-const canvas = document.getElementById('canvas');
-const bgimg = document.getElementById('bgimg');
-const stage = document.getElementById('stage');
-const coordsPanel = document.getElementById('coordsPanel');
-const topbar = document.getElementById('topbar');
-const expandBtn = document.getElementById('expandBtn');
-
-// =====================================================
-// ROTATION / FITTING
-// =====================================================
-
-function applyRotation() {
-  const vw = window.innerWidth;
-  const vh = window.innerHeight;
-  const isPortrait = vh > vw;
-
-  if (isPortrait) {
-    rotator.style.width = vh + 'px';
-    rotator.style.height = vw + 'px';
-    rotator.style.transform = 'rotate(90deg) translateY(-100%)';
-    return { w: vh, h: vw };
-  } else {
-    rotator.style.width = vw + 'px';
-    rotator.style.height = vh + 'px';
-    rotator.style.transform = 'none';
-    return { w: vw, h: vh };
-  }
-}
-
-function fitCanvas() {
-  const view = applyRotation();
-
-  const topbarHeight = topbar.offsetHeight;
-
-  const availW = view.w;
-  const availH = view.h - topbarHeight;
-
-  stage.style.top = topbarHeight + 'px';
-  stage.style.width = availW + 'px';
-  stage.style.height = availH + 'px';
-
-  const scaleW = availW / NATIVE_W;
-  const scaleH = availH / NATIVE_H;
-
-  scale = Math.min(scaleW, scaleH);
-
-  canvas.style.width = (NATIVE_W * scale) + 'px';
-  canvas.style.height = (NATIVE_H * scale) + 'px';
-
-  updateAllHitboxVisuals();
-}
-
-// =====================================================
-// SCREEN LOADING
-// =====================================================
-
-function loadScreen(name) {
-  currentScreen = name;
-  bgimg.src = SCREENS[name].file;
-
-  document.querySelectorAll('.hitbox').forEach(el => el.remove());
-
-  SCREENS[name].hitboxes.forEach(hb => createHitbox(hb));
-
-  document.querySelectorAll('#buttonrow button[data-screen]').forEach(b => {
-    b.classList.toggle('active', b.dataset.screen === name);
-  });
-
-  selectedHb = null;
-  selectedEl = null;
-
-  updateCoordsPanel();
-  requestAnimationFrame(fitCanvas);
-}
-
-// =====================================================
-// HITBOX CREATION / DISPLAY
-// =====================================================
-
-function createHitbox(hb) {
-  const el = document.createElement('div');
-  el.className = 'hitbox';
-  el.dataset.id = hb.id;
-  el.style.color = hb.color;
-  el.style.borderColor = hb.color;
-
-  const mini = document.createElement('div');
-  mini.className = 'mini-id';
-  mini.textContent = hb.id;
-  el.appendChild(mini);
-
-  const handle = document.createElement('div');
-  handle.className = 'handle';
-  el.appendChild(handle);
-
-  canvas.appendChild(el);
-
-  applyHitboxVisual(el, hb);
-
-  attachDrag(el, hb);
-  attachResize(handle, el, hb);
-}
-
-function applyHitboxVisual(el, hb) {
-  el.style.left = (hb.x * scale) + 'px';
-  el.style.top = (hb.y * scale) + 'px';
-  el.style.width = (hb.w * scale) + 'px';
-  el.style.height = (hb.h * scale) + 'px';
-}
-
-function updateAllHitboxVisuals() {
-  SCREENS[currentScreen].hitboxes.forEach(hb => {
-    const el = canvas.querySelector(`[data-id="${hb.id}"]`);
-    if (el) applyHitboxVisual(el, hb);
-  });
-}
-
-function updateCoordsPanel() {
-  coordsPanel.innerHTML = '';
-
-  SCREENS[currentScreen].hitboxes.forEach(hb => {
-    const chip = document.createElement('div');
-    chip.className = 'coordChip';
-    chip.dataset.id = hb.id;
-
-    if (selectedHb && selectedHb.id === hb.id) {
-      chip.classList.add('selected');
+    function loadState() {
+        try {
+            STATE.coins = parseInt(localStorage.getItem('chaosline_coins') || '0', 10);
+            const unlocked = JSON.parse(localStorage.getItem('chaosline_unlocked_levels') || '[1]');
+            STATE.unlockedLevels = Array.isArray(unlocked) ? unlocked : [1];
+            STATE.stars = JSON.parse(localStorage.getItem('chaosline_stars') || '{}');
+            STATE.bossDefeated = localStorage.getItem('chaosline_boss_defeated') === 'true';
+            STATE.audioMuted = localStorage.getItem('chaosline_audio_muted') === 'true';
+        } catch (e) {
+            STATE.coins = 0;
+            STATE.unlockedLevels = [1];
+            STATE.stars = {};
+            STATE.bossDefeated = false;
+            STATE.audioMuted = false;
+        }
     }
 
-    chip.textContent =
-      `${hb.id} x:${Math.round(hb.x)} y:${Math.round(hb.y)} w:${Math.round(hb.w)} h:${Math.round(hb.h)}`;
+    function saveState() {
+        try {
+            localStorage.setItem('chaosline_coins', STATE.coins);
+            localStorage.setItem('chaosline_unlocked_levels', JSON.stringify(STATE.unlockedLevels));
+            localStorage.setItem('chaosline_stars', JSON.stringify(STATE.stars));
+            localStorage.setItem('chaosline_boss_defeated', STATE.bossDefeated);
+            localStorage.setItem('chaosline_audio_muted', STATE.audioMuted);
+        } catch (e) { /* quota exceeded, ignore */ }
+    }
 
-    coordsPanel.appendChild(chip);
-  });
+    // ============================================================
+    // ===== DOM REFERENCES =====
+    // ============================================================
+    const gameContainer = document.getElementById('game-container');
+    const overlayCanvas = document.getElementById('overlay-canvas');
+    const overlayCtx = overlayCanvas.getContext('2d');
+    const effectsCanvas = document.getElementById('effects-canvas');
+    const effectsCtx = effectsCanvas.getContext('2d');
+    const grainCanvas = document.getElementById('grain-canvas');
+    const grainCtx = grainCanvas.getContext('2d');
+    const transitionOverlay = document.getElementById('transition-overlay');
+    const preparingText = document.getElementById('preparing-text');
+    const vignetteEl = document.getElementById('vignette');
 
-  requestAnimationFrame(fitCanvas);
-}
+    const screenDivs = {};
+    SCREEN_NAMES.forEach(name => {
+        const key = name === 'placeholder' ? 'placeholder' : name;
+        screenDivs[name] = document.getElementById('screen-' + key.replace(/_/g, '-'));
+    });
 
-// Update only the selected chip text without full rerender
-function updateCoordChipOnly() {
-  if (!selectedHb) return;
-  const chip = coordsPanel.querySelector(`.coordChip[data-id="${selectedHb.id}"]`);
-  if (chip) {
-    chip.textContent =
-      `${selectedHb.id} x:${Math.round(selectedHb.x)} y:${Math.round(selectedHb.y)} w:${Math.round(selectedHb.w)} h:${Math.round(selectedHb.h)}`;
-  }
-}
+    const placeholderTextEl = document.getElementById('placeholder-text');
+    const placeholderBackEl = document.getElementById('placeholder-back');
 
-// =====================================================
-// EXPAND / COLLAPSE PANEL
-// =====================================================
+    // ============================================================
+    // ===== AUDIO SYSTEM =====
+    // ============================================================
+    let audioCtx = null;
+    let masterGain = null;
+    let bgMusicNodes = [];
+    let bgMusicActive = false;
 
-expandBtn.addEventListener('click', () => {
-  panelExpanded = !panelExpanded;
-  coordsPanel.classList.toggle('expanded', panelExpanded);
-  expandBtn.textContent = panelExpanded ? 'HIDE' : 'SHOW ALL';
-  requestAnimationFrame(fitCanvas);
-});
+    function initAudio() {
+        if (audioCtx) return;
+        try {
+            audioCtx = new(window.AudioContext || window.webkitAudioContext)();
+            masterGain = audioCtx.createGain();
+            masterGain.gain.value = STATE.audioMuted ? 0 : 0.8;
+            masterGain.connect(audioCtx.destination);
+        } catch (e) {
+            console.warn('Web Audio API not available');
+        }
+    }
 
-// =====================================================
-// POINTER HANDLING — ROTATION AWARE
-// =====================================================
+    function ensureAudioRunning() {
+        if (audioCtx && audioCtx.state === 'suspended') {
+            audioCtx.resume();
+        }
+        initAudio();
+        if (!bgMusicActive && audioCtx && masterGain) {
+            startBgMusic('portrait');
+        }
+    }
 
-function getPoint(e) {
-  let raw;
+    function stopAllBgMusic() {
+        bgMusicNodes.forEach(n => {
+            try { n.stop(); } catch (e) {}
+            try { n.disconnect(); } catch (e) {}
+        });
+        bgMusicNodes = [];
+        if (STATE.bgMusicSource) {
+            try { STATE.bgMusicSource.stop(); } catch (e) {}
+            try { STATE.bgMusicSource.disconnect(); } catch (e) {}
+            STATE.bgMusicSource = null;
+        }
+        if (STATE.bgMusicGain) {
+            try { STATE.bgMusicGain.disconnect(); } catch (e) {}
+            STATE.bgMusicGain = null;
+        }
+        bgMusicActive = false;
+    }
 
-  if (e.touches && e.touches[0]) {
-    raw = {
-      x: e.touches[0].clientX,
-      y: e.touches[0].clientY
+    function startBgMusic(type) {
+        if (!audioCtx || !masterGain) return;
+        stopAllBgMusic();
+        bgMusicActive = true;
+        STATE.bgMusicType = type;
+
+        const bgGain = audioCtx.createGain();
+        STATE.bgMusicGain = bgGain;
+        const vol = type === 'portrait' ? 0.15 : 0.12;
+        bgGain.gain.value = STATE.audioMuted ? 0 : vol;
+        bgGain.connect(masterGain);
+
+        const now = audioCtx.currentTime;
+        const loopDuration = type === 'portrait' ? 14 : 16;
+
+        function scheduleLoop() {
+            if (!bgMusicActive || !audioCtx || !STATE.bgMusicGain) return;
+            const schedNow = audioCtx.currentTime;
+            createBgSegment(schedNow, type, STATE.bgMusicGain);
+            STATE.bgMusicSource = { stop: () => {} };
+            const timerId = setTimeout(scheduleLoop, loopDuration * 1000 - 100);
+            if (STATE.bgMusicSource) STATE.bgMusicSource._timerId = timerId;
+        }
+
+        function createBgSegment(startTime, segType, gainNode) {
+            const dur = segType === 'portrait' ? 14 : 16;
+            const endTime = startTime + dur;
+            const localNodes = [];
+
+            // Bass drone 55Hz
+            const bassOsc = audioCtx.createOscillator();
+            bassOsc.type = 'sine';
+            bassOsc.frequency.value = 55;
+            const bassGain = audioCtx.createGain();
+            bassGain.gain.setValueAtTime(0.25, startTime);
+            bassGain.gain.linearRampToValueAtTime(0.22, startTime + dur * 0.9);
+            bassGain.gain.linearRampToValueAtTime(0.2, endTime);
+            bassOsc.connect(bassGain);
+            bassGain.connect(gainNode);
+            bassOsc.start(startTime);
+            bassOsc.stop(endTime);
+            localNodes.push(bassOsc, bassGain);
+
+            // Pad - triangle + sawtooth at 110Hz and 165Hz with LFO
+            [110, 165].forEach(freq => {
+                const padOsc = audioCtx.createOscillator();
+                padOsc.type = 'triangle';
+                padOsc.frequency.value = freq;
+                const lfo = audioCtx.createOscillator();
+                lfo.type = 'sine';
+                lfo.frequency.value = 0.15;
+                const lfoGain = audioCtx.createGain();
+                lfoGain.gain.value = 3;
+                lfo.connect(lfoGain);
+                lfoGain.connect(padOsc.detune);
+                lfo.start(startTime);
+                lfo.stop(endTime);
+                const padGain = audioCtx.createGain();
+                padGain.gain.setValueAtTime(0.06, startTime);
+                padGain.gain.linearRampToValueAtTime(0.05, endTime);
+                padOsc.connect(padGain);
+                padGain.connect(gainNode);
+                padOsc.start(startTime);
+                padOsc.stop(endTime);
+                localNodes.push(padOsc, padGain, lfo, lfoGain);
+            });
+
+            // Metallic ping every 4 seconds
+            for (let t = startTime; t < endTime; t += 4) {
+                const pingOsc = audioCtx.createOscillator();
+                pingOsc.type = 'sine';
+                pingOsc.frequency.value = 2000;
+                const pingGain = audioCtx.createGain();
+                pingGain.gain.setValueAtTime(0, t);
+                pingGain.gain.linearRampToValueAtTime(0.04, t + 0.02);
+                pingGain.gain.exponentialRampToValueAtTime(0.001, t + 1.5);
+                pingOsc.connect(pingGain);
+                pingGain.connect(gainNode);
+                pingOsc.start(t);
+                pingOsc.stop(t + 1.5);
+                localNodes.push(pingOsc, pingGain);
+            }
+
+            // Heartbeat every 2 seconds
+            for (let t = startTime; t < endTime; t += 2) {
+                const hbOsc = audioCtx.createOscillator();
+                hbOsc.type = 'sine';
+                hbOsc.frequency.value = 60;
+                const hbGain = audioCtx.createGain();
+                hbGain.gain.setValueAtTime(0, t);
+                hbGain.gain.linearRampToValueAtTime(0.08, t + 0.03);
+                hbGain.gain.exponentialRampToValueAtTime(0.001, t + 0.4);
+                hbOsc.connect(hbGain);
+                hbGain.connect(gainNode);
+                hbOsc.start(t);
+                hbOsc.stop(t + 0.5);
+                localNodes.push(hbOsc, hbGain);
+            }
+
+            // Brown noise texture
+            if (segType === 'portrait') {
+                const noiseBuffer = createNoiseBuffer(2);
+                const noiseSource = audioCtx.createBufferSource();
+                noiseSource.buffer = noiseBuffer;
+                noiseSource.loop = true;
+                const noiseFilter = audioCtx.createBiquadFilter();
+                noiseFilter.type = 'lowpass';
+                noiseFilter.frequency.value = 300;
+                noiseFilter.Q.value = 0.5;
+                const noiseGain = audioCtx.createGain();
+                noiseGain.gain.value = 0.015;
+                noiseSource.connect(noiseFilter);
+                noiseFilter.connect(noiseGain);
+                noiseGain.connect(gainNode);
+                noiseSource.start(startTime);
+                noiseSource.stop(endTime);
+                localNodes.push(noiseSource, noiseFilter, noiseGain);
+            }
+
+            // Menu arpeggio for main menu type
+            if (segType === 'menu') {
+                const arpNotes = [110, 130.81, 164.81, 196]; // A2, C3, E3, G3
+                const arpDuration = dur / (arpNotes.length * 4);
+                for (let i = 0; i < arpNotes.length * 4; i++) {
+                    const noteTime = startTime + i * arpDuration;
+                    if (noteTime >= endTime) break;
+                    const arpOsc = audioCtx.createOscillator();
+                    arpOsc.type = 'sine';
+                    arpOsc.frequency.value = arpNotes[i % arpNotes.length];
+                    const arpGain = audioCtx.createGain();
+                    arpGain.gain.setValueAtTime(0, noteTime);
+                    arpGain.gain.linearRampToValueAtTime(0.03, noteTime + 0.05);
+                    arpGain.gain.exponentialRampToValueAtTime(0.001, noteTime + arpDuration * 1.2);
+                    arpOsc.connect(arpGain);
+                    arpGain.connect(gainNode);
+                    arpOsc.start(noteTime);
+                    arpOsc.stop(noteTime + arpDuration * 1.3);
+                    localNodes.push(arpOsc, arpGain);
+                }
+            }
+
+            bgMusicNodes.push(...localNodes);
+        }
+
+        scheduleLoop();
+    }
+
+    function createNoiseBuffer(duration) {
+        const sampleRate = audioCtx.sampleRate;
+        const length = sampleRate * duration;
+        const buffer = audioCtx.createBuffer(1, length, sampleRate);
+        const data = buffer.getChannelData(0);
+        let b0 = 0,
+            b1 = 0,
+            b2 = 0;
+        for (let i = 0; i < length; i++) {
+            const white = Math.random() * 2 - 1;
+            b0 = 0.99765 * b0 + white * 0.099046;
+            b1 = 0.9632 * b1 + white * 0.296516;
+            b2 = 0.57 * b2 + white * 0.18457;
+            data[i] = (b0 + b1 + b2 + white * 0.0438) * 0.25;
+        }
+        return buffer;
+    }
+
+    function playSfx(type) {
+        if (!audioCtx || !masterGain || STATE.audioMuted) return;
+        const now = audioCtx.currentTime;
+        const sfxGain = audioCtx.createGain();
+        sfxGain.gain.value = 0.3;
+        sfxGain.connect(masterGain);
+
+        switch (type) {
+            case 'hover':
+                playTone(1200, 0.05, 'sine', 0.15, sfxGain, now);
+                break;
+            case 'tap':
+                playTone(300, 0.03, 'square', 0.25, sfxGain, now);
+                playNoiseBurst(0.02, 0.2, sfxGain, now);
+                playTone(1500, 0.1, 'sine', 0.2, sfxGain, now + 0.01);
+                break;
+            case 'back':
+                playSweep(800, 200, 0.15, 'triangle', sfxGain, now);
+                break;
+            case 'whoosh':
+                playNoiseSweep(8000, 200, 0.4, sfxGain, now);
+                break;
+            case 'thump':
+                playTone(50, 0.2, 'sine', 0.5, sfxGain, now);
+                break;
+            case 'locked':
+                playTone(150, 0.2, 'sawtooth', 0.3, sfxGain, now);
+                playTone(155, 0.2, 'sawtooth', 0.3, sfxGain, now);
+                break;
+            case 'toast':
+                playTone(800, 0.08, 'sine', 0.2, sfxGain, now);
+                playTone(1000, 0.08, 'sine', 0.2, sfxGain, now + 0.08);
+                break;
+            case 'loading_hum':
+                playTone(100, 2.5, 'triangle', 0.05, sfxGain, now);
+                break;
+            default:
+                break;
+        }
+    }
+
+    function playTone(freq, dur, waveType, gainVal, gainNode, startTime) {
+        const osc = audioCtx.createOscillator();
+        osc.type = waveType;
+        osc.frequency.value = freq;
+        const g = audioCtx.createGain();
+        g.gain.setValueAtTime(gainVal, startTime);
+        g.gain.exponentialRampToValueAtTime(0.001, startTime + dur);
+        osc.connect(g);
+        g.connect(gainNode);
+        osc.start(startTime);
+        osc.stop(startTime + dur + 0.05);
+        bgMusicNodes.push(osc, g);
+    }
+
+    function playNoiseBurst(dur, gainVal, gainNode, startTime) {
+        const buf = createNoiseBuffer(Math.max(dur, 0.05));
+        const src = audioCtx.createBufferSource();
+        src.buffer = buf;
+        const g = audioCtx.createGain();
+        g.gain.setValueAtTime(gainVal, startTime);
+        g.gain.exponentialRampToValueAtTime(0.001, startTime + dur);
+        src.connect(g);
+        g.connect(gainNode);
+        src.start(startTime);
+        src.stop(startTime + dur + 0.02);
+        bgMusicNodes.push(src, g);
+    }
+
+    function playSweep(freqStart, freqEnd, dur, waveType, gainNode, startTime) {
+        const osc = audioCtx.createOscillator();
+        osc.type = waveType;
+        osc.frequency.setValueAtTime(freqStart, startTime);
+        osc.frequency.linearRampToValueAtTime(freqEnd, startTime + dur);
+        const g = audioCtx.createGain();
+        g.gain.setValueAtTime(0.25, startTime);
+        g.gain.exponentialRampToValueAtTime(0.001, startTime + dur);
+        osc.connect(g);
+        g.connect(gainNode);
+        osc.start(startTime);
+        osc.stop(startTime + dur + 0.05);
+        bgMusicNodes.push(osc, g);
+    }
+
+    function playNoiseSweep(freqStart, freqEnd, dur, gainNode, startTime) {
+        const buf = createNoiseBuffer(dur + 0.1);
+        const src = audioCtx.createBufferSource();
+        src.buffer = buf;
+        const filter = audioCtx.createBiquadFilter();
+        filter.type = 'bandpass';
+        filter.frequency.setValueAtTime(freqStart, startTime);
+        filter.frequency.linearRampToValueAtTime(freqEnd, startTime + dur);
+        filter.Q.value = 0.8;
+        const g = audioCtx.createGain();
+        g.gain.setValueAtTime(0.3, startTime);
+        g.gain.exponentialRampToValueAtTime(0.001, startTime + dur);
+        src.connect(filter);
+        filter.connect(g);
+        g.connect(gainNode);
+        src.start(startTime);
+        src.stop(startTime + dur + 0.05);
+        bgMusicNodes.push(src, filter, g);
+    }
+
+    function setAudioMuted(muted) {
+        STATE.audioMuted = muted;
+        saveState();
+        if (masterGain) {
+            masterGain.gain.value = muted ? 0 : 0.8;
+        }
+        if (STATE.bgMusicGain) {
+            STATE.bgMusicGain.gain.value = muted ? 0 : (STATE.bgMusicType === 'portrait' ? 0.15 : 0.12);
+        }
+    }
+
+    // ============================================================
+    // ===== IMAGE PRELOADING =====
+    // ============================================================
+    const imagePaths = [
+        'portrait_rotate.png',
+        'loading.png',
+        'main_menu.png',
+        'world_select.png',
+        'level_select.png',
+    ];
+    const preloadedImages = {};
+    let allImagesReady = false;
+
+    function preloadImages() {
+        let loadedCount = 0;
+        imagePaths.forEach(path => {
+            const img = new Image();
+            img.onload = () => {
+                loadedCount++;
+                preloadedImages[path] = img;
+                STATE.imagesLoaded[path] = true;
+                if (loadedCount >= imagePaths.length) {
+                    allImagesReady = true;
+                    preparingText.classList.remove('visible');
+                }
+            };
+            img.onerror = () => {
+                loadedCount++;
+                console.warn('Failed to load image:', path);
+                if (loadedCount >= imagePaths.length) {
+                    allImagesReady = true;
+                    preparingText.classList.remove('visible');
+                }
+            };
+            img.src = path;
+        });
+        // Also check if images in DOM are already loaded
+        document.querySelectorAll('.bg-image').forEach(el => {
+            if (el.complete && el.naturalWidth > 0) {
+                const src = el.getAttribute('src');
+                if (src && !STATE.imagesLoaded[src]) {
+                    STATE.imagesLoaded[src] = true;
+                    preloadedImages[src] = el;
+                }
+            }
+        });
+        // Set a timeout fallback
+        setTimeout(() => {
+            if (!allImagesReady) {
+                allImagesReady = true;
+                preparingText.classList.remove('visible');
+            }
+        }, 4000);
+    }
+
+    function areCriticalImagesReady() {
+        // Check if the current screen's image is loaded
+        const currentScreenData = HITBOX_DATA[STATE.currentScreen];
+        if (!currentScreenData) return true;
+        const imgPath = STATE.currentScreen === 'portrait_rotate' ? 'portrait_rotate.png' :
+            STATE.currentScreen + '.png';
+        const screenDiv = screenDivs[STATE.currentScreen];
+        if (screenDiv) {
+            const imgEl = screenDiv.querySelector('.bg-image');
+            if (imgEl && imgEl.complete && imgEl.naturalWidth > 0) return true;
+        }
+        return !!preloadedImages[imgPath];
+    }
+
+    // ============================================================
+    // ===== SCREEN TRANSFORM CALCULATION =====
+    // ============================================================
+    function calculateScreenTransform(screenName) {
+        const screenData = HITBOX_DATA[screenName];
+        if (!screenData) {
+            const vw = window.innerWidth;
+            const vh = window.innerHeight;
+            return { scale: Math.min(vw / 1920, vh / 1080), offsetX: 0, offsetY: 0, nativeW: 1920, nativeH: 1080,
+                vw, vh };
+        }
+        const nativeW = screenData.nativeW;
+        const nativeH = screenData.nativeH;
+        const vw = window.innerWidth;
+        const vh = window.innerHeight;
+        const scaleX = vw / nativeW;
+        const scaleY = vh / nativeH;
+        const scale = Math.min(scaleX, scaleY);
+        const displayedW = nativeW * scale;
+        const displayedH = nativeH * scale;
+        const offsetX = (vw - displayedW) / 2;
+        const offsetY = (vh - displayedH) / 2;
+        return { scale, offsetX, offsetY, nativeW, nativeH, vw, vh, displayedW, displayedH };
+    }
+
+    function updateScreenTransform() {
+        STATE.screenTransform = calculateScreenTransform(STATE.currentScreen);
+    }
+
+    function nativeToScreen(nx, ny) {
+        const t = STATE.screenTransform;
+        return {
+            x: nx * t.scale + t.offsetX,
+            y: ny * t.scale + t.offsetY,
+        };
+    }
+
+    function screenToNative(sx, sy) {
+        const t = STATE.screenTransform;
+        return {
+            x: (sx - t.offsetX) / t.scale,
+            y: (sy - t.offsetY) / t.scale,
+        };
+    }
+
+    function getHitboxScreenRect(hitbox) {
+        const topLeft = nativeToScreen(hitbox.x, hitbox.y);
+        const bottomRight = nativeToScreen(hitbox.x + hitbox.w, hitbox.y + hitbox.h);
+        return {
+            x: topLeft.x,
+            y: topLeft.y,
+            w: bottomRight.x - topLeft.x,
+            h: bottomRight.y - topLeft.y,
+        };
+    }
+
+    // ============================================================
+    // ===== SCREEN MANAGER =====
+    // ============================================================
+    function getScreenDivId(screenName) {
+        return 'screen-' + screenName.replace(/_/g, '-');
+    }
+
+    function showScreen(screenName, instant = false) {
+        if (STATE.isTransitioning && !instant) return;
+        if (STATE.currentScreen === screenName && !instant) return;
+
+        const prevScreen = STATE.currentScreen;
+        STATE.previousScreen = prevScreen;
+        STATE.currentScreen = screenName;
+        updateScreenTransform();
+
+        // Hide all screens
+        Object.values(screenDivs).forEach(div => {
+            div.classList.remove('active', 'transitioning-out', 'transitioning-in');
+            div.style.opacity = '0';
+            div.style.pointerEvents = 'none';
+            div.style.transform = 'scale(1)';
+            div.style.filter = 'none';
+        });
+
+        const targetDiv = screenDivs[screenName];
+        if (!targetDiv) {
+            console.warn('Screen div not found:', screenName);
+            STATE.isTransitioning = false;
+            return;
+        }
+
+        if (instant) {
+            targetDiv.classList.add('active');
+            targetDiv.style.opacity = '1';
+            targetDiv.style.pointerEvents = 'auto';
+            targetDiv.style.transform = 'scale(1)';
+            targetDiv.style.filter = 'none';
+            STATE.isTransitioning = false;
+            onScreenShown(screenName);
+            return;
+        }
+
+        STATE.isTransitioning = true;
+        performTransition(prevScreen, screenName, targetDiv);
+    }
+
+    function performTransition(fromScreen, toScreen, targetDiv) {
+        const closeMs = CONFIG.TRANSITION_CLOSE_MS;
+        const blackMs = CONFIG.TRANSITION_BLACK_MS;
+        const openMs = CONFIG.TRANSITION_OPEN_MS;
+
+        // CLOSING: fade current screen with glitch
+        const fromDiv = screenDivs[fromScreen];
+        if (fromDiv && fromScreen !== 'placeholder') {
+            fromDiv.classList.add('transitioning-out');
+            fromDiv.style.transition = `opacity ${closeMs}ms ease, transform ${closeMs}ms ease`;
+            fromDiv.style.opacity = '0';
+            fromDiv.style.transform = 'scale(1.05)';
+            applyGlitchEffect(fromDiv, closeMs);
+        }
+
+        playSfx('whoosh');
+
+        // After close, go black
+        setTimeout(() => {
+            transitionOverlay.style.opacity = '1';
+            transitionOverlay.style.transition = `opacity 50ms ease`;
+            playSfx('thump');
+
+            if (fromDiv) {
+                fromDiv.style.pointerEvents = 'none';
+                fromDiv.classList.remove('active', 'transitioning-out');
+                fromDiv.style.filter = 'none';
+                fromDiv.style.transform = 'scale(1)';
+                fromDiv.style.opacity = '0';
+            }
+
+            // After black, open new screen
+            setTimeout(() => {
+                transitionOverlay.style.opacity = '0';
+                transitionOverlay.style.transition = `opacity ${openMs}ms ease`;
+
+                targetDiv.classList.add('active', 'transitioning-in');
+                targetDiv.style.opacity = '0';
+                targetDiv.style.transform = 'scale(1.1)';
+                targetDiv.style.filter = 'brightness(1.5) blur(1px)';
+                targetDiv.style.transition =
+                    `opacity ${openMs}ms ease, transform ${openMs}ms ease, filter ${openMs}ms ease`;
+                targetDiv.style.pointerEvents = 'auto';
+
+                requestAnimationFrame(() => {
+                    targetDiv.style.opacity = '1';
+                    targetDiv.style.transform = 'scale(1)';
+                    targetDiv.style.filter = 'brightness(1) blur(0px)';
+                });
+
+                playSfx('whoosh');
+
+                setTimeout(() => {
+                    targetDiv.classList.remove('transitioning-in');
+                    targetDiv.style.transition = 'opacity 0.3s ease';
+                    targetDiv.style.filter = 'none';
+                    STATE.isTransitioning = false;
+                    updateScreenTransform();
+                    onScreenShown(toScreen);
+                }, openMs);
+            }, blackMs);
+        }, closeMs);
+    }
+
+    function applyGlitchEffect(div, durationMs) {
+        const startTime = performance.now();
+        const originalFilter = div.style.filter || '';
+
+        function glitchFrame() {
+            const elapsed = performance.now() - startTime;
+            if (elapsed >= durationMs) {
+                div.style.filter = originalFilter;
+                return;
+            }
+            const intensity = 1 - (elapsed / durationMs);
+            const shiftX = (Math.random() - 0.5) * 10 * intensity;
+            const shiftR = (Math.random() - 0.5) * 6 * intensity;
+            const shiftB = (Math.random() - 0.5) * 6 * intensity;
+            div.style.filter =
+                `brightness(${1+intensity*0.3}) contrast(${1+intensity*0.2})` +
+                (Math.random() < 0.3 ? ` drop-shadow(${shiftR}px 0 0 rgba(255,0,0,0.5)) drop-shadow(${shiftB}px 0 0 rgba(0,0,255,0.5))` :
+                    '');
+            div.style.transform = `scale(${1+intensity*0.03}) translateX(${shiftX}px)`;
+            if (elapsed < durationMs) {
+                requestAnimationFrame(glitchFrame);
+            }
+        }
+        requestAnimationFrame(glitchFrame);
+    }
+
+    function onScreenShown(screenName) {
+        updateScreenTransform();
+        STATE.lastInteraction = Date.now();
+        resetIdleTimer();
+
+        // Handle music
+        if (screenName === 'portrait_rotate') {
+            if (!bgMusicActive || STATE.bgMusicType !== 'portrait') {
+                startBgMusic('portrait');
+            }
+        } else if (['loading', 'main_menu', 'world_select', 'level_select'].includes(screenName)) {
+            if (!bgMusicActive || STATE.bgMusicType !== 'menu') {
+                startBgMusic('menu');
+            }
+        }
+
+        // Loading screen specific
+        if (screenName === 'loading') {
+            startLoadingBar();
+        }
+
+        // Clear toasts
+        STATE.toastData = null;
+        if (STATE.toastTimer) clearTimeout(STATE.toastTimer);
+    }
+
+    function resetIdleTimer() {
+        if (STATE.idleTimer) clearTimeout(STATE.idleTimer);
+        STATE.idleTimer = setTimeout(() => {
+            if (STATE.currentScreen === 'main_menu' && !STATE.isTransitioning) {
+                // Idle animation triggered - play button glow pulse
+                STATE.idleGlowActive = true;
+            }
+        }, CONFIG.IDLE_GLOW_DELAY_MS);
+    }
+
+    // ============================================================
+    // ===== LOADING BAR =====
+    // ============================================================
+    function startLoadingBar() {
+        STATE.loadingProgress = 0;
+        STATE.loadingStartTime = Date.now();
+        STATE.loadingComplete = false;
+        playSfx('loading_hum');
+        updateLoadingBar();
+    }
+
+    function updateLoadingBar() {
+        if (STATE.currentScreen !== 'loading' || STATE.loadingComplete) return;
+        const elapsed = Date.now() - STATE.loadingStartTime;
+        const progress = Math.min(elapsed / CONFIG.LOADING_DURATION_MS, 1);
+        // Ease in-out
+        STATE.loadingProgress = progress < 0.5 ?
+            2 * progress * progress :
+            -1 + (4 - 2 * progress) * progress;
+        if (progress >= 1) {
+            STATE.loadingProgress = 1;
+            STATE.loadingComplete = true;
+            setTimeout(() => {
+                if (STATE.currentScreen === 'loading') {
+                    showScreen('main_menu');
+                }
+            }, 200);
+        } else {
+            requestAnimationFrame(() => {
+                updateLoadingBar();
+            });
+        }
+    }
+
+    // ============================================================
+    // ===== HITBOX DETECTION & TOUCH HANDLING =====
+    // ============================================================
+    function getHitboxAtScreenPoint(sx, sy) {
+        const screenData = HITBOX_DATA[STATE.currentScreen];
+        if (!screenData) return null;
+        const native = screenToNative(sx, sy);
+        for (const [key, hb] of Object.entries(screenData.hitboxes)) {
+            if (native.x >= hb.x && native.x <= hb.x + hb.w &&
+                native.y >= hb.y && native.y <= hb.y + hb.h) {
+                return { key, hitbox: hb, nativeX: native.x, nativeY: native.y };
+            }
+        }
+        return null;
+    }
+
+    function isLevelLocked(levelNum) {
+        if (levelNum === 'boss') {
+            return !(STATE.unlockedLevels.length >= 10 && STATE.unlockedLevels.includes(10));
+        }
+        return !STATE.unlockedLevels.includes(levelNum);
+    }
+
+    function handleHitboxTap(hitboxKey, hitbox, screenX, screenY) {
+        if (STATE.isTransitioning) return;
+        STATE.lastInteraction = Date.now();
+        resetIdleTimer();
+        STATE.idleGlowActive = false;
+
+        const action = hitbox.action;
+        if (!action || hitbox.decorative) return;
+
+        playSfx('tap');
+        addRipple(screenX, screenY);
+
+        switch (action) {
+            case 'tap_rotate':
+                handleTapRotate();
+                break;
+            case 'back':
+                handleBackNavigation();
+                break;
+            case 'play':
+                showScreen('world_select');
+                break;
+            case 'placeholder_skin':
+            case 'placeholder_shop':
+            case 'placeholder_inventory':
+            case 'placeholder_stats':
+            case 'placeholder_howto':
+                showPlaceholder('COMING IN DAY 5', 'main_menu');
+                break;
+            case 'select_overworld':
+                showScreen('level_select');
+                break;
+            case 'select_inferno':
+            case 'select_abyss':
+                handleLockedWorldTap(hitbox.label);
+                break;
+            case 'select_level':
+                handleLevelTap(hitbox.level);
+                break;
+            case 'select_boss':
+                handleLevelTap('boss');
+                break;
+            case 'debug_tap':
+                handleDebugTap();
+                break;
+            case 'coin_display':
+                // Just display - no action on tap
+                break;
+            default:
+                break;
+        }
+    }
+
+    function handleTapRotate() {
+        // Attempt orientation lock
+        try {
+            if (screen.orientation && screen.orientation.lock) {
+                screen.orientation.lock('landscape').catch(() => {});
+            }
+        } catch (e) {}
+        // Attempt fullscreen
+        try {
+            if (document.documentElement.requestFullscreen) {
+                document.documentElement.requestFullscreen().catch(() => {});
+            } else if (document.documentElement.webkitRequestFullscreen) {
+                document.documentElement.webkitRequestFullscreen();
+            }
+        } catch (e) {}
+
+        if (!allImagesReady) {
+            preparingText.classList.add('visible');
+            const checkReady = setInterval(() => {
+                if (allImagesReady) {
+                    clearInterval(checkReady);
+                    preparingText.classList.remove('visible');
+                    showScreen('loading');
+                }
+            }, 200);
+            setTimeout(() => {
+                clearInterval(checkReady);
+                preparingText.classList.remove('visible');
+                showScreen('loading');
+            }, 3000);
+        } else {
+            showScreen('loading');
+        }
+    }
+
+    function handleBackNavigation() {
+        const backMap = {
+            'loading': 'portrait_rotate',
+            'main_menu': 'portrait_rotate',
+            'world_select': 'main_menu',
+            'level_select': 'world_select',
+            'placeholder': STATE.placeholderReturnScreen || 'main_menu',
+        };
+        const target = backMap[STATE.currentScreen] || 'main_menu';
+        if (STATE.currentScreen === 'placeholder' && STATE.placeholderReturnAction === 'level_select') {
+            showScreen('level_select');
+            STATE.placeholderReturnScreen = null;
+            STATE.placeholderReturnAction = null;
+            return;
+        }
+        STATE.placeholderReturnScreen = null;
+        STATE.placeholderReturnAction = null;
+        playSfx('back');
+        showScreen(target);
+    }
+
+    function handleLockedWorldTap(label) {
+        playSfx('locked');
+        showToast('COMING SOON');
+        // Shake the screen briefly
+        const screenDiv = screenDivs[STATE.currentScreen];
+        if (screenDiv) {
+            screenDiv.classList.add('shaking');
+            setTimeout(() => screenDiv.classList.remove('shaking'), 500);
+        }
+    }
+
+    function handleLevelTap(levelNum) {
+        if (isLevelLocked(levelNum)) {
+            playSfx('locked');
+            showToast('LOCKED');
+            const screenDiv = screenDivs[STATE.currentScreen];
+            if (screenDiv) {
+                screenDiv.classList.add('shaking');
+                setTimeout(() => screenDiv.classList.remove('shaking'), 500);
+            }
+        } else {
+            playSfx('tap');
+            const label = levelNum === 'boss' ? 'BOSS' : 'LEVEL ' + levelNum;
+            STATE.placeholderReturnScreen = 'level_select';
+            STATE.placeholderReturnAction = 'level_select';
+            showPlaceholder(label + ' — GAMEPLAY COMING SOON', 'level_select');
+        }
+    }
+
+    function handleDebugTap() {
+        const now = Date.now();
+        if (STATE.debugTapTimer && now - STATE.debugTapTimer > CONFIG.DEBUG_TAP_WINDOW_MS) {
+            STATE.debugTapCount = 0;
+        }
+        STATE.debugTapCount++;
+        STATE.debugTapTimer = now;
+        if (STATE.debugTapCount >= CONFIG.DEBUG_TAP_COUNT) {
+            STATE.debugTapCount = 0;
+            showDebugPanel();
+        }
+    }
+
+    function showPlaceholder(text, returnScreen) {
+        STATE.placeholderReturnScreen = returnScreen;
+        STATE.placeholderReturnAction = returnScreen;
+        if (placeholderTextEl) placeholderTextEl.textContent = text;
+        showScreen('placeholder');
+    }
+
+    // ============================================================
+    // ===== TRANSITIONS (wrapped) =====
+    // ============================================================
+    // (Handled in performTransition above)
+
+    // ============================================================
+    // ===== DYNAMIC OVERLAYS (Canvas) =====
+    // ============================================================
+    function drawAllOverlays() {
+        if (STATE.isTransitioning && STATE.currentScreen === 'placeholder') return;
+        overlayCtx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
+
+        switch (STATE.currentScreen) {
+            case 'main_menu':
+                drawCoinCounter();
+                break;
+            case 'level_select':
+                drawLevelOverlays();
+                break;
+            case 'world_select':
+                drawWorldOverlays();
+                break;
+            default:
+                break;
+        }
+
+        // Draw toast
+        if (STATE.toastData) {
+            drawToast();
+        }
+
+        // Draw hitbox debug
+        if (STATE.showHitboxes) {
+            drawHitboxDebug();
+        }
+    }
+
+    function drawCoinCounter() {
+        const hb = HITBOX_DATA.main_menu?.hitboxes?.main_coin;
+        if (!hb) return;
+        const rect = getHitboxScreenRect(hb);
+        const cx = rect.x + rect.w * 0.22;
+        const cy = rect.y + rect.h / 2;
+
+        // Coin icon
+        const coinR = Math.min(rect.h * 0.35, 20);
+        const gradient = overlayCtx.createRadialGradient(cx - coinR * 0.2, cy - coinR * 0.25, coinR * 0.1, cx, cy,
+            coinR);
+        gradient.addColorStop(0, '#ffd700');
+        gradient.addColorStop(0.5, '#f0c000');
+        gradient.addColorStop(1, '#8b6914');
+        overlayCtx.beginPath();
+        overlayCtx.arc(cx, cy, coinR, 0, Math.PI * 2);
+        overlayCtx.fillStyle = gradient;
+        overlayCtx.fill();
+        overlayCtx.strokeStyle = '#5a3e0b';
+        overlayCtx.lineWidth = 2;
+        overlayCtx.stroke();
+
+        // Inner highlight
+        overlayCtx.beginPath();
+        overlayCtx.arc(cx - coinR * 0.2, cy - coinR * 0.2, coinR * 0.3, 0, Math.PI * 2);
+        overlayCtx.fillStyle = 'rgba(255,255,255,0.4)';
+        overlayCtx.fill();
+
+        // Coin count text
+        const textX = cx + coinR + 14;
+        overlayCtx.fillStyle = '#d4d4d4';
+        overlayCtx.font = 'bold ' + Math.max(16, rect.h * 0.45) + 'px "Courier New", monospace';
+        overlayCtx.textBaseline = 'middle';
+        overlayCtx.shadowColor = 'rgba(30,58,138,0.8)';
+        overlayCtx.shadowBlur = 10;
+        overlayCtx.fillText(STATE.coins, textX, cy);
+        overlayCtx.shadowBlur = 0;
+    }
+
+    function drawLevelOverlays() {
+        const screenData = HITBOX_DATA.level_select;
+        if (!screenData) return;
+
+        for (const [key, hb] of Object.entries(screenData.hitboxes)) {
+            if (!hb.level && hb.level !== 1 && hb.level !== 'boss') continue;
+            if (key === 'level_back') continue;
+
+            const levelNum = hb.level;
+            const rect = getHitboxScreenRect(hb);
+            const cx = rect.x + rect.w / 2;
+            const cy = rect.y + rect.h / 2;
+            const locked = isLevelLocked(levelNum);
+
+            if (locked) {
+                // Draw padlock
+                drawPadlock(cx, cy, Math.min(rect.w, rect.h) * 0.55);
+            }
+
+            // Draw stars if completed
+            if (!locked && STATE.stars[levelNum] && STATE.stars[levelNum] > 0) {
+                const starCount = Math.min(STATE.stars[levelNum], 3);
+                const starY = rect.y + rect.h + 18 * STATE.screenTransform.scale;
+                const starSize = 28 * STATE.screenTransform.scale;
+                const totalWidth = starCount * starSize + (starCount - 1) * (8 * STATE.screenTransform.scale);
+                const startX = cx - totalWidth / 2;
+                for (let i = 0; i < starCount; i++) {
+                    drawFilledStar(startX + i * (starSize + 8 * STATE.screenTransform.scale), starY, starSize);
+                }
+            }
+
+            // Draw boss crown if boss defeated
+            if (levelNum === 'boss' && STATE.bossDefeated && !locked) {
+                const crownY = rect.y - 25 * STATE.screenTransform.scale;
+                drawCrown(cx, crownY, rect.w * 0.5);
+            }
+        }
+
+        // Draw path animation
+        drawLevelPathAnimation();
+    }
+
+    function drawPadlock(cx, cy, size) {
+        const halfW = size * 0.4;
+        const halfH = size * 0.5;
+        const arcR = size * 0.25;
+
+        // Lock body
+        overlayCtx.fillStyle = '#1a1a1a';
+        overlayCtx.strokeStyle = '#3a1010';
+        overlayCtx.lineWidth = 3;
+        overlayCtx.shadowColor = 'rgba(139,0,0,0.6)';
+        overlayCtx.shadowBlur = 12;
+        overlayCtx.beginPath();
+        overlayCtx.roundRect(cx - halfW, cy - halfH * 0.3, halfW * 2, halfH * 1.3, 6);
+        overlayCtx.fill();
+        overlayCtx.stroke();
+        overlayCtx.shadowBlur = 0;
+
+        // Shackle
+        overlayCtx.strokeStyle = '#4a4a4a';
+        overlayCtx.lineWidth = 5;
+        overlayCtx.beginPath();
+        overlayCtx.arc(cx, cy - halfH * 0.2, arcR, Math.PI, 0);
+        overlayCtx.stroke();
+
+        // Keyhole
+        overlayCtx.fillStyle = '#8b0000';
+        overlayCtx.beginPath();
+        overlayCtx.arc(cx, cy + halfH * 0.15, size * 0.08, 0, Math.PI * 2);
+        overlayCtx.fill();
+        overlayCtx.fillStyle = '#000';
+        overlayCtx.fillRect(cx - size * 0.03, cy + halfH * 0.1, size * 0.06, size * 0.18);
+    }
+
+    function drawFilledStar(cx, cy, size) {
+        const spikes = 5;
+        const outerR = size * 0.5;
+        const innerR = size * 0.2;
+        overlayCtx.fillStyle = '#1e3a8a';
+        overlayCtx.strokeStyle = '#4a6fd4';
+        overlayCtx.lineWidth = 2;
+        overlayCtx.shadowColor = 'rgba(30,58,138,0.7)';
+        overlayCtx.shadowBlur = 8;
+        overlayCtx.beginPath();
+        for (let i = 0; i < spikes * 2; i++) {
+            const r = i % 2 === 0 ? outerR : innerR;
+            const angle = (i * Math.PI) / spikes - Math.PI / 2;
+            const x = cx + Math.cos(angle) * r;
+            const y = cy + Math.sin(angle) * r;
+            if (i === 0) overlayCtx.moveTo(x, y);
+            else overlayCtx.lineTo(x, y);
+        }
+        overlayCtx.closePath();
+        overlayCtx.fill();
+        overlayCtx.stroke();
+        overlayCtx.shadowBlur = 0;
+
+        // White core
+        overlayCtx.fillStyle = 'rgba(255,255,255,0.7)';
+        overlayCtx.beginPath();
+        overlayCtx.arc(cx, cy, size * 0.12, 0, Math.PI * 2);
+        overlayCtx.fill();
+    }
+
+    function drawCrown(cx, cy, size) {
+        overlayCtx.fillStyle = '#ffd700';
+        overlayCtx.shadowColor = 'rgba(255,215,0,0.7)';
+        overlayCtx.shadowBlur = 15;
+        overlayCtx.beginPath();
+        const hw = size * 0.5;
+        const h = size * 0.45;
+        overlayCtx.moveTo(cx - hw, cy);
+        overlayCtx.lineTo(cx - hw, cy - h);
+        overlayCtx.lineTo(cx - hw * 0.6, cy - h * 0.5);
+        overlayCtx.lineTo(cx - hw * 0.2, cy - h);
+        overlayCtx.lineTo(cx, cy - h * 0.3);
+        overlayCtx.lineTo(cx + hw * 0.2, cy - h);
+        overlayCtx.lineTo(cx + hw * 0.6, cy - h * 0.5);
+        overlayCtx.lineTo(cx + hw, cy - h);
+        overlayCtx.lineTo(cx + hw, cy);
+        overlayCtx.closePath();
+        overlayCtx.fill();
+        overlayCtx.shadowBlur = 0;
+    }
+
+    function drawLevelPathAnimation() {
+        const screenData = HITBOX_DATA.level_select;
+        if (!screenData) return;
+        const levelKeys = ['level_1', 'level_2', 'level_3', 'level_4', 'level_5',
+            'level_6', 'level_7', 'level_8', 'level_9', 'level_10', 'level_boss'
+        ];
+        const points = [];
+        levelKeys.forEach(key => {
+            const hb = screenData.hitboxes[key];
+            if (hb) {
+                const rect = getHitboxScreenRect(hb);
+                points.push({ x: rect.x + rect.w / 2, y: rect.y + rect.h / 2 });
+            }
+        });
+
+        if (points.length < 2) return;
+
+        const dashLen = 15 * STATE.screenTransform.scale;
+        const gapLen = 10 * STATE.screenTransform.scale;
+        const totalPattern = dashLen + gapLen;
+        const offset = (Date.now() / 40) % totalPattern;
+
+        overlayCtx.strokeStyle = 'rgba(30,58,138,0.5)';
+        overlayCtx.lineWidth = 3 * STATE.screenTransform.scale;
+        overlayCtx.lineCap = 'round';
+        overlayCtx.setLineDash([dashLen, gapLen]);
+        overlayCtx.lineDashOffset = -offset;
+        overlayCtx.beginPath();
+        overlayCtx.moveTo(points[0].x, points[0].y);
+        for (let i = 1; i < points.length; i++) {
+            overlayCtx.lineTo(points[i].x, points[i].y);
+        }
+        overlayCtx.stroke();
+        overlayCtx.setLineDash([]);
+    }
+
+    function drawWorldOverlays() {
+        const screenData = HITBOX_DATA.world_select;
+        if (!screenData) return;
+        // Draw subtle chain sway for locked worlds
+        ['world_inferno', 'world_abyss'].forEach(key => {
+            const hb = screenData.hitboxes[key];
+            if (!hb || !hb.locked) return;
+            const rect = getHitboxScreenRect(hb);
+            const swayAngle = Math.sin(Date.now() / 2000) * 1.5;
+            // Subtle rotation indicator via overlay lines
+            overlayCtx.strokeStyle = 'rgba(139,0,0,0.3)';
+            overlayCtx.lineWidth = 2;
+            overlayCtx.save();
+            overlayCtx.translate(rect.x + rect.w / 2, rect.y + rect.h * 0.08);
+            overlayCtx.rotate((swayAngle * Math.PI) / 180);
+            overlayCtx.beginPath();
+            for (let i = 0; i < 3; i++) {
+                const linkY = i * rect.h * 0.06;
+                overlayCtx.ellipse(0, linkY, rect.w * 0.15, rect.h * 0.02, 0, 0, Math.PI * 2);
+            }
+            overlayCtx.stroke();
+            overlayCtx.restore();
+        });
+    }
+
+    function drawHitboxDebug() {
+        const screenData = HITBOX_DATA[STATE.currentScreen];
+        if (!screenData) return;
+        overlayCtx.fillStyle = 'rgba(255,0,0,0.25)';
+        overlayCtx.strokeStyle = 'rgba(255,50,50,0.8)';
+        overlayCtx.lineWidth = 2;
+        for (const [key, hb] of Object.entries(screenData.hitboxes)) {
+            if (hb.hidden) continue;
+            const rect = getHitboxScreenRect(hb);
+            overlayCtx.fillRect(rect.x, rect.y, rect.w, rect.h);
+            overlayCtx.strokeRect(rect.x, rect.y, rect.w, rect.h);
+            overlayCtx.fillStyle = '#fff';
+            overlayCtx.font = '10px monospace';
+            overlayCtx.fillText(key, rect.x + 2, rect.y + 12);
+            overlayCtx.fillStyle = 'rgba(255,0,0,0.25)';
+        }
+    }
+
+    // ============================================================
+    // ===== TOAST SYSTEM =====
+    // ============================================================
+    function showToast(message) {
+        playSfx('toast');
+        STATE.toastData = {
+            message,
+            startTime: Date.now(),
+            phase: 'in',
+        };
+        if (STATE.toastTimer) clearTimeout(STATE.toastTimer);
+        STATE.toastTimer = setTimeout(() => {
+            if (STATE.toastData) STATE.toastData.phase = 'out';
+            STATE.toastTimer = setTimeout(() => {
+                STATE.toastData = null;
+            }, CONFIG.TOAST_FADE_MS);
+        }, CONFIG.TOAST_HOLD_MS);
+    }
+
+    function drawToast() {
+        if (!STATE.toastData) return;
+        const data = STATE.toastData;
+        const elapsed = Date.now() - data.startTime;
+        let alpha = 1;
+        if (data.phase === 'in') {
+            alpha = Math.min(elapsed / 200, 1);
+        } else if (data.phase === 'out') {
+            const outElapsed = elapsed - CONFIG.TOAST_HOLD_MS;
+            alpha = Math.max(1 - outElapsed / CONFIG.TOAST_FADE_MS, 0);
+        }
+
+        const vw = overlayCanvas.width;
+        const vh = overlayCanvas.height;
+        const toastW = Math.min(500, vw * 0.7);
+        const toastH = 70;
+        const tx = (vw - toastW) / 2;
+        const ty = vh / 2 - toastH / 2;
+
+        overlayCtx.globalAlpha = alpha;
+        overlayCtx.fillStyle = 'rgba(10,10,10,0.85)';
+        overlayCtx.strokeStyle = 'rgba(30,58,138,0.8)';
+        overlayCtx.lineWidth = 3;
+        overlayCtx.shadowColor = 'rgba(30,58,138,0.5)';
+        overlayCtx.shadowBlur = 20;
+        overlayCtx.beginPath();
+        overlayCtx.roundRect(tx, ty, toastW, toastH, 8);
+        overlayCtx.fill();
+        overlayCtx.stroke();
+        overlayCtx.shadowBlur = 0;
+
+        overlayCtx.fillStyle = '#d4d4d4';
+        overlayCtx.font = 'bold 20px "Courier New", monospace';
+        overlayCtx.textAlign = 'center';
+        overlayCtx.textBaseline = 'middle';
+        overlayCtx.fillText(data.message, vw / 2, ty + toastH / 2);
+        overlayCtx.textAlign = 'start';
+        overlayCtx.globalAlpha = 1;
+    }
+
+    // ============================================================
+    // ===== PARTICLES & EFFECTS =====
+    // ============================================================
+    function initParticles() {
+        STATE.particles = [];
+        for (let i = 0; i < CONFIG.PARTICLE_COUNT; i++) {
+            STATE.particles.push(createParticle());
+        }
+    }
+
+    function createParticle() {
+        const vw = effectsCanvas.width || window.innerWidth;
+        const vh = effectsCanvas.height || window.innerHeight;
+        return {
+            x: Math.random() * vw,
+            y: vh + Math.random() * 100,
+            size: 1.5 + Math.random() * 3.5,
+            speed: 0.3 + Math.random() * 0.9,
+            opacity: 0.15 + Math.random() * 0.45,
+            life: 0,
+            maxLife: 3 + Math.random() * 6,
+            fadePhase: Math.random() * Math.PI * 2,
+        };
+    }
+
+    function updateParticles(dt) {
+        const vw = effectsCanvas.width || window.innerWidth;
+        const vh = effectsCanvas.height || window.innerHeight;
+        STATE.particles.forEach(p => {
+            p.y -= p.speed * dt * 60;
+            p.life += dt;
+            p.fadePhase += dt * 1.5;
+            if (p.y < -20 || p.life > p.maxLife) {
+                Object.assign(p, createParticle());
+                p.y = vh + Math.random() * 60;
+                p.life = 0;
+            }
+        });
+    }
+
+    function drawParticles() {
+        effectsCtx.clearRect(0, 0, effectsCanvas.width, effectsCanvas.height);
+        STATE.particles.forEach(p => {
+            const fadeAlpha = p.opacity * (0.5 + 0.5 * Math.sin(p.fadePhase));
+            const lifeRatio = 1 - Math.abs(p.life / p.maxLife - 0.5) * 2;
+            const alpha = fadeAlpha * Math.max(0.2, lifeRatio);
+            effectsCtx.fillStyle = `rgba(180,30,30,${alpha})`;
+            effectsCtx.shadowColor = `rgba(200,40,20,${alpha*0.6})`;
+            effectsCtx.shadowBlur = 8;
+            effectsCtx.beginPath();
+            effectsCtx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+            effectsCtx.fill();
+            effectsCtx.shadowBlur = 0;
+        });
+    }
+
+    // ============================================================
+    // ===== RIPPLE EFFECT =====
+    // ============================================================
+    function addRipple(sx, sy) {
+        STATE.activeRipples.push({
+            x: sx,
+            y: sy,
+            radius: 5,
+            maxRadius: 80,
+            startTime: Date.now(),
+            duration: CONFIG.RIPPLE_DURATION_MS,
+        });
+        if (STATE.activeRipples.length > 8) STATE.activeRipples.shift();
+    }
+
+    function updateAndDrawRipples() {
+        const now = Date.now();
+        STATE.activeRipples = STATE.activeRipples.filter(r => {
+            const elapsed = now - r.startTime;
+            if (elapsed > r.duration) return false;
+            const progress = elapsed / r.duration;
+            r.radius = 5 + (r.maxRadius - 5) * progress;
+            const alpha = 1 - progress;
+            overlayCtx.strokeStyle = `rgba(30,58,138,${alpha*0.7})`;
+            overlayCtx.lineWidth = 2.5 * (1 - progress);
+            overlayCtx.beginPath();
+            overlayCtx.arc(r.x, r.y, r.radius, 0, Math.PI * 2);
+            overlayCtx.stroke();
+            return true;
+        });
+    }
+
+    // ============================================================
+    // ===== FILM GRAIN =====
+    // ============================================================
+    let grainInterval = null;
+
+    function initGrain() {
+        resizeGrainCanvas();
+        updateGrain();
+        if (grainInterval) clearInterval(grainInterval);
+        grainInterval = setInterval(updateGrain, CONFIG.GRAIN_UPDATE_MS);
+    }
+
+    function resizeGrainCanvas() {
+        grainCanvas.width = window.innerWidth;
+        grainCanvas.height = window.innerHeight;
+    }
+
+    function updateGrain() {
+        const w = grainCanvas.width;
+        const h = grainCanvas.height;
+        if (w <= 0 || h <= 0) return;
+        const imageData = grainCtx.createImageData(w, h);
+        const data = imageData.data;
+        for (let i = 0; i < data.length; i += 4) {
+            const val = Math.random() * 255;
+            data[i] = val;
+            data[i + 1] = val;
+            data[i + 2] = val;
+            data[i + 3] = 255;
+        }
+        grainCtx.putImageData(imageData, 0, 0);
+    }
+
+    // ============================================================
+    // ===== DEBUG PANEL =====
+    // ============================================================
+    function showDebugPanel() {
+        const panel = document.createElement('div');
+        panel.id = 'debug-panel';
+        panel.style.cssText = `
+        position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
+        background:rgba(10,10,10,0.95);border:2px solid #1e3a8a;
+        border-radius:8px;padding:20px;z-index:100;color:#d4d4d4;
+        font-family:'Courier New',monospace;min-width:280px;
+        text-align:center;box-shadow:0 0 40px rgba(30,58,138,0.6);
+      `;
+        panel.innerHTML = `
+        <div style="font-size:20px;margin-bottom:16px;letter-spacing:3px;color:#fff;">DEBUG</div>
+        <button class="debug-btn" data-action="unlock">Unlock All Levels</button>
+        <button class="debug-btn" data-action="coins">Add 1000 Coins</button>
+        <button class="debug-btn" data-action="reset">Reset Progress</button>
+        <button class="debug-btn" data-action="hitboxes">Toggle Hitbox Visibility</button>
+        <button class="debug-btn" data-action="close" style="margin-top:12px;background:#3a1010;">Close</button>
+      `;
+        document.body.appendChild(panel);
+
+        const btnStyle = `
+        display:block;width:100%;margin:6px 0;padding:10px;
+        background:rgba(30,58,138,0.3);border:1px solid rgba(30,58,138,0.6);
+        color:#d4d4d4;border-radius:4px;cursor:pointer;
+        font-family:'Courier New',monospace;font-size:14px;
+        transition:all 0.2s;
+      `;
+        panel.querySelectorAll('.debug-btn').forEach(btn => {
+            btn.style.cssText = btnStyle;
+            btn.addEventListener('click', (e) => {
+                const action = e.target.dataset.action;
+                switch (action) {
+                    case 'unlock':
+                        STATE.unlockedLevels = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+                        STATE.bossDefeated = false;
+                        saveState();
+                        showToast('All Levels Unlocked');
+                        break;
+                    case 'coins':
+                        STATE.coins += 1000;
+                        saveState();
+                        showToast('+1000 Coins');
+                        break;
+                    case 'reset':
+                        window.chaosline_reset();
+                        break;
+                    case 'hitboxes':
+                        STATE.showHitboxes = !STATE.showHitboxes;
+                        showToast('Hitboxes: ' + (STATE.showHitboxes ? 'ON' : 'OFF'));
+                        break;
+                    case 'close':
+                        panel.remove();
+                        break;
+                }
+                if (action !== 'close' && action !== 'hitboxes') {
+                    panel.remove();
+                }
+            });
+        });
+    }
+
+    window.chaosline_reset = function() {
+        localStorage.clear();
+        STATE.coins = 0;
+        STATE.unlockedLevels = [1];
+        STATE.stars = {};
+        STATE.bossDefeated = false;
+        STATE.audioMuted = false;
+        saveState();
+        location.reload();
     };
-  } else {
-    raw = {
-      x: e.clientX,
-      y: e.clientY
-    };
-  }
 
-  const vw = window.innerWidth;
-  const vh = window.innerHeight;
-  const isPortrait = vh > vw;
+    // ============================================================
+    // ===== EVENT HANDLERS =====
+    // ============================================================
+    function handleTouchStart(e) {
+        if (STATE.isTransitioning) return;
+        ensureAudioRunning();
+        const touch = e.touches[0];
+        const sx = touch.clientX;
+        const sy = touch.clientY;
+        const hit = getHitboxAtScreenPoint(sx, sy);
+        if (hit && !hit.hitbox.decorative && !hit.hitbox.display) {
+            // Visual feedback - glow
+            STATE._activeHitbox = hit;
+            STATE._touchStartTime = Date.now();
+            playSfx('hover');
+        }
+    }
 
-  if (isPortrait) {
-    return {
-      x: raw.y,
-      y: vw - raw.x
-    };
-  }
+    function handleTouchEnd(e) {
+        if (STATE.isTransitioning) return;
+        const touch = e.changedTouches[0];
+        const sx = touch.clientX;
+        const sy = touch.clientY;
+        const hit = getHitboxAtScreenPoint(sx, sy);
 
-  return raw;
-}
+        if (hit && !hit.hitbox.decorative && !hit.hitbox.display) {
+            handleHitboxTap(hit.key, hit.hitbox, sx, sy);
+        }
 
-// =====================================================
-// DRAG MOVE
-// =====================================================
+        STATE._activeHitbox = null;
+        STATE._touchStartTime = null;
+    }
 
-function attachDrag(el, hb) {
-  let startX, startY, origX, origY;
+    function handleClick(e) {
+        if (STATE.isTransitioning) return;
+        if (e.target.closest('#debug-panel')) return;
+        if (STATE._touchHandled) {
+            STATE._touchHandled = false;
+            return;
+        }
+        ensureAudioRunning();
+        const sx = e.clientX;
+        const sy = e.clientY;
+        const hit = getHitboxAtScreenPoint(sx, sy);
+        if (hit && !hit.hitbox.decorative && !hit.hitbox.display) {
+            handleHitboxTap(hit.key, hit.hitbox, sx, sy);
+        }
+    }
 
-  function down(e) {
-    if (e.target.classList.contains('handle')) return;
+    // Handle placeholder back button
+    placeholderBackEl.addEventListener('click', (e) => {
+        e.stopPropagation();
+        handleBackNavigation();
+    });
+    placeholderBackEl.addEventListener('touchend', (e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        handleBackNavigation();
+    });
 
-    e.preventDefault();
+    // Global touch/click handlers
+    gameContainer.addEventListener('touchstart', (e) => {
+        STATE._touchHandled = true;
+        handleTouchStart(e);
+    }, { passive: false });
+    gameContainer.addEventListener('touchend', (e) => {
+        handleTouchEnd(e);
+    }, { passive: false });
+    gameContainer.addEventListener('touchcancel', () => {
+        STATE._activeHitbox = null;
+        STATE._touchStartTime = null;
+    });
+    gameContainer.addEventListener('click', handleClick);
 
-    selectHitbox(el, hb);
+    // Prevent double-tap zoom
+    document.addEventListener('dblclick', (e) => {
+        e.preventDefault();
+    }, { passive: false });
 
-    const p = getPoint(e);
+    // Resize handler
+    function handleResize() {
+        resizeAllCanvases();
+        updateScreenTransform();
+        resizeGrainCanvas();
+        updateGrain();
+    }
+    window.addEventListener('resize', handleResize);
+    window.addEventListener('orientationchange', () => {
+        setTimeout(handleResize, 300);
+    });
 
-    startX = p.x;
-    startY = p.y;
-    origX = hb.x;
-    origY = hb.y;
+    function resizeAllCanvases() {
+        const vw = window.innerWidth;
+        const vh = window.innerHeight;
+        [overlayCanvas, effectsCanvas].forEach(c => {
+            c.width = vw;
+            c.height = vh;
+        });
+        grainCanvas.width = vw;
+        grainCanvas.height = vh;
+    }
 
-    document.addEventListener('mousemove', move);
-    document.addEventListener('touchmove', move, { passive: false });
-    document.addEventListener('mouseup', up);
-    document.addEventListener('touchend', up);
-  }
+    // ============================================================
+    // ===== MAIN ANIMATION LOOP =====
+    // ============================================================
+    let lastFrameTime = Date.now();
 
-  function move(e) {
-    e.preventDefault();
+    function animationLoop() {
+        const now = Date.now();
+        const dt = Math.min((now - lastFrameTime) / 1000, 0.1);
+        lastFrameTime = now;
 
-    const p = getPoint(e);
+        updateParticles(dt);
+        drawParticles();
+        drawAllOverlays();
+        updateAndDrawRipples();
 
-    const dx = (p.x - startX) / scale;
-    const dy = (p.y - startY) / scale;
+        // Idle glow indicator on main menu play button
+        if (STATE.currentScreen === 'main_menu' && STATE.idleGlowActive && !STATE.isTransitioning) {
+            const hb = HITBOX_DATA.main_menu?.hitboxes?.main_play;
+            if (hb) {
+                const rect = getHitboxScreenRect(hb);
+                const glowAlpha = 0.3 + 0.2 * Math.sin(now / 800);
+                overlayCtx.strokeStyle = `rgba(30,58,138,${glowAlpha})`;
+                overlayCtx.lineWidth = 4;
+                overlayCtx.shadowColor = `rgba(30,58,138,${glowAlpha*1.5})`;
+                overlayCtx.shadowBlur = 30;
+                overlayCtx.strokeRect(rect.x - 6, rect.y - 6, rect.w + 12, rect.h + 12);
+                overlayCtx.shadowBlur = 0;
+            }
+        }
 
-    hb.x = Math.max(0, Math.min(NATIVE_W - hb.w, origX + dx));
-    hb.y = Math.max(0, Math.min(NATIVE_H - hb.h, origY + dy));
+        // Loading bar drawing
+        if (STATE.currentScreen === 'loading' && !STATE.loadingComplete) {
+            drawLoadingBarFill();
+        }
 
-    applyHitboxVisual(el, hb);
-    updateCoordChipOnly();
-  }
+        requestAnimationFrame(animationLoop);
+    }
 
-  function up() {
-    document.removeEventListener('mousemove', move);
-    document.removeEventListener('touchmove', move);
-    document.removeEventListener('mouseup', up);
-    document.removeEventListener('touchend', up);
-  }
+    function drawLoadingBarFill() {
+        const hb = HITBOX_DATA.loading?.hitboxes?.loading_bar;
+        if (!hb) return;
+        const rect = getHitboxScreenRect(hb);
+        const fillWidth = rect.w * STATE.loadingProgress;
+        const gradient = overlayCtx.createLinearGradient(rect.x, rect.y, rect.x + rect.w, rect.y);
+        gradient.addColorStop(0, '#1e3a8a');
+        gradient.addColorStop(0.5, '#3b5fc0');
+        gradient.addColorStop(1, '#1e3a8a');
+        overlayCtx.fillStyle = gradient;
+        overlayCtx.shadowColor = 'rgba(30,58,138,0.7)';
+        overlayCtx.shadowBlur = 15;
+        overlayCtx.beginPath();
+        overlayCtx.roundRect(rect.x, rect.y, fillWidth, rect.h, 4);
+        overlayCtx.fill();
+        overlayCtx.shadowBlur = 0;
 
-  el.addEventListener('mousedown', down);
-  el.addEventListener('touchstart', down, { passive: false });
-}
+        // Glow edge at fill front
+        if (fillWidth > 2) {
+            overlayCtx.fillStyle = 'rgba(180,200,255,0.6)';
+            overlayCtx.fillRect(rect.x + fillWidth - 3, rect.y, 6, rect.h);
+        }
+    }
 
-// =====================================================
-// RESIZE
-// =====================================================
+    // ============================================================
+    // ===== INIT =====
+    // ============================================================
+    function init() {
+        loadState();
+        resizeAllCanvases();
+        updateScreenTransform();
+        initGrain();
+        initParticles();
+        preloadImages();
 
-function attachResize(handle, el, hb) {
-  let startX, startY, origW, origH;
+        // Set initial screen
+        const initialDiv = screenDivs['portrait_rotate'];
+        if (initialDiv) {
+            initialDiv.classList.add('active');
+            initialDiv.style.opacity = '1';
+            initialDiv.style.pointerEvents = 'auto';
+            initialDiv.style.transform = 'scale(1)';
+        }
 
-  function down(e) {
-    e.preventDefault();
-    e.stopPropagation();
+        // Start animation loop
+        lastFrameTime = Date.now();
+        requestAnimationFrame(animationLoop);
 
-    selectHitbox(el, hb);
+        // Initial grain
+        updateGrain();
 
-    const p = getPoint(e);
+        console.log('CHAOSLINE UI initialized');
+        console.log('Debug: window.chaosline_reset() to reset all progress');
+        console.log('Debug: Tap title 5 times rapidly on main menu for debug panel');
+    }
 
-    startX = p.x;
-    startY = p.y;
-    origW = hb.w;
-    origH = hb.h;
+    // RoundRect polyfill
+    if (!CanvasRenderingContext2D.prototype.roundRect) {
+        CanvasRenderingContext2D.prototype.roundRect = function(x, y, w, h, r) {
+            if (typeof r === 'number') r = { tl: r, tr: r, br: r, bl: r };
+            this.beginPath();
+            this.moveTo(x + r.tl, y);
+            this.lineTo(x + w - r.tr, y);
+            this.quadraticCurveTo(x + w, y, x + w, y + r.tr);
+            this.lineTo(x + w, y + h - r.br);
+            this.quadraticCurveTo(x + w, y + h, x + w - r.br, y + h);
+            this.lineTo(x + r.bl, y + h);
+            this.quadraticCurveTo(x, y + h, x, y + h - r.bl);
+            this.lineTo(x, y + r.tl);
+            this.quadraticCurveTo(x, y, x + r.tl, y);
+            this.closePath();
+            return this;
+        };
+    }
 
-    document.addEventListener('mousemove', move);
-    document.addEventListener('touchmove', move, { passive: false });
-    document.addEventListener('mouseup', up);
-    document.addEventListener('touchend', up);
-  }
-
-  function move(e) {
-    e.preventDefault();
-
-    const p = getPoint(e);
-
-    const dx = (p.x - startX) / scale;
-    const dy = (p.y - startY) / scale;
-
-    hb.w = Math.max(20, Math.min(NATIVE_W - hb.x, origW + dx));
-    hb.h = Math.max(20, Math.min(NATIVE_H - hb.y, origH + dy));
-
-    applyHitboxVisual(el, hb);
-    updateCoordChipOnly();
-  }
-
-  function up() {
-    document.removeEventListener('mousemove', move);
-    document.removeEventListener('touchmove', move);
-    document.removeEventListener('mouseup', up);
-    document.removeEventListener('touchend', up);
-  }
-
-  handle.addEventListener('mousedown', down);
-  handle.addEventListener('touchstart', down, { passive: false });
-}
-
-// =====================================================
-// SELECTION
-// =====================================================
-
-function selectHitbox(el, hb) {
-  document.querySelectorAll('.hitbox').forEach(h => h.classList.remove('selected'));
-
-  el.classList.add('selected');
-
-  selectedEl = el;
-  selectedHb = hb;
-
-  updateCoordsPanel();
-}
-
-// =====================================================
-// INIT
-// =====================================================
-
-document.querySelectorAll('#buttonrow button[data-screen]').forEach(b => {
-  b.addEventListener('click', () => loadScreen(b.dataset.screen));
-});
-
-window.addEventListener('resize', fitCanvas);
-
-window.addEventListener('orientationchange', () => {
-  setTimeout(fitCanvas, 120);
-});
-
-bgimg.addEventListener('load', fitCanvas);
-
-loadScreen('loading');
+    // Start the application
+    init();
 </script>
-
 </body>
 </html>
