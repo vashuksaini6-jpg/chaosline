@@ -36,7 +36,6 @@
     top: 0;
     left: 0;
     right: 0;
-    height: 110px;
     background: #050d20;
     z-index: 100;
     border-bottom: 1px solid #1e3a8a;
@@ -52,6 +51,7 @@
     gap: 6px;
     border-bottom: 1px solid #1e3a8a;
     background: #050d20;
+    flex-shrink: 0;
   }
 
   #buttonrow button {
@@ -70,16 +70,35 @@
     border-color: #4a7fff;
   }
 
+  #expandBtn {
+    margin-left: auto;
+    background: #8b0000 !important;
+    border-color: #b30000 !important;
+    font-weight: bold;
+  }
+
   #coordsPanel {
-    height: 68px;
-    overflow-y: auto;
-    overflow-x: hidden;
-    padding: 4px 6px;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 4px;
-    align-content: flex-start;
+    padding: 5px 6px;
     background: #02030a;
+    display: flex;
+    gap: 4px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    white-space: nowrap;
+    height: 34px;
+    align-items: center;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  #coordsPanel.expanded {
+    flex-wrap: wrap;
+    overflow-x: hidden;
+    overflow-y: auto;
+    white-space: normal;
+    height: auto;
+    max-height: 60vh;
+    align-content: flex-start;
+    align-items: flex-start;
   }
 
   .coordChip {
@@ -87,25 +106,29 @@
     color: #8ab4ff;
     background: #0a1a3d;
     border: 1px solid #1e3a8a;
-    padding: 2px 5px;
+    padding: 3px 5px;
     border-radius: 3px;
-    white-space: nowrap;
+    line-height: 1.2;
+    flex-shrink: 0;
   }
 
   .coordChip.selected {
     color: #fff;
     background: #1e3a8a;
     border-color: #ffffff;
+    font-weight: bold;
   }
 
   #stage {
     position: absolute;
-    top: 110px;
     left: 0;
+    right: 0;
+    bottom: 0;
     display: flex;
     align-items: center;
     justify-content: center;
     overflow: hidden;
+    background: #000;
   }
 
   #canvas {
@@ -184,6 +207,7 @@
       <button data-screen="main_menu">Main</button>
       <button data-screen="world_select">Worlds</button>
       <button data-screen="level_select">Levels</button>
+      <button id="expandBtn">SHOW ALL</button>
     </div>
 
     <div id="coordsPanel"></div>
@@ -269,12 +293,15 @@ let currentScreen = 'loading';
 let scale = 1;
 let selectedHb = null;
 let selectedEl = null;
+let panelExpanded = false;
 
 const rotator = document.getElementById('rotator');
 const canvas = document.getElementById('canvas');
 const bgimg = document.getElementById('bgimg');
 const stage = document.getElementById('stage');
 const coordsPanel = document.getElementById('coordsPanel');
+const topbar = document.getElementById('topbar');
+const expandBtn = document.getElementById('expandBtn');
 
 // =====================================================
 // ROTATION / FITTING
@@ -286,7 +313,6 @@ function applyRotation() {
   const isPortrait = vh > vw;
 
   if (isPortrait) {
-    // Rotate whole editor so 1920x1080 landscape image maps correctly on portrait phones.
     rotator.style.width = vh + 'px';
     rotator.style.height = vw + 'px';
     rotator.style.transform = 'rotate(90deg) translateY(-100%)';
@@ -302,9 +328,12 @@ function applyRotation() {
 function fitCanvas() {
   const view = applyRotation();
 
-  const availW = view.w;
-  const availH = view.h - 110;
+  const topbarHeight = topbar.offsetHeight;
 
+  const availW = view.w;
+  const availH = view.h - topbarHeight;
+
+  stage.style.top = topbarHeight + 'px';
   stage.style.width = availW + 'px';
   stage.style.height = availH + 'px';
 
@@ -331,7 +360,7 @@ function loadScreen(name) {
 
   SCREENS[name].hitboxes.forEach(hb => createHitbox(hb));
 
-  document.querySelectorAll('#buttonrow button').forEach(b => {
+  document.querySelectorAll('#buttonrow button[data-screen]').forEach(b => {
     b.classList.toggle('active', b.dataset.screen === name);
   });
 
@@ -339,7 +368,7 @@ function loadScreen(name) {
   selectedEl = null;
 
   updateCoordsPanel();
-  fitCanvas();
+  requestAnimationFrame(fitCanvas);
 }
 
 // =====================================================
@@ -390,6 +419,7 @@ function updateCoordsPanel() {
   SCREENS[currentScreen].hitboxes.forEach(hb => {
     const chip = document.createElement('div');
     chip.className = 'coordChip';
+    chip.dataset.id = hb.id;
 
     if (selectedHb && selectedHb.id === hb.id) {
       chip.classList.add('selected');
@@ -400,7 +430,30 @@ function updateCoordsPanel() {
 
     coordsPanel.appendChild(chip);
   });
+
+  requestAnimationFrame(fitCanvas);
 }
+
+// Update only the selected chip text without full rerender
+function updateCoordChipOnly() {
+  if (!selectedHb) return;
+  const chip = coordsPanel.querySelector(`.coordChip[data-id="${selectedHb.id}"]`);
+  if (chip) {
+    chip.textContent =
+      `${selectedHb.id} x:${Math.round(selectedHb.x)} y:${Math.round(selectedHb.y)} w:${Math.round(selectedHb.w)} h:${Math.round(selectedHb.h)}`;
+  }
+}
+
+// =====================================================
+// EXPAND / COLLAPSE PANEL
+// =====================================================
+
+expandBtn.addEventListener('click', () => {
+  panelExpanded = !panelExpanded;
+  coordsPanel.classList.toggle('expanded', panelExpanded);
+  expandBtn.textContent = panelExpanded ? 'HIDE' : 'SHOW ALL';
+  requestAnimationFrame(fitCanvas);
+});
 
 // =====================================================
 // POINTER HANDLING — ROTATION AWARE
@@ -426,7 +479,6 @@ function getPoint(e) {
   const isPortrait = vh > vw;
 
   if (isPortrait) {
-    // Convert physical portrait coordinates into rotated landscape coordinates.
     return {
       x: raw.y,
       y: vw - raw.x
@@ -475,7 +527,7 @@ function attachDrag(el, hb) {
     hb.y = Math.max(0, Math.min(NATIVE_H - hb.h, origY + dy));
 
     applyHitboxVisual(el, hb);
-    updateCoordsPanel();
+    updateCoordChipOnly();
   }
 
   function up() {
@@ -527,7 +579,7 @@ function attachResize(handle, el, hb) {
     hb.h = Math.max(20, Math.min(NATIVE_H - hb.y, origH + dy));
 
     applyHitboxVisual(el, hb);
-    updateCoordsPanel();
+    updateCoordChipOnly();
   }
 
   function up() {
@@ -560,7 +612,7 @@ function selectHitbox(el, hb) {
 // INIT
 // =====================================================
 
-document.querySelectorAll('#buttonrow button').forEach(b => {
+document.querySelectorAll('#buttonrow button[data-screen]').forEach(b => {
   b.addEventListener('click', () => loadScreen(b.dataset.screen));
 });
 
